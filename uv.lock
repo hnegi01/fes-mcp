@@ -408,6 +408,7 @@ dependencies = [
     { name = "fastmcp" },
     { name = "jsonschema" },
     { name = "pysisense" },
+    { name = "python-dotenv" },
 ]
 
 [package.dev-dependencies]
@@ -421,6 +422,7 @@ requires-dist = [
     { name = "fastmcp", specifier = ">=2.10,<3" },
     { name = "jsonschema", specifier = ">=4.21" },
     { name = "pysisense", specifier = "==1.0.2" },
+    { name = "python-dotenv", specifier = ">=1.0" },
 ]
 
 [package.metadata.requires-dev]

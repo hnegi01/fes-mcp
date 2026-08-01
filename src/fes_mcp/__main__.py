@@ -5,7 +5,9 @@ from __future__ import annotations
 import logging
 import sys
 
-from .settings import Settings
+from dotenv import load_dotenv
+
+from .settings import REPO_ROOT, Settings
 from .server import build_server
 
 
@@ -19,6 +21,8 @@ def _setup_logging(level: str) -> None:
 
 
 def main() -> None:
+    # Real environment variables (e.g. from Claude Desktop's config) win over .env.
+    load_dotenv(REPO_ROOT / ".env")
     settings = Settings.from_env()
     _setup_logging(settings.log_level)
 
