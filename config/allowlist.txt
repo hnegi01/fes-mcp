@@ -1,10 +1,20 @@
 # Curated tool surface for fes_mcp.
-# One entry per line: a tool_id (dashboard.get_all_dashboards) or a whole
-# module (dashboard). Override at runtime with FES_MCP_TOOLS.
+# One entry per line: a whole module (dashboard) or a single tool_id
+# (dashboard.get_all_dashboards). Override at runtime with FES_MCP_TOOLS.
 #
-# Walking skeleton: five read-only dashboard tools.
-dashboard.get_all_dashboards
-dashboard.get_dashboard_by_id
-dashboard.get_dashboard_by_name
-dashboard.get_dashboard_widgets
-dashboard.get_dashboard_columns
+# Mutating tools in these modules are only exposed when
+# FES_MCP_ALLOW_MUTATIONS=true; they always carry destructiveHint so clients
+# warn before writes. The migration module is excluded in code (dual-tenant,
+# out of scope for v1) regardless of this file.
+
+access_management   # users, groups, shares, permissions      (13 read / 6 write)
+blox                # blox widgets/templates                   (1 read / 2 write)
+custom_code         # custom code notebooks/transforms         (3 read / 5 write)
+dashboard           # dashboards, widgets, scripts, shares     (13 read / 6 write)
+datamodel           # datamodels, tables, builds               (15 read / 13 write)
+encryption          # encrypt/decrypt helpers                  (0 read / 2 write)
+folder              # folder tree management                   (5 read / 3 write)
+metadata            # metadata queries                         (3 read / 2 write)
+plugins             # plugin management                        (2 read / 6 write)
+queries             # SQL/JAQL query execution                 (0 read / 2 write)
+wellcheck           # instance health checks                   (8 read / 0 write)
