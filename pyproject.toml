@@ -1,0 +1,31 @@
+[project]
+name = "fes-mcp"
+version = "0.1.0"
+description = "Standalone Sisense admin MCP server backed by the PySisense SDK"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "fastmcp>=2.10,<3",
+    "jsonschema>=4.21",
+    "pysisense==1.0.2",
+]
+
+[project.scripts]
+fes-mcp = "fes_mcp.__main__:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/fes_mcp"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

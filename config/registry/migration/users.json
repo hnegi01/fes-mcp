@@ -1,0 +1,100 @@
+[
+  {
+    "tool_id": "migration.migrate_all_users",
+    "description": "Migrate all eligible users from the source environment to the target environment using the bulk endpoint.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "emit": {
+          "type": "object",
+          "description": "Optional callback invoked with structured progress events. If not provided, the method emits no events and only returns a final result. Event payloads follow a consistent shape: - ``type``: str (\"started\" | \"progress\" | \"warning\" | \"error\" | \"completed\") - ``step``: str logical step identifier - ``message``: str human-readable message - Additional fields depending on the step (counts, status_code, etc.)"
+        }
+      },
+      "required": []
+    },
+    "mutates": true,
+    "examples": [
+      {
+        "user_query": "How can I migrate all users from the source environment to the target environment and track progress?",
+        "arguments": {
+          "emit": {
+            "type": "progress",
+            "step": "fetch_users",
+            "message": "Fetching users from the source environment"
+          }
+        },
+        "notes": "This call migrates all eligible users from the source to the target environment and uses the emit callback to track progress at each step."
+      },
+      {
+        "user_query": "I want to migrate users but don't need progress updates. How can I do that?",
+        "arguments": {},
+        "notes": "This call migrates all eligible users without emitting progress events. Use this when you only need the final migration result."
+      },
+      {
+        "user_query": "Can I monitor detailed progress while migrating users to ensure everything is working correctly?",
+        "arguments": {
+          "emit": {
+            "type": "progress",
+            "step": "submit_payload",
+            "message": "Submitting bulk payload to the target environment"
+          }
+        },
+        "notes": "This call migrates users and provides detailed progress updates, including when the bulk payload is submitted to the target environment."
+      }
+    ]
+  },
+  {
+    "tool_id": "migration.migrate_users",
+    "description": "Migrate specific users from the source environment to the target environment.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "user_name_list": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "email"
+          },
+          "description": "The user identifiers (email addresses) to migrate."
+        }
+      },
+      "required": [
+        "user_name_list"
+      ]
+    },
+    "mutates": true,
+    "examples": [
+      {
+        "user_query": "Migrate the users john.doe@example.com and jane.smith@example.com to the target environment.",
+        "arguments": {
+          "user_name_list": [
+            "john.doe@example.com",
+            "jane.smith@example.com"
+          ]
+        },
+        "notes": "This call migrates the specified users from the source environment to the target environment, ensuring their roles and group memberships are mapped correctly."
+      },
+      {
+        "user_query": "Transfer the users admin@example.com and support@example.com to the new Sisense instance.",
+        "arguments": {
+          "user_name_list": [
+            "admin@example.com",
+            "support@example.com"
+          ]
+        },
+        "notes": "Use this call when moving administrative and support users to a new Sisense environment while preserving their configurations."
+      },
+      {
+        "user_query": "Migrate the users sales.team@example.com, marketing.lead@example.com, and hr.manager@example.com to the target environment.",
+        "arguments": {
+          "user_name_list": [
+            "sales.team@example.com",
+            "marketing.lead@example.com",
+            "hr.manager@example.com"
+          ]
+        },
+        "notes": "This operation is ideal for migrating multiple department leads to the target environment in one batch."
+      }
+    ]
+  }
+]
