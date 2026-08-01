@@ -1,0 +1,10 @@
+# Curated tool surface for fes_mcp.
+# One entry per line: a tool_id (dashboard.get_all_dashboards) or a whole
+# module (dashboard). Override at runtime with FES_MCP_TOOLS.
+#
+# Walking skeleton: five read-only dashboard tools.
+dashboard.get_all_dashboards
+dashboard.get_dashboard_by_id
+dashboard.get_dashboard_by_name
+dashboard.get_dashboard_widgets
+dashboard.get_dashboard_columns

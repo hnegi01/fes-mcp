@@ -1,0 +1,98 @@
+"""Tool registry loading and filtering.
+
+The registry JSON is auto-generated from PySisense SDK docstrings by
+scripts/01_build_registry_from_sdk.py — never handwritten. This module loads
+it, normalizes each entry, and applies the curated allowlist that defines the
+exposed tool surface.
+"""
+
+from __future__ import annotations
+
+import copy
+import json
+import logging
+from pathlib import Path
+from typing import Any
+
+logger = logging.getLogger("fes_mcp.registry")
+
+# Dual-tenant migration tools are out of scope for v1 (they need their own
+# source/target connection mode).
+EXCLUDED_MODULES = {"migration"}
+
+
+def _normalize_parameters_schema(raw: Any) -> dict[str, Any]:
+    """Ensure the parameters schema is a well-formed object schema."""
+    schema = copy.deepcopy(raw) if isinstance(raw, dict) else {}
+    schema.setdefault("type", "object")
+    schema.setdefault("properties", {})
+    schema.setdefault("required", [])
+    if not isinstance(schema["properties"], dict):
+        schema["properties"] = {}
+    if not isinstance(schema["required"], list):
+        schema["required"] = []
+    return schema
+
+
+def load_registry(path: Path) -> dict[str, dict[str, Any]]:
+    """Load the registry JSON and return {tool_id: normalized entry}."""
+    if not path.exists():
+        raise RuntimeError(
+            f"Registry file not found: {path}. Run ./refresh_registry.sh to generate it."
+        )
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, list):
+        raise RuntimeError(f"Registry JSON must be a list, got {type(payload).__name__}")
+
+    tools: dict[str, dict[str, Any]] = {}
+    skipped = 0
+    for row in payload:
+        tool_id = row.get("tool_id")
+        if not tool_id or not row.get("module") or not row.get("method") or not row.get("class"):
+            skipped += 1
+            continue
+        entry = dict(row)
+        entry["mutates"] = bool(entry.get("mutates", False))
+        entry["parameters"] = _normalize_parameters_schema(entry.get("parameters"))
+        tools[tool_id] = entry
+
+    logger.info("Loaded registry: %d tools (%d rows skipped) from %s", len(tools), skipped, path)
+    return tools
+
+
+def select_tools(
+    tools: dict[str, dict[str, Any]],
+    allowlist: tuple[str, ...],
+    allow_mutations: bool,
+) -> dict[str, dict[str, Any]]:
+    """Apply the allowlist (tool_ids and/or module names) and mutation policy.
+
+    An empty allowlist selects nothing — the tool surface is always explicit.
+    """
+    modules = {e for e in allowlist if "." not in e}
+    tool_ids = {e for e in allowlist if "." in e}
+
+    unknown = tool_ids - tools.keys()
+    known_modules = {t["module"] for t in tools.values()}
+    unknown |= modules - known_modules
+    if unknown:
+        logger.warning("Allowlist entries not found in registry: %s", ", ".join(sorted(unknown)))
+
+    selected: dict[str, dict[str, Any]] = {}
+    dropped_mutating = 0
+    for tool_id, entry in tools.items():
+        if entry["module"] in EXCLUDED_MODULES:
+            continue
+        if not (tool_id in tool_ids or entry["module"] in modules):
+            continue
+        if entry["mutates"] and not allow_mutations:
+            dropped_mutating += 1
+            continue
+        selected[tool_id] = entry
+
+    if dropped_mutating:
+        logger.info(
+            "Excluded %d mutating tools (FES_MCP_ALLOW_MUTATIONS=false)", dropped_mutating
+        )
+    logger.info("Tool surface: %d tools selected", len(selected))
+    return selected
