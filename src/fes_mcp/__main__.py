@@ -26,10 +26,23 @@ def main() -> None:
     settings = Settings.from_env()
     _setup_logging(settings.log_level)
 
-    if settings.auth_mode != "none":
-        raise SystemExit(
-            f"FES_MCP_AUTH={settings.auth_mode} is not implemented yet; use FES_MCP_AUTH=none."
+    if settings.auth_mode == "bearer":
+        raise SystemExit("FES_MCP_AUTH=bearer is not implemented; use none or oauth.")
+
+    if settings.auth_mode == "oauth":
+        if settings.transport != "http":
+            raise SystemExit("FES_MCP_AUTH=oauth requires FES_MCP_TRANSPORT=http.")
+        from .auth import SisenseAuthProvider, make_credential_resolver
+
+        public_url = settings.public_url or f"http://{settings.host}:{settings.port}"
+        provider = SisenseAuthProvider(public_url)
+        mcp = build_server(
+            settings,
+            credential_resolver=make_credential_resolver(provider),
+            auth=provider,
         )
+        mcp.run(transport="http", host=settings.host, port=settings.port)
+        return
 
     mcp = build_server(settings)
 

@@ -10,6 +10,7 @@ def make_settings(**overrides) -> Settings:
         sisense_ssl_verify=True,
         auth_mode="none",
         bearer_token=None,
+        public_url=None,
         allowlist=(),
         allow_mutations=False,
         transport="stdio",

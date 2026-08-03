@@ -34,6 +34,7 @@ class Settings:
 
     auth_mode: str
     bearer_token: str | None
+    public_url: str | None
 
     allowlist: tuple[str, ...]
     allow_mutations: bool
@@ -67,6 +68,7 @@ class Settings:
             sisense_ssl_verify=_env_bool("SISENSE_SSL_VERIFY", True),
             auth_mode=auth_mode,
             bearer_token=os.getenv("FES_MCP_BEARER_TOKEN") or None,
+            public_url=(os.getenv("FES_MCP_PUBLIC_URL") or "").rstrip("/") or None,
             allowlist=allowlist,
             allow_mutations=_env_bool("FES_MCP_ALLOW_MUTATIONS", False),
             transport=transport,
