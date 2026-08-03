@@ -127,5 +127,21 @@ def build_server(
     for entry in selected.values():
         mcp.add_tool(build_tool(entry, dispatcher, credential_resolver))
 
+    from starlette.requests import Request
+    from starlette.responses import JSONResponse, PlainTextResponse
+
+    @mcp.custom_route("/", methods=["GET"])
+    async def root(request: Request) -> PlainTextResponse:
+        return PlainTextResponse(
+            "fes_mcp: Sisense admin MCP server is running.\n"
+            f"Tools: {len(selected)} | auth: {settings.auth_mode}\n"
+            "Add the /mcp path of this URL as a connector in your MCP client "
+            "(Claude Desktop / Claude Code / claude.ai). Do not browse here directly.\n"
+        )
+
+    @mcp.custom_route("/healthz", methods=["GET"])
+    async def healthz(request: Request) -> JSONResponse:
+        return JSONResponse({"ok": True, "tools": len(selected), "auth": settings.auth_mode})
+
     logger.info("Registered %d MCP tools", len(selected))
     return mcp
