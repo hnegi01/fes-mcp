@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
+import time
 from collections import OrderedDict
 from typing import Any
 
@@ -133,13 +134,23 @@ class SisenseDispatcher:
                 "EXECUTING mutation tool=%s domain=%s args=%s", tool_id, cred.domain, _scrub(args)
             )
 
-        logger.info("Dispatching %s (domain=%s)", tool_id, cred.domain)
+        start = time.perf_counter()
+        outcome = "error"
         try:
             result = method(**args)
+            outcome = "ok"
         except TypeError as exc:
             raise DispatchError(f"Argument error calling {tool_id}: {exc}") from exc
         except Exception as exc:
             raise DispatchError(f"{type(exc).__name__} calling {tool_id}: {exc}") from exc
+        finally:
+            logger.info(
+                "tool=%s domain=%s outcome=%s duration_ms=%.0f",
+                tool_id,
+                cred.domain,
+                outcome,
+                (time.perf_counter() - start) * 1000,
+            )
 
         sdk_error = _sdk_error_message(result)
         if sdk_error is not None:

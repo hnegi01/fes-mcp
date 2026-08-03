@@ -34,6 +34,10 @@ def main() -> None:
             raise SystemExit("FES_MCP_AUTH=oauth requires FES_MCP_TRANSPORT=http.")
         from .auth import SisenseAuthProvider, make_credential_resolver
 
+        from starlette.middleware import Middleware
+
+        from .middleware import AccessLogMiddleware
+
         public_url = settings.public_url or f"http://{settings.host}:{settings.port}"
         provider = SisenseAuthProvider(public_url)
         mcp = build_server(
@@ -41,13 +45,27 @@ def main() -> None:
             credential_resolver=make_credential_resolver(provider),
             auth=provider,
         )
-        mcp.run(transport="http", host=settings.host, port=settings.port)
+        mcp.run(
+            transport="http",
+            host=settings.host,
+            port=settings.port,
+            middleware=[Middleware(AccessLogMiddleware)],
+        )
         return
 
     mcp = build_server(settings)
 
     if settings.transport == "http":
-        mcp.run(transport="http", host=settings.host, port=settings.port)
+        from starlette.middleware import Middleware
+
+        from .middleware import AccessLogMiddleware
+
+        mcp.run(
+            transport="http",
+            host=settings.host,
+            port=settings.port,
+            middleware=[Middleware(AccessLogMiddleware)],
+        )
     else:
         mcp.run(transport="stdio")
 
