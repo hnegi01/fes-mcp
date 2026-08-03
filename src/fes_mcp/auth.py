@@ -44,6 +44,8 @@ from .credentials import SisenseCredential
 logger = logging.getLogger("fes_mcp.auth")
 
 LOGIN_SESSION_TTL_SECONDS = 600
+LOGIN_RATE_LIMIT_ATTEMPTS = 5
+LOGIN_RATE_LIMIT_WINDOW_SECONDS = 60
 
 
 class SisenseLoginError(Exception):
@@ -55,6 +57,40 @@ class _PendingLogin:
     client: OAuthClientInformationFull
     params: AuthorizationParams
     expires_at: float
+    csrf: str
+
+
+class _RateLimiter:
+    """Sliding-window limiter keyed by client IP, protecting /login from
+    password brute-forcing through this server."""
+
+    def __init__(self, max_attempts: int, window_seconds: float):
+        self._max = max_attempts
+        self._window = window_seconds
+        self._attempts: dict[str, list[float]] = {}
+
+    def allow(self, key: str) -> bool:
+        now = time.time()
+        attempts = [t for t in self._attempts.get(key, []) if t > now - self._window]
+        if len(attempts) >= self._max:
+            self._attempts[key] = attempts
+            return False
+        attempts.append(now)
+        self._attempts[key] = attempts
+        if len(self._attempts) > 10_000:  # bound memory under address-spraying
+            self._attempts = {
+                k: v for k, v in self._attempts.items() if v and v[-1] > now - self._window
+            }
+        return True
+
+
+def _client_ip(request: Request) -> str:
+    # Behind the EC2 reverse proxy the peer address is the proxy; the proxy
+    # appends the real client to X-Forwarded-For.
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
 
 
 def normalize_domain(raw: str) -> str:
@@ -122,6 +158,9 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
         # Any issued token string (auth code, access, refresh) → the user's
         # Sisense credential.
         self._credentials: dict[str, SisenseCredential] = {}
+        self._login_limiter = _RateLimiter(
+            LOGIN_RATE_LIMIT_ATTEMPTS, LOGIN_RATE_LIMIT_WINDOW_SECONDS
+        )
 
     # -- step 1: Claude hits /authorize → send the user to our login page ----
 
@@ -130,7 +169,10 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
     ) -> str:
         login_id = secrets.token_urlsafe(24)
         self._pending_logins[login_id] = _PendingLogin(
-            client=client, params=params, expires_at=time.time() + LOGIN_SESSION_TTL_SECONDS
+            client=client,
+            params=params,
+            expires_at=time.time() + LOGIN_SESSION_TTL_SECONDS,
+            csrf=secrets.token_urlsafe(16),
         )
         self._sweep_pending()
         return f"{str(self.base_url).rstrip('/')}/login?session={login_id}"
@@ -154,7 +196,7 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
                 return HTMLResponse(_page("This login link is invalid or has expired. "
                                           "Close this window and reconnect from your MCP client."),
                                     status_code=400)
-            return HTMLResponse(_page(_form(login_id)))
+            return HTMLResponse(_page(_form(login_id, self._pending_logins[login_id].csrf)))
 
         form = await request.form()
         login_id = str(form.get("session", ""))
@@ -162,6 +204,22 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
             return HTMLResponse(_page("This login link is invalid or has expired. "
                                       "Close this window and reconnect from your MCP client."),
                                 status_code=400)
+
+        pending_check = self._pending_logins[login_id]
+        if not secrets.compare_digest(str(form.get("csrf", "")), pending_check.csrf):
+            logger.warning("CSRF token mismatch on /login")
+            return HTMLResponse(_page("This request could not be verified. "
+                                      "Close this window and reconnect from your MCP client."),
+                                status_code=400)
+
+        ip = _client_ip(request)
+        if not self._login_limiter.allow(ip):
+            logger.warning("Login rate limit exceeded for ip=%s", ip)
+            return HTMLResponse(
+                _page(_form(login_id, pending_check.csrf,
+                            error="Too many login attempts. Wait a minute and try again.")),
+                status_code=429,
+            )
 
         try:
             credential = await asyncio.to_thread(
@@ -173,7 +231,9 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
                 form.get("skip_tls") == "on",
             )
         except SisenseLoginError as exc:
-            return HTMLResponse(_page(_form(login_id, error=str(exc))), status_code=200)
+            return HTMLResponse(
+                _page(_form(login_id, pending_check.csrf, error=str(exc))), status_code=200
+            )
 
         pending = self._pending_logins.pop(login_id)
         redirect_url = self._issue_code(pending, credential)
@@ -321,7 +381,7 @@ def _page(body: str) -> str:
 <body><div class="card">{body}</div></body></html>"""
 
 
-def _form(login_id: str, error: str | None = None) -> str:
+def _form(login_id: str, csrf: str, error: str | None = None) -> str:
     error_html = f'<div class="error">{html.escape(error)}</div>' if error else ""
     return f"""
 <h1>Connect to Sisense</h1>
@@ -330,6 +390,7 @@ Your credentials go only to your Sisense instance — the client never sees them
 {error_html}
 <form method="post" action="login">
   <input type="hidden" name="session" value="{html.escape(login_id)}">
+  <input type="hidden" name="csrf" value="{html.escape(csrf)}">
   <label>Sisense URL</label>
   <input type="text" name="domain" placeholder="acme.sisense.com" autofocus>
   <label>Username</label>
