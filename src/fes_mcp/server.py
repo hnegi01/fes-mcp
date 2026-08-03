@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-from typing import Any
+from typing import Any, Callable, Optional
 
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
@@ -18,9 +18,19 @@ from fastmcp.tools.tool import Tool, ToolResult
 from mcp.types import ToolAnnotations
 from pydantic import ConfigDict
 
+from .credentials import SisenseCredential
 from .dispatcher import DispatchError, SisenseDispatcher
 from .registry import load_registry, select_tools
 from .settings import Settings
+
+# Resolves the current request's Sisense credential (None → env/dev default).
+# The oauth mode supplies one that maps the caller's access token to the
+# credential captured at login.
+CredentialResolver = Callable[[], Optional[SisenseCredential]]
+
+
+def _no_credential() -> SisenseCredential | None:
+    return None
 
 logger = logging.getLogger("fes_mcp.server")
 
@@ -40,10 +50,14 @@ class SisenseTool(Tool):
 
     tool_id: str
     dispatcher: SisenseDispatcher
+    credential_resolver: CredentialResolver = _no_credential
 
     async def run(self, arguments: dict[str, Any]) -> ToolResult:
+        credential = self.credential_resolver()
         try:
-            result = await asyncio.to_thread(self.dispatcher.invoke, self.tool_id, arguments)
+            result = await asyncio.to_thread(
+                self.dispatcher.invoke, self.tool_id, arguments, credential
+            )
         except DispatchError as exc:
             raise ToolError(str(exc)) from exc
 
@@ -59,11 +73,16 @@ def _mcp_tool_name(tool_id: str) -> str:
     return tool_id.replace(".", "_")
 
 
-def build_tool(entry: dict[str, Any], dispatcher: SisenseDispatcher) -> SisenseTool:
+def build_tool(
+    entry: dict[str, Any],
+    dispatcher: SisenseDispatcher,
+    credential_resolver: CredentialResolver = _no_credential,
+) -> SisenseTool:
     mutates = bool(entry["mutates"])
     return SisenseTool(
         tool_id=entry["tool_id"],
         dispatcher=dispatcher,
+        credential_resolver=credential_resolver,
         name=_mcp_tool_name(entry["tool_id"]),
         description=entry.get("description") or f"PySisense {entry['tool_id']}",
         parameters=entry["parameters"],
@@ -83,7 +102,11 @@ def build_tool(entry: dict[str, Any], dispatcher: SisenseDispatcher) -> SisenseT
     )
 
 
-def build_server(settings: Settings) -> FastMCP:
+def build_server(
+    settings: Settings,
+    credential_resolver: CredentialResolver = _no_credential,
+    auth: Any = None,
+) -> FastMCP:
     registry = load_registry(settings.registry_path)
     selected = select_tools(registry, settings.allowlist, settings.allow_mutations)
     if not selected:
@@ -93,14 +116,16 @@ def build_server(settings: Settings) -> FastMCP:
 
     dispatcher = SisenseDispatcher(settings, selected)
 
-    if not settings.sisense_domain or not settings.sisense_token:
+    if settings.auth_mode == "none" and (
+        not settings.sisense_domain or not settings.sisense_token
+    ):
         logger.warning(
             "SISENSE_DOMAIN/SISENSE_TOKEN not set — tools will list but every call will fail."
         )
 
-    mcp: FastMCP = FastMCP(name="sisense-admin", instructions=SERVER_INSTRUCTIONS)
+    mcp: FastMCP = FastMCP(name="sisense-admin", instructions=SERVER_INSTRUCTIONS, auth=auth)
     for entry in selected.values():
-        mcp.add_tool(build_tool(entry, dispatcher))
+        mcp.add_tool(build_tool(entry, dispatcher, credential_resolver))
 
     logger.info("Registered %d MCP tools", len(selected))
     return mcp
