@@ -25,3 +25,6 @@ logs/
 .DS_Store
 .idea/
 .vscode/
+
+# Local working notes
+.claude/roadmap.md
