@@ -1,5 +1,6 @@
 import pytest
 
+from fes_mcp.credentials import SisenseCredential
 from fes_mcp.dispatcher import DispatchError, SisenseDispatcher
 from tests.conftest import make_settings
 
@@ -14,12 +15,32 @@ def test_happy_path(dispatcher):
     assert result == [{"oid": "d1", "title": "Sales"}]
 
 
-def test_client_built_once_from_settings(dispatcher, fake_sdk):
+def test_env_fallback_client_reused(dispatcher, fake_sdk):
     dispatcher.invoke("dashboard.get_all_dashboards", {})
     dispatcher.invoke("dashboard.get_dashboard_by_id", {"dashboard_id": "d1"})
-    client = dispatcher._client
-    assert client["connection"]["domain"] == "sisense.example.com"
-    assert client["connection"]["is_ssl"] is True
+    assert len(dispatcher._bundles) == 1
+    bundle = next(iter(dispatcher._bundles.values()))
+    assert bundle.client["connection"]["domain"] == "sisense.example.com"
+    assert bundle.client["connection"]["is_ssl"] is True
+
+
+def test_per_credential_clients_are_isolated(dispatcher, fake_sdk):
+    alice = SisenseCredential(domain="a.sisense.com", token="tok-a")
+    bob = SisenseCredential(domain="b.sisense.com", token="tok-b", ssl_verify=False)
+    dispatcher.invoke("dashboard.get_all_dashboards", {}, credential=alice)
+    dispatcher.invoke("dashboard.get_all_dashboards", {}, credential=bob)
+    dispatcher.invoke("dashboard.get_all_dashboards", {}, credential=alice)  # cache hit
+    assert len(dispatcher._bundles) == 2
+    domains = {b.client["connection"]["domain"] for b in dispatcher._bundles.values()}
+    assert domains == {"a.sisense.com", "b.sisense.com"}
+
+
+def test_evict_drops_cached_client(dispatcher, fake_sdk):
+    alice = SisenseCredential(domain="a.sisense.com", token="tok-a")
+    dispatcher.invoke("dashboard.get_all_dashboards", {}, credential=alice)
+    assert len(dispatcher._bundles) == 1
+    dispatcher.evict(alice)
+    assert len(dispatcher._bundles) == 0
 
 
 def test_unknown_tool(dispatcher):
@@ -27,9 +48,9 @@ def test_unknown_tool(dispatcher):
         dispatcher.invoke("nope.nothing", {})
 
 
-def test_missing_creds(sample_tools, fake_sdk):
+def test_no_credential_and_no_env(sample_tools, fake_sdk):
     d = SisenseDispatcher(make_settings(sisense_domain=None, sisense_token=None), sample_tools)
-    with pytest.raises(DispatchError, match="credentials are not configured"):
+    with pytest.raises(DispatchError, match="No Sisense credential"):
         d.invoke("dashboard.get_all_dashboards", {})
 
 

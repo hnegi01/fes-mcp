@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python3 *)"
+      "Bash(python3 *)",
+      "Bash(.venv/bin/python *)",
+      "Bash(git add *)",
+      "Bash(git -c user.email=himanshu.negi@sisense.com -c 'user.name=Himanshu Negi' commit -qm 'Dispatcher: per-session credentials with per-credential client cache *)"
     ]
   }
 }

@@ -1,8 +1,9 @@
-"""Single-tenant dispatcher: tool_id + arguments → PySisense SDK method call.
+"""Dispatcher: (credential, tool_id, arguments) → PySisense SDK method call.
 
-Slimmed down from the fes-assistant dispatcher: the Sisense connection comes
-from env-configured settings (never from tool arguments), and there is no
-multi-tenant credential injection, cancellation, or progress-emit plumbing.
+Clients are cached per credential, so the server can serve many users (each
+with their own Sisense identity, possibly on different Sisense instances)
+from one process. When no per-session credential is supplied, the env-derived
+default credential is used — that's local dev mode.
 """
 
 from __future__ import annotations
@@ -10,77 +11,97 @@ from __future__ import annotations
 import json
 import logging
 import threading
+from collections import OrderedDict
 from typing import Any
 
 import jsonschema
 import urllib3
 
+from .credentials import SisenseCredential, credential_from_settings
 from .settings import Settings
 
 logger = logging.getLogger("fes_mcp.dispatcher")
 audit_logger = logging.getLogger("fes_mcp.mutations")
+
+# Cap on distinct cached (domain, token) clients; oldest evicted first.
+MAX_CACHED_CLIENTS = 200
 
 
 class DispatchError(Exception):
     """A tool call failed: bad arguments, unknown tool, or SDK-reported error."""
 
 
+class _ClientBundle:
+    """A SisenseClient plus its lazily-built module facade instances."""
+
+    def __init__(self, credential: SisenseCredential):
+        if not credential.ssl_verify:
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+        from pysisense import SisenseClient
+
+        self.client = SisenseClient.from_connection(
+            domain=credential.domain,
+            token=credential.token,
+            is_ssl=credential.ssl_verify,
+        )
+        self.modules: dict[str, Any] = {}
+
+    def module(self, class_name: str) -> Any:
+        if class_name not in self.modules:
+            import pysisense
+
+            klass = getattr(pysisense, class_name, None)
+            if klass is None:
+                raise DispatchError(f"SDK class '{class_name}' not found in pysisense.")
+            self.modules[class_name] = klass(api_client=self.client)
+        return self.modules[class_name]
+
+
 class SisenseDispatcher:
-    """Routes tool calls to PySisense facade methods over one cached client."""
+    """Routes tool calls to PySisense facade methods, one client per credential."""
 
     def __init__(self, settings: Settings, tools: dict[str, dict[str, Any]]):
         self._settings = settings
         self._tools = tools
-        self._client: Any = None
-        self._modules: dict[str, Any] = {}
-        # RLock: _get_module_instance holds it while calling _get_client.
+        self._default_credential = credential_from_settings(settings)
+        self._bundles: OrderedDict[tuple, _ClientBundle] = OrderedDict()
         self._lock = threading.RLock()
 
     @property
     def tools(self) -> dict[str, dict[str, Any]]:
         return self._tools
 
-    def _get_client(self) -> Any:
-        """Build the SisenseClient lazily so the server can start (and list
-        tools) before credentials are configured."""
-        if self._client is None:
-            with self._lock:
-                if self._client is None:
-                    s = self._settings
-                    if not s.sisense_domain or not s.sisense_token:
-                        raise DispatchError(
-                            "Sisense credentials are not configured. "
-                            "Set SISENSE_DOMAIN and SISENSE_TOKEN in the server environment."
-                        )
-                    if not s.sisense_ssl_verify:
-                        urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-                    from pysisense import SisenseClient
+    def _get_bundle(self, credential: SisenseCredential) -> _ClientBundle:
+        key = credential.cache_key()
+        with self._lock:
+            bundle = self._bundles.get(key)
+            if bundle is None:
+                bundle = _ClientBundle(credential)
+                self._bundles[key] = bundle
+                logger.info("SisenseClient created for domain=%s", credential.domain)
+                while len(self._bundles) > MAX_CACHED_CLIENTS:
+                    self._bundles.popitem(last=False)
+            else:
+                self._bundles.move_to_end(key)
+            return bundle
 
-                    self._client = SisenseClient.from_connection(
-                        domain=s.sisense_domain,
-                        token=s.sisense_token,
-                        is_ssl=s.sisense_ssl_verify,
-                    )
-                    logger.info("SisenseClient created for domain=%s", s.sisense_domain)
-        return self._client
+    def evict(self, credential: SisenseCredential) -> None:
+        """Drop the cached client for a credential (e.g. on session logout)."""
+        with self._lock:
+            self._bundles.pop(credential.cache_key(), None)
 
-    def _get_module_instance(self, class_name: str) -> Any:
-        if class_name not in self._modules:
-            with self._lock:
-                if class_name not in self._modules:
-                    import pysisense
-
-                    klass = getattr(pysisense, class_name, None)
-                    if klass is None:
-                        raise DispatchError(f"SDK class '{class_name}' not found in pysisense.")
-                    self._modules[class_name] = klass(api_client=self._get_client())
-        return self._modules[class_name]
-
-    def invoke(self, tool_id: str, arguments: dict[str, Any] | None) -> Any:
+    def invoke(
+        self,
+        tool_id: str,
+        arguments: dict[str, Any] | None,
+        credential: SisenseCredential | None = None,
+    ) -> Any:
         """Validate arguments against the registry schema and call the SDK.
 
-        Returns the raw SDK result. Raises DispatchError on any failure.
-        Blocking — callers on an event loop should offload to a thread.
+        `credential` is the per-session Sisense identity; falls back to the
+        env-derived default when omitted (local dev mode). Returns the raw SDK
+        result; raises DispatchError on any failure. Blocking — callers on an
+        event loop should offload to a thread.
         """
         meta = self._tools.get(tool_id)
         if meta is None:
@@ -92,18 +113,27 @@ class SisenseDispatcher:
                 "(FES_MCP_ALLOW_MUTATIONS=false)."
             )
 
+        cred = credential or self._default_credential
+        if cred is None:
+            raise DispatchError(
+                "No Sisense credential for this session. Authenticate via the connector, "
+                "or set SISENSE_DOMAIN and SISENSE_TOKEN in the server environment for dev mode."
+            )
+
         args = _coerce_json_strings(arguments or {})
         _validate_arguments(tool_id, args, meta["parameters"])
 
-        instance = self._get_module_instance(meta["class"])
+        instance = self._get_bundle(cred).module(meta["class"])
         method = getattr(instance, meta["method"], None)
         if method is None:
             raise DispatchError(f"Method '{meta['class']}.{meta['method']}' not found in SDK.")
 
         if meta["mutates"]:
-            audit_logger.info("EXECUTING mutation tool=%s args=%s", tool_id, _scrub(args))
+            audit_logger.info(
+                "EXECUTING mutation tool=%s domain=%s args=%s", tool_id, cred.domain, _scrub(args)
+            )
 
-        logger.info("Dispatching %s", tool_id)
+        logger.info("Dispatching %s (domain=%s)", tool_id, cred.domain)
         try:
             result = method(**args)
         except TypeError as exc:
