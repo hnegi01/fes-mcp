@@ -133,6 +133,11 @@ changes nothing. On clients without elicitation (Claude Desktop, claude.ai)
 the call proceeds normally and the client's own tool-approval flow plus the
 `destructiveHint` annotation are the safeguard, as for any MCP server.
 
+Proceeding without the dialog is a deliberate decision (fail-open), not an
+oversight: elicitation is an optional client capability and can be
+auto-answered by a misbehaving client, so it is treated strictly as UX — the
+authorization boundary is always the user's own Sisense permissions.
+
 ## Configuration
 
 | Variable | Default | Purpose |

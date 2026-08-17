@@ -69,6 +69,14 @@ def load_registry(path: Path) -> dict[str, dict[str, Any]]:
         entry["parameters"] = _normalize_parameters_schema(entry.get("parameters"))
         tools[tool_id] = entry
 
+    unknown_overrides = MUTATES_OVERRIDES.keys() - tools.keys()
+    if unknown_overrides:
+        logger.warning(
+            "MUTATES_OVERRIDES keys not found in registry (typo, or tool renamed "
+            "by a registry refresh?): %s",
+            ", ".join(sorted(unknown_overrides)),
+        )
+
     logger.info("Loaded registry: %d tools (%d rows skipped) from %s", len(tools), skipped, path)
     return tools
 
