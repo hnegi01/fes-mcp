@@ -4,7 +4,9 @@
       "Bash(python3 *)",
       "Bash(.venv/bin/python *)",
       "Bash(git add *)",
-      "Bash(git -c user.email=himanshu.negi@sisense.com -c 'user.name=Himanshu Negi' commit -qm 'Dispatcher: per-session credentials with per-credential client cache *)"
+      "Bash(git -c user.email=himanshu.negi@sisense.com -c 'user.name=Himanshu Negi' commit -qm 'Dispatcher: per-session credentials with per-credential client cache *)",
+      "Bash(uv pip *)",
+      "Bash(/Users/himanshu_negi/Desktop/Sisense/fes_mcp/.venv/bin/python -c ' *)"
     ]
   }
 }

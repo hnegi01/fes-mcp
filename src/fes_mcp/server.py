@@ -12,8 +12,10 @@ import json
 import logging
 from typing import Any, Callable, Optional
 
+import mcp.types as mt
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
+from fastmcp.server.elicitation import AcceptedElicitation
 from fastmcp.tools.tool import Tool, ToolResult
 from mcp.types import ToolAnnotations
 from pydantic import ConfigDict
@@ -39,8 +41,31 @@ Sisense administration tools backed by the PySisense SDK. All tools operate on
 the single Sisense instance this server is connected to. Tool names mirror
 PySisense: <module>_<method> (e.g. dashboard_get_all_dashboards). Tools marked
 as destructive modify the Sisense instance — confirm with the user before
-calling them.
+calling them. On clients that support MCP elicitation, destructive tools also
+ask the user to approve directly before executing.
 """
+
+
+def _current_context():
+    """The active request Context, or None outside a request (e.g. tests
+    calling run() directly)."""
+    try:
+        from fastmcp.server.dependencies import get_context
+
+        return get_context()
+    except RuntimeError:
+        return None
+
+
+def _supports_form_elicitation(ctx: Any) -> bool:
+    try:
+        return bool(
+            ctx.session.check_client_capability(
+                mt.ClientCapabilities(elicitation=mt.ElicitationCapability())
+            )
+        )
+    except Exception:  # noqa: BLE001 — treat any probe failure as "no"
+        return False
 
 
 class SisenseTool(Tool):
@@ -51,8 +76,20 @@ class SisenseTool(Tool):
     tool_id: str
     dispatcher: SisenseDispatcher
     credential_resolver: CredentialResolver = _no_credential
+    mutates: bool = False
 
     async def run(self, arguments: dict[str, Any]) -> ToolResult:
+        if self.mutates and not await self._user_approved():
+            aborted = {
+                "aborted": True,
+                "mutated": False,
+                "message": "User declined the confirmation; nothing was changed.",
+            }
+            return ToolResult(
+                content=json.dumps(aborted, indent=2),
+                structured_content=aborted,
+            )
+
         credential = self.credential_resolver()
         try:
             result = await asyncio.to_thread(
@@ -66,6 +103,29 @@ class SisenseTool(Tool):
             content=json.dumps(result, indent=2, default=str),
             structured_content=structured,
         )
+
+    async def _user_approved(self) -> bool:
+        """Ask the human via MCP elicitation before a mutating tool runs.
+
+        Best effort by design: when the client didn't declare the elicitation
+        capability (e.g. Claude Desktop, claude.ai) the call proceeds and the
+        client's own tool-approval flow plus destructiveHint are the
+        safeguard, as for any standard MCP server.
+        """
+        ctx = _current_context()
+        if ctx is None or not _supports_form_elicitation(ctx):
+            return True
+        try:
+            answer = await ctx.elicit(
+                f"'{self.name}' will modify the Sisense instance. Proceed?",
+                response_type=["proceed", "abort"],
+            )
+        except Exception as exc:  # noqa: BLE001
+            raise ToolError(
+                f"Confirmation dialog failed ({exc}); nothing was changed. "
+                "Retry the call to be asked again."
+            ) from exc
+        return isinstance(answer, AcceptedElicitation) and answer.data == "proceed"
 
 
 def _mcp_tool_name(tool_id: str) -> str:
@@ -83,6 +143,7 @@ def build_tool(
         tool_id=entry["tool_id"],
         dispatcher=dispatcher,
         credential_resolver=credential_resolver,
+        mutates=mutates,
         name=_mcp_tool_name(entry["tool_id"]),
         description=entry.get("description") or f"PySisense {entry['tool_id']}",
         parameters=entry["parameters"],

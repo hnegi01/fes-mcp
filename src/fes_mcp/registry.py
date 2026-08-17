@@ -20,6 +20,17 @@ logger = logging.getLogger("fes_mcp.registry")
 # source/target connection mode).
 EXCLUDED_MODULES = {"migration"}
 
+# Corrections to the generated `mutates` heuristic, verified against the SDK
+# source: these only execute queries or lookups (POSTs to query/GraphQL
+# endpoints, or GETs) and change nothing on the Sisense instance.
+MUTATES_OVERRIDES: dict[str, bool] = {
+    "queries.elasticube_run_jaql_query": False,
+    "queries.elasticubes_run_jaql_csv": False,
+    "datamodel.generate_connections_payload": False,
+    "datamodel.load_datamodel": False,
+    "plugins.save_snapshot": False,
+}
+
 
 def _normalize_parameters_schema(raw: Any) -> dict[str, Any]:
     """Ensure the parameters schema is a well-formed object schema."""
@@ -52,7 +63,9 @@ def load_registry(path: Path) -> dict[str, dict[str, Any]]:
             skipped += 1
             continue
         entry = dict(row)
-        entry["mutates"] = bool(entry.get("mutates", False))
+        entry["mutates"] = MUTATES_OVERRIDES.get(
+            tool_id, bool(entry.get("mutates", False))
+        )
         entry["parameters"] = _normalize_parameters_schema(entry.get("parameters"))
         tools[tool_id] = entry
 

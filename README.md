@@ -120,6 +120,19 @@ access logs with request ids, per-call tool logs (tool/user domain/outcome/
 duration). Sessions are in-memory in v1 — a server restart requires users to
 sign in again.
 
+## Safety model
+
+Nothing custom: authorization is Sisense's job. Every tool call runs with the
+signed-in user's own Sisense token, so Sisense enforces their real permissions
+on every API call and permission errors surface to the client verbatim.
+
+On top of that, mutating tools ask the human for approval before executing —
+via MCP elicitation, on clients that declare the capability (Claude Code,
+Cursor, VS Code). A proceed/abort dialog opens mid-call; abort or decline
+changes nothing. On clients without elicitation (Claude Desktop, claude.ai)
+the call proceeds normally and the client's own tool-approval flow plus the
+`destructiveHint` annotation are the safeguard, as for any MCP server.
+
 ## Configuration
 
 | Variable | Default | Purpose |
