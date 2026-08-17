@@ -30,6 +30,31 @@ def test_registry_applies_mutates_overrides(tmp_path):
     assert tools["queries.elasticube_run_jaql_query"]["mutates"] is False
 
 
+def test_stale_override_keys_warn(tmp_path, caplog):
+    # An override whose tool_id no longer exists must not fail silently.
+    import json
+    import logging
+
+    from fes_mcp.registry import load_registry
+
+    rows = [
+        {
+            "tool_id": "dashboard.get_all_dashboards",
+            "module": "dashboard",
+            "class": "Dashboard",
+            "method": "get_all_dashboards",
+            "mutates": False,
+            "parameters": {},
+        },
+    ]
+    path = tmp_path / "registry.json"
+    path.write_text(json.dumps(rows))
+    with caplog.at_level(logging.WARNING, logger="fes_mcp.registry"):
+        load_registry(path)
+    assert "MUTATES_OVERRIDES keys not found" in caplog.text
+    assert "datamodel.load_datamodel" in caplog.text
+
+
 # ---------------------------------------------------------------------------
 # Elicitation gate on mutating tools (mocked SDK, in-memory MCP client)
 # ---------------------------------------------------------------------------
