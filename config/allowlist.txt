@@ -6,7 +6,11 @@
 # them. Override at runtime with FES_MCP_TOOLS.
 #
 # [write] tools are additionally gated: only exposed when
-# FES_MCP_ALLOW_MUTATIONS=true, and always carry destructiveHint.
+# FES_MCP_ALLOW_MUTATIONS=true, always carry destructiveHint, and ask the user
+# for approval via MCP elicitation on clients that support it. Authorization
+# itself is enforced by Sisense per user on every API call.
+# [read, reclassified] marks tools the generated heuristic misflagged as
+# writes; corrected after verifying the SDK source (registry.MUTATES_OVERRIDES).
 # The migration module (dual-tenant) is excluded in code and not listed.
 
 # ===== access_management (13 read / 6 write) =====
@@ -66,7 +70,7 @@ dashboard.move_dashboard_to_folder     # [write] Move a dashboard into a folder.
 dashboard.publish_dashboard            # [write] Publish (republish) a dashboard.
 dashboard.rename_dashboard             # [write] Rename a dashboard.
 
-# ===== datamodel (15 read / 13 write) =====
+# ===== datamodel (17 read / 11 write) =====
 datamodel.describe_datamodel              # Retrieve data model structure in a flat, row-based format.
 datamodel.describe_datamodel_raw          # Retrieve detailed information about a specific data model.
 datamodel.get_all_datamodel               # Retrieve metadata for all data models using an internal API.
@@ -89,8 +93,8 @@ datamodel.create_dataset                  # [write] Create a new dataset in the 
 datamodel.create_table                    # [write] Create a new table in the specified data model.
 datamodel.delete_datamodel                # [write] Delete a data model by title and server using the GraphQL ECM endpoint.
 datamodel.deploy_datamodel                # [write] Deploy (build or publish) the specified data model based on its type.
-datamodel.generate_connections_payload    # [write] Generate a connection payload for a given data source type.
-datamodel.load_datamodel                  # [write] Look up a data model's OID by title using the GraphQL ECM endpoint.
+datamodel.generate_connections_payload    # [read, reclassified] Generate a connection payload for a given data source type.
+datamodel.load_datamodel                  # [read, reclassified] Look up a data model's OID by title using the GraphQL ECM endpoint.
 datamodel.set_live_datasecurity_add_many  # [write] Add multiple datasecurity rules to a LIVE datamodel.
 datamodel.setup_datamodel                 # [write] Set up a data model end to end using an existing connection.
 datamodel.update_connection               # [write] Update an existing connection.
@@ -117,7 +121,7 @@ metadata.get_datasources            # Retrieve all datasources visible to the au
 metadata.add_datasource_measure     # [write] Create a saved formula measure in Sisense metadata.
 metadata.post_metadata_query        # [write] Execute a metadata query against Sisense.
 
-# ===== plugins (2 read / 6 write) =====
+# ===== plugins (3 read / 5 write) =====
 plugins.get_all_plugins   # Retrieve all plugins installed on the Sisense instance.
 plugins.get_plugin        # Get a single plugin by its name or folder name.
 plugins.disable_plugin    # [write] Disable a single plugin by name or folder name.
@@ -125,11 +129,11 @@ plugins.disable_plugins   # [write] Disable one or more plugins by name or folde
 plugins.enable_plugin     # [write] Enable a single plugin by name or folder name.
 plugins.enable_plugins    # [write] Enable one or more plugins by name or folder name.
 plugins.restore_snapshot  # [write] Restore plugin states to exactly match a previously saved snapshot.
-plugins.save_snapshot     # [write] Capture the current plugin enable/disable state as a snapshot.
+plugins.save_snapshot     # [read, reclassified] Capture the current plugin enable/disable state as a snapshot.
 
-# ===== queries (0 read / 2 write) =====
-queries.elasticube_run_jaql_query  # [write] Run a JAQL query against a datasource (elasticube).
-queries.elasticubes_run_jaql_csv   # [write] Run a JAQL query and return CSV output.
+# ===== queries (2 read / 0 write) =====
+queries.elasticube_run_jaql_query  # [read, reclassified] Run a JAQL query against a datasource (elasticube).
+queries.elasticubes_run_jaql_csv   # [read, reclassified] Run a JAQL query and return CSV output.
 
 # ===== wellcheck (8 read / 0 write) =====
 wellcheck.check_dashboard_structure          # Analyze the structure of one or more dashboards.
