@@ -21,7 +21,7 @@ from mcp.types import ToolAnnotations
 from pydantic import ConfigDict
 
 from .credentials import SisenseCredential
-from .dispatcher import DispatchError, SisenseDispatcher
+from .dispatcher import DispatchError, SisenseDispatcher, _scrub
 from .registry import load_registry, select_tools
 from .settings import Settings
 
@@ -57,6 +57,10 @@ def _current_context():
         return None
 
 
+# Keep the confirmation dialog readable even for huge payloads.
+_ELICIT_ARGS_LIMIT = 800
+
+
 def _supports_form_elicitation(ctx: Any) -> bool:
     try:
         return bool(
@@ -79,7 +83,7 @@ class SisenseTool(Tool):
     mutates: bool = False
 
     async def run(self, arguments: dict[str, Any]) -> ToolResult:
-        if self.mutates and not await self._user_approved():
+        if self.mutates and not await self._user_approved(arguments):
             aborted = {
                 "aborted": True,
                 "mutated": False,
@@ -104,8 +108,11 @@ class SisenseTool(Tool):
             structured_content=structured,
         )
 
-    async def _user_approved(self) -> bool:
+    async def _user_approved(self, arguments: dict[str, Any]) -> bool:
         """Ask the human via MCP elicitation before a mutating tool runs.
+
+        The dialog discloses the exact arguments about to run (secrets masked)
+        so the human confirms an operation, not just a tool name.
 
         Best effort by design: when the client didn't declare the elicitation
         capability (e.g. Claude Desktop, claude.ai) the call proceeds and the
@@ -115,9 +122,13 @@ class SisenseTool(Tool):
         ctx = _current_context()
         if ctx is None or not _supports_form_elicitation(ctx):
             return True
+        args_shown = _scrub(arguments) if arguments else "(no arguments)"
+        if len(args_shown) > _ELICIT_ARGS_LIMIT:
+            args_shown = args_shown[:_ELICIT_ARGS_LIMIT] + "… (truncated)"
         try:
             answer = await ctx.elicit(
-                f"'{self.name}' will modify the Sisense instance. Proceed?",
+                f"'{self.name}' will modify the Sisense instance with "
+                f"arguments: {args_shown} Proceed?",
                 response_type=["proceed", "abort"],
             )
         except Exception as exc:  # noqa: BLE001
