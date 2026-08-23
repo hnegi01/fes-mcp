@@ -117,6 +117,18 @@ async def test_mutation_asks_and_runs_on_approval(confirm_mcp):
     assert FakeFolder.deleted == ["f1"]
 
 
+async def test_confirmation_discloses_arguments(confirm_mcp):
+    asked = []
+
+    async def approve(message, response_type, params, context):
+        asked.append(message)
+        return {"value": "proceed"}
+
+    async with Client(confirm_mcp, elicitation_handler=approve) as client:
+        await client.call_tool("folder_delete_folder", {"folder_id": "f-oid-42"})
+    assert "f-oid-42" in asked[0]  # the human confirms the operation, not just the name
+
+
 async def test_mutation_aborts_on_abort_choice(confirm_mcp):
     async def choose_abort(message, response_type, params, context):
         return {"value": "abort"}
