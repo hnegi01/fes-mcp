@@ -74,9 +74,8 @@ instances sign in by pasting their personal Sisense API token instead.
 - `config/allowlist.txt` — the curated tool surface, one tool per line.
   Delete/comment a line to remove a tool. Tools not listed are never exposed,
   so registry refreshes can't silently widen the surface.
-- Mutating tools are exposed only when `FES_MCP_ALLOW_MUTATIONS=true`, always
-  carry `destructiveHint`, are blocked server-side as a second layer, and are
-  written to a mutation audit log.
+- Mutating tools are gated behind `FES_MCP_ALLOW_MUTATIONS=true` — see
+  [Security](#security) for the full mutation safeguards.
 
 ## Quick start (local dev)
 
@@ -115,16 +114,34 @@ Endpoints: `/mcp` (MCP), `/login` (sign-in page, reached via the OAuth flow
 only), `/.well-known/*` + `/authorize` + `/token` + `/register` (OAuth 2.1),
 `/` (status), `/healthz` (health probe).
 
-Hardening included: per-IP login rate limiting, CSRF-protected login form,
-access logs with request ids, per-call tool logs (tool/user domain/outcome/
-duration). Sessions are in-memory in v1 — a server restart requires users to
-sign in again.
+Sessions are in-memory in v1 — a server restart requires users to sign in
+again. Hardening details are covered in [Security](#security).
 
-## Safety model
+## Security
+
+### Credential handling
+
+The MCP client never sees Sisense credentials, and the server never stores
+passwords — a password is used once against Sisense's login API to mint the
+user's own token, then discarded. Sisense tokens live server-side, keyed to
+the MCP access token, and survive refresh rotation. In dev mode the single
+env credential (`SISENSE_DOMAIN`/`SISENSE_TOKEN`) stays on your machine.
+
+Hardening on the hosted surface: per-IP login rate limiting, CSRF-protected
+login form, access logs with request ids, and per-call tool logs
+(tool / user domain / outcome / duration).
+
+### Authorization
 
 Nothing custom: authorization is Sisense's job. Every tool call runs with the
 signed-in user's own Sisense token, so Sisense enforces their real permissions
 on every API call and permission errors surface to the client verbatim.
+
+### Mutations
+
+Mutating tools are exposed only when `FES_MCP_ALLOW_MUTATIONS=true`, always
+carry `destructiveHint`, are blocked server-side as a second layer when
+disabled, and are written to a mutation audit log.
 
 On top of that, mutating tools ask the human for approval before executing —
 via MCP elicitation, on clients that declare the capability (Claude Code,
@@ -137,6 +154,22 @@ Proceeding without the dialog is a deliberate decision (fail-open), not an
 oversight: elicitation is an optional client capability and can be
 auto-answered by a misbehaving client, so it is treated strictly as UX — the
 authorization boundary is always the user's own Sisense permissions.
+
+### Data flow to the LLM provider
+
+This server has no summarization or data-redaction layer: every tool result —
+full rows, not `{ok, count}` metadata — is returned to the MCP client and
+lands in the model's context. That is by design and is what makes multi-step
+tool chaining work: the model can only reason over, filter, and feed one
+tool's output into the next call if it actually sees the data.
+
+The consequence: whoever connects this server to an MCP client is accepting
+that Sisense data (dashboard contents, query results, user lists, …) flows to
+that client's LLM provider — e.g. Anthropic, for Claude — under **their own
+terms with that provider**. The server cannot enforce or scope this; it is a
+per-deployment acceptance to make consciously. Ways to narrow the exposure:
+curate `config/allowlist.txt` down to the tools a deployment actually needs,
+and keep `FES_MCP_ALLOW_MUTATIONS=false` unless writes are required.
 
 ## Configuration
 
@@ -156,11 +189,15 @@ authorization boundary is always the user's own Sisense permissions.
 ## Tests
 
 ```bash
-uv run pytest
+uv run python -m pytest
 ```
 
-29 tests, no network and no credentials needed (the SDK is mocked): registry
-selection, dispatcher validation/errors, MCP round-trips, and the complete
+(`python -m` matters: it puts the repo root on `sys.path`, which the test
+modules' `from tests.conftest import …` imports rely on.)
+
+37 tests, no network and no credentials needed (the SDK is mocked): registry
+selection, dispatcher validation/errors, MCP round-trips, mutation
+confirmation (approve/abort/decline/no-capability), and the complete
 headless OAuth dance — client registration → authorize → login → PKCE code
 exchange → authenticated call → refresh rotation — plus the abuse paths
 (forged CSRF, brute-force rate limit, expired sessions).
