@@ -25,6 +25,8 @@ import secrets
 import time
 from dataclasses import dataclass
 
+from urllib.parse import parse_qs, quote, urlparse
+
 import requests as _requests
 from fastmcp.server.auth.auth import AccessToken as FastMCPAccessToken
 from fastmcp.server.auth.providers.in_memory import (
@@ -36,7 +38,7 @@ from mcp.server.auth.settings import ClientRegistrationOptions
 from mcp.shared.auth import OAuthClientInformationFull, OAuthToken
 from mcp.server.auth.provider import AuthorizationCode, RefreshToken
 from starlette.requests import Request
-from starlette.responses import HTMLResponse, RedirectResponse
+from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
 from starlette.routing import Route
 
 from .credentials import SisenseCredential
@@ -58,6 +60,9 @@ class _PendingLogin:
     params: AuthorizationParams
     expires_at: float
     csrf: str
+    # Sisense origin from the connector URL's ?target= (already normalized).
+    # When set, the login page skips its domain field and this value wins.
+    target: str | None = None
 
 
 class _RateLimiter:
@@ -91,6 +96,19 @@ def _client_ip(request: Request) -> str:
     if forwarded:
         return forwarded.split(",")[0].strip()
     return request.client.host if request.client else "unknown"
+
+
+def _target_from_resource(resource: str | None) -> str | None:
+    """Extract + normalize the ?target= a client carried in its RFC 8707
+    resource indicator (e.g. resource=https://host/mcp?target=https://acme...).
+    Any problem → None, which falls back to the login form's domain field."""
+    if not resource:
+        return None
+    try:
+        raw = (parse_qs(urlparse(str(resource)).query).get("target") or [""])[0].strip()
+        return normalize_domain(raw) if raw else None
+    except (SisenseLoginError, ValueError):
+        return None
 
 
 def normalize_domain(raw: str) -> str:
@@ -173,6 +191,7 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
             params=params,
             expires_at=time.time() + LOGIN_SESSION_TTL_SECONDS,
             csrf=secrets.token_urlsafe(16),
+            target=_target_from_resource(params.resource),
         )
         self._sweep_pending()
         return f"{str(self.base_url).rstrip('/')}/login?session={login_id}"
@@ -186,8 +205,41 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
 
     def get_routes(self, mcp_path: str | None = None) -> list[Route]:
         routes = super().get_routes(mcp_path)
+        # Replace the SDK's static protected-resource-metadata route with a
+        # dynamic one that echoes ?target= back in `resource`, so the target
+        # survives the client's discovery hop (it sends the PRM `resource`
+        # value as the `resource` param on /authorize).
+        routes = [
+            r
+            for r in routes
+            if not str(getattr(r, "path", "")).startswith(
+                "/.well-known/oauth-protected-resource"
+            )
+        ]
+        routes.append(
+            Route(
+                "/.well-known/oauth-protected-resource/mcp",
+                self._protected_resource_metadata,
+                methods=["GET", "OPTIONS"],
+            )
+        )
         routes.append(Route("/login", self._login_endpoint, methods=["GET", "POST"]))
         return routes
+
+    async def _protected_resource_metadata(self, request: Request):
+        base = str(self.base_url).rstrip("/")
+        resource = f"{base}/mcp"
+        target = (request.query_params.get("target") or "").strip()
+        if target:
+            resource = f"{resource}?target={quote(target, safe='')}"
+        return JSONResponse(
+            {
+                "resource": resource,
+                "authorization_servers": [base],
+                "bearer_methods_supported": ["header"],
+            },
+            headers={"Access-Control-Allow-Origin": "*"},
+        )
 
     async def _login_endpoint(self, request: Request):
         if request.method == "GET":
@@ -196,7 +248,10 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
                 return HTMLResponse(_page("This login link is invalid or has expired. "
                                           "Close this window and reconnect from your MCP client."),
                                     status_code=400)
-            return HTMLResponse(_page(_form(login_id, self._pending_logins[login_id].csrf)))
+            pending_get = self._pending_logins[login_id]
+            return HTMLResponse(
+                _page(_form(login_id, pending_get.csrf, target=pending_get.target))
+            )
 
         form = await request.form()
         login_id = str(form.get("session", ""))
@@ -217,14 +272,16 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
             logger.warning("Login rate limit exceeded for ip=%s", ip)
             return HTMLResponse(
                 _page(_form(login_id, pending_check.csrf,
-                            error="Too many login attempts. Wait a minute and try again.")),
+                            error="Too many login attempts. Wait a minute and try again.",
+                            target=pending_check.target)),
                 status_code=429,
             )
 
         try:
             credential = await asyncio.to_thread(
                 self._authenticate_form,
-                str(form.get("domain", "")),
+                # The connector URL's target wins over anything in the form.
+                pending_check.target or str(form.get("domain", "")),
                 str(form.get("username", "")),
                 str(form.get("password", "")),
                 str(form.get("api_token", "")),
@@ -232,7 +289,9 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
             )
         except SisenseLoginError as exc:
             return HTMLResponse(
-                _page(_form(login_id, pending_check.csrf, error=str(exc))), status_code=200
+                _page(_form(login_id, pending_check.csrf, error=str(exc),
+                            target=pending_check.target)),
+                status_code=200,
             )
 
         pending = self._pending_logins.pop(login_id)
@@ -357,7 +416,7 @@ def make_credential_resolver(provider: SisenseAuthProvider):
 def _page(body: str) -> str:
     return f"""<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sisense Admin MCP — Sign in</title>
+<title>Sisense MCP — Sign in</title>
 <style>
   body {{ font-family: -apple-system, Segoe UI, sans-serif; background:#f5f6f8; margin:0;
          display:flex; justify-content:center; align-items:flex-start; min-height:100vh; }}
@@ -377,24 +436,36 @@ def _page(body: str) -> str:
   .error {{ background:#fdecec; color:#b3261e; border-radius:6px; padding:10px 12px;
            font-size:.85rem; margin-bottom:12px; }}
   .hint {{ color:#888; font-size:.72rem; margin-top:2px; }}
+  .fixed {{ background:#f5f6f8; border:1px solid #e2e4e8; border-radius:6px;
+           padding:9px 10px; font-size:.9rem; color:#444; word-break:break-all; }}
 </style></head>
 <body><div class="card">{body}</div></body></html>"""
 
 
-def _form(login_id: str, csrf: str, error: str | None = None) -> str:
+def _form(
+    login_id: str, csrf: str, error: str | None = None, target: str | None = None
+) -> str:
     error_html = f'<div class="error">{html.escape(error)}</div>' if error else ""
+    if target:
+        # Instance fixed by the connector URL's ?target= — show, don't ask.
+        domain_html = f"""  <label>Sisense instance</label>
+  <div class="fixed">{html.escape(target)}</div>"""
+        username_extra = " autofocus"
+    else:
+        domain_html = """  <label>Sisense URL</label>
+  <input type="text" name="domain" placeholder="acme.sisense.com" autofocus>"""
+        username_extra = ""
     return f"""
 <h1>Connect to Sisense</h1>
-<p class="sub">Sign in to let your MCP client run Sisense admin tools as you.
+<p class="sub">Sign in to let your MCP client run Sisense tools as you.
 Your credentials go only to your Sisense instance — the client never sees them.</p>
 {error_html}
 <form method="post" action="login">
   <input type="hidden" name="session" value="{html.escape(login_id)}">
   <input type="hidden" name="csrf" value="{html.escape(csrf)}">
-  <label>Sisense URL</label>
-  <input type="text" name="domain" placeholder="acme.sisense.com" autofocus>
+{domain_html}
   <label>Username</label>
-  <input type="text" name="username" placeholder="you@example.com" autocomplete="username">
+  <input type="text" name="username" placeholder="you@example.com" autocomplete="username"{username_extra}>
   <label>Password</label>
   <input type="password" name="password" autocomplete="current-password">
   <div class="divider">or, if your instance uses SSO</div>

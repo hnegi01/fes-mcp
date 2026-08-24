@@ -1,10 +1,10 @@
 """Per-session Sisense credentials.
 
 A credential is (domain, token, ssl_verify) — enough to build a PySisense
-client. Where it comes from varies by mode:
-- dev/local: the server's env settings (one credential for everyone)
-- oauth:     the login bridge stores one credential per authenticated user
-- gateway:   a trusted upstream injects one per request (future)
+client. Where it comes from varies by auth mode:
+- env:      the server's env settings (one credential, local dev)
+- upstream: fes-auth injects one per request as Authorization +
+            X-Sisense-Url headers
 """
 
 from __future__ import annotations

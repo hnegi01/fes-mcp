@@ -406,6 +406,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "fastmcp" },
+    { name = "httpx" },
     { name = "jsonschema" },
     { name = "pysisense" },
     { name = "python-dotenv" },
@@ -420,6 +421,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "fastmcp", specifier = ">=2.10,<3" },
+    { name = "httpx", specifier = ">=0.28" },
     { name = "jsonschema", specifier = ">=4.21" },
     { name = "pysisense", specifier = "==1.0.2" },
     { name = "python-dotenv", specifier = ">=1.0" },

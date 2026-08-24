@@ -1,11 +1,12 @@
 [project]
 name = "fes-mcp"
 version = "0.1.0"
-description = "Standalone Sisense admin MCP server backed by the PySisense SDK"
+description = "Sisense Meta-Management MCP Server — environment operations as AI-ready tools (PySisense SDK)"
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "fastmcp>=2.10,<3",
+    "httpx>=0.28",
     "jsonschema>=4.21",
     "pysisense==1.0.2",
     "python-dotenv>=1.0",
@@ -13,6 +14,7 @@ dependencies = [
 
 [project.scripts]
 fes-mcp = "fes_mcp.__main__:main"
+fes-auth = "fes_mcp.authserver:main"
 
 [dependency-groups]
 dev = [
