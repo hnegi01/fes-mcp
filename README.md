@@ -164,6 +164,11 @@ Endpoints on fes-auth: `/mcp` (proxied MCP), `/login`, `/.well-known/*` +
 Hardening included: per-IP login rate limiting, CSRF-protected login form,
 access logs with request ids.
 
+OAuth discovery requires the server's paths at the **origin root**, so give
+it its own hostname — or, on a shared hostname, route exactly these paths to
+fes-auth at the proxy. A path prefix (`https://host/some-prefix/mcp`) will
+not work.
+
 ## Quick start (local dev)
 
 Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/). Local dev skips

@@ -10,6 +10,8 @@ __pycache__/
 *.pyc
 .pytest_cache/
 sis_mcp.txt
+docker-compose.prod.yml
+deploy/
 KICKOFF_PROMPT.md
 Dockerfile
 .dockerignore
