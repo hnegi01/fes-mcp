@@ -1,0 +1,15 @@
+.git
+.venv
+.env
+.env.*
+!.env.example
+logs/
+tests/
+scripts/
+__pycache__/
+*.pyc
+.pytest_cache/
+sis_mcp.txt
+KICKOFF_PROMPT.md
+Dockerfile
+.dockerignore
