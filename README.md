@@ -69,7 +69,7 @@ flowchart LR
     C1 & C2 & C3 -. "browser: sign in once" .-> L
     P -- "Authorization: Bearer &lt;Sisense token&gt;\nX-Sisense-Url: &lt;instance&gt;\n(internal network only)" --> T
     T --> D
-    D -- "REST, as the signed-in user" --> F[(Sisense instances\nA, B, ...)]
+    D -- "REST, as the signed-in user" --> F[(Sisense Fusion Deployment)]
 ```
 
 The seam between the two services is just those two headers plus the 401
