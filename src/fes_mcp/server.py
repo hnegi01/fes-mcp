@@ -26,8 +26,7 @@ from .registry import load_registry, select_tools
 from .settings import Settings
 
 # Resolves the current request's Sisense credential (None → env/dev default).
-# The oauth mode supplies one that maps the caller's access token to the
-# credential captured at login.
+# Upstream mode supplies one that reads the credential injected per request.
 CredentialResolver = Callable[[], Optional[SisenseCredential]]
 
 
@@ -37,12 +36,13 @@ def _no_credential() -> SisenseCredential | None:
 logger = logging.getLogger("fes_mcp.server")
 
 SERVER_INSTRUCTIONS = """\
-Sisense administration tools backed by the PySisense SDK. All tools operate on
-the single Sisense instance this server is connected to. Tool names mirror
-PySisense: <module>_<method> (e.g. dashboard_get_all_dashboards). Tools marked
-as destructive modify the Sisense instance — confirm with the user before
-calling them. On clients that support MCP elicitation, destructive tools also
-ask the user to approve directly before executing.
+Sisense management tools backed by the PySisense SDK, for any Sisense user:
+every call runs with the calling user's own Sisense credential, so results and
+permissions are exactly what that user can see and do in Sisense itself. Tool
+names mirror PySisense: <module>_<method> (e.g. dashboard_get_all_dashboards).
+Tools marked as destructive modify the Sisense instance — confirm with the
+user before calling them. On clients that support MCP elicitation, destructive
+tools also ask the user to approve directly before executing.
 """
 
 
@@ -188,14 +188,14 @@ def build_server(
 
     dispatcher = SisenseDispatcher(settings, selected)
 
-    if settings.auth_mode == "none" and (
+    if settings.auth_mode == "env" and (
         not settings.sisense_domain or not settings.sisense_token
     ):
         logger.warning(
             "SISENSE_DOMAIN/SISENSE_TOKEN not set — tools will list but every call will fail."
         )
 
-    mcp: FastMCP = FastMCP(name="sisense-admin", instructions=SERVER_INSTRUCTIONS, auth=auth)
+    mcp: FastMCP = FastMCP(name="sisense", instructions=SERVER_INSTRUCTIONS, auth=auth)
     for entry in selected.values():
         mcp.add_tool(build_tool(entry, dispatcher, credential_resolver))
 
@@ -205,7 +205,7 @@ def build_server(
     @mcp.custom_route("/", methods=["GET"])
     async def root(request: Request) -> PlainTextResponse:
         return PlainTextResponse(
-            "fes_mcp: Sisense admin MCP server is running.\n"
+            "Sisense Meta-Management MCP server (resource server) is running.\n"
             f"Tools: {len(selected)} | auth: {settings.auth_mode}\n"
             "Add the /mcp path of this URL as a connector in your MCP client "
             "(Claude Desktop / Claude Code / claude.ai). Do not browse here directly.\n"

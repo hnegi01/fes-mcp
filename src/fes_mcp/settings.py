@@ -1,7 +1,8 @@
-"""Environment-driven configuration for the fes_mcp server.
+"""Environment-driven configuration for the fes_mcp services.
 
-The server is single-tenant: one Sisense connection, configured entirely from
-environment variables. See .env.example for the full reference.
+One Settings object serves both services: fes-mcp (the resource server) and
+fes-auth (the authorization server / proxy). See .env.example for the full
+reference.
 """
 
 from __future__ import annotations
@@ -15,7 +16,11 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_REGISTRY_PATH = REPO_ROOT / "config" / "tools.registry.with_examples.json"
 DEFAULT_ALLOWLIST_PATH = REPO_ROOT / "config" / "allowlist.txt"
 
-AUTH_MODES = ("none", "bearer", "oauth")
+# upstream = per-request credentials injected by fes-auth — the default for
+#            the http transport.
+# env      = one credential from SISENSE_* env vars — the default for stdio
+#            (local development).
+AUTH_MODES = ("upstream", "env")
 TRANSPORTS = ("stdio", "http")
 
 
@@ -33,8 +38,18 @@ class Settings:
     sisense_ssl_verify: bool
 
     auth_mode: str
-    bearer_token: str | None
+
+    # fes-auth (the AS service) only: its public base URL and the resource
+    # server it proxies tool calls to.
     public_url: str | None
+    rs_url: str | None
+
+    # upstream mode: exact-match origin allowlist for X-Sisense-Url
+    # (None = accept any — fes-auth names the targets) and how
+    # long a verified (domain, token) pair is trusted before re-checking
+    # Sisense.
+    allowed_sisense_origins: tuple[str, ...] | None
+    verify_ttl: int
 
     allowlist: tuple[str, ...]
     allow_mutations: bool
@@ -48,13 +63,16 @@ class Settings:
 
     @classmethod
     def from_env(cls) -> "Settings":
-        auth_mode = os.getenv("FES_MCP_AUTH", "none").strip().lower()
-        if auth_mode not in AUTH_MODES:
-            raise ValueError(f"FES_MCP_AUTH must be one of {AUTH_MODES}, got {auth_mode!r}")
-
         transport = os.getenv("FES_MCP_TRANSPORT", "stdio").strip().lower()
         if transport not in TRANSPORTS:
             raise ValueError(f"FES_MCP_TRANSPORT must be one of {TRANSPORTS}, got {transport!r}")
+
+        # Unset auth mode follows the transport: http serves per-request
+        # upstream credentials; stdio is local dev on the env credential.
+        default_auth = "upstream" if transport == "http" else "env"
+        auth_mode = (os.getenv("FES_MCP_AUTH") or default_auth).strip().lower()
+        if auth_mode not in AUTH_MODES:
+            raise ValueError(f"FES_MCP_AUTH must be one of {AUTH_MODES}, got {auth_mode!r}")
 
         raw_tools = os.getenv("FES_MCP_TOOLS", "").strip()
         if raw_tools:
@@ -67,8 +85,12 @@ class Settings:
             sisense_token=os.getenv("SISENSE_TOKEN") or None,
             sisense_ssl_verify=_env_bool("SISENSE_SSL_VERIFY", True),
             auth_mode=auth_mode,
-            bearer_token=os.getenv("FES_MCP_BEARER_TOKEN") or None,
             public_url=(os.getenv("FES_MCP_PUBLIC_URL") or "").rstrip("/") or None,
+            rs_url=(os.getenv("FES_MCP_RS_URL") or "").rstrip("/") or None,
+            allowed_sisense_origins=_parse_origins(
+                os.getenv("FES_MCP_ALLOWED_SISENSE_ORIGINS", "")
+            ),
+            verify_ttl=int(os.getenv("FES_MCP_VERIFY_TTL", "300")),
             allowlist=allowlist,
             allow_mutations=_env_bool("FES_MCP_ALLOW_MUTATIONS", False),
             transport=transport,
@@ -77,6 +99,12 @@ class Settings:
             registry_path=Path(os.getenv("FES_MCP_REGISTRY_PATH") or DEFAULT_REGISTRY_PATH),
             log_level=os.getenv("FES_MCP_LOG_LEVEL", "INFO").upper(),
         )
+
+
+def _parse_origins(raw: str) -> tuple[str, ...] | None:
+    """Comma-separated origin list → tuple, or None when unset (= accept any)."""
+    entries = tuple(o.strip() for o in raw.split(",") if o.strip())
+    return entries or None
 
 
 def _load_allowlist_file(path: Path) -> tuple[str, ...]:

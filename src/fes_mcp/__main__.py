@@ -1,4 +1,8 @@
-"""Entry point: `fes-mcp` (or `python -m fes_mcp`)."""
+"""Entry point: `fes-mcp` (or `python -m fes_mcp`) — the resource server.
+
+The authorization server has its own entry point: `fes-auth`
+(fes_mcp.authserver). This process only serves tools.
+"""
 
 from __future__ import annotations
 
@@ -21,29 +25,23 @@ def _setup_logging(level: str) -> None:
 
 
 def main() -> None:
-    # Real environment variables (e.g. from Claude Desktop's config) win over .env.
+    # Real environment variables (e.g. from an MCP client's config) win over .env.
     load_dotenv(REPO_ROOT / ".env")
     settings = Settings.from_env()
     _setup_logging(settings.log_level)
 
-    if settings.auth_mode == "bearer":
-        raise SystemExit("FES_MCP_AUTH=bearer is not implemented; use none or oauth.")
-
-    if settings.auth_mode == "oauth":
+    if settings.auth_mode == "upstream":
         if settings.transport != "http":
-            raise SystemExit("FES_MCP_AUTH=oauth requires FES_MCP_TRANSPORT=http.")
-        from .auth import SisenseAuthProvider, make_credential_resolver
-
+            raise SystemExit("FES_MCP_AUTH=upstream requires FES_MCP_TRANSPORT=http.")
         from starlette.middleware import Middleware
 
         from .middleware import AccessLogMiddleware
+        from .upstream import UpstreamTokenVerifier, upstream_credential_resolver
 
-        public_url = settings.public_url or f"http://{settings.host}:{settings.port}"
-        provider = SisenseAuthProvider(public_url)
         mcp = build_server(
             settings,
-            credential_resolver=make_credential_resolver(provider),
-            auth=provider,
+            credential_resolver=upstream_credential_resolver,
+            auth=UpstreamTokenVerifier(settings),
         )
         mcp.run(
             transport="http",
@@ -53,6 +51,7 @@ def main() -> None:
         )
         return
 
+    # env mode: local development on the single SISENSE_* credential.
     mcp = build_server(settings)
 
     if settings.transport == "http":
