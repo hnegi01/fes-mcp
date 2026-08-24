@@ -346,3 +346,7 @@ Field Engineering and provided **"as-is."**
 - For usage questions or help getting started, contact your Customer Success
   Manager (CSM), who will route feedback to the Field Engineering team.
 - Issues and contributions are welcome through the repository.
+
+## License
+
+[MIT](LICENSE)
