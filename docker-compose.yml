@@ -1,0 +1,37 @@
+# fes_mcp — the standard deployment: authorization server + resource server.
+#
+#   docker compose up --build
+#
+# Publishes only fes-auth (port 8200). Terminate TLS in front of it (ALB /
+# nginx / Caddy) and set FES_MCP_PUBLIC_URL to the public HTTPS URL — MCP
+# clients require HTTPS for the OAuth flow. The resource server is reachable
+# only on the internal compose network, which is the trust boundary between
+# the two services (no shared secret, by design).
+
+services:
+  fes-auth:
+    build:
+      context: .
+      target: fes-auth
+    image: fes-auth
+    ports:
+      - "8200:8200"
+    environment:
+      FES_MCP_PUBLIC_URL: ${FES_MCP_PUBLIC_URL:-http://localhost:8200}
+      FES_MCP_RS_URL: http://fes-mcp:8200
+    depends_on:
+      fes-mcp:
+        condition: service_healthy
+    restart: unless-stopped
+
+  fes-mcp:
+    build:
+      context: .
+      target: fes-mcp
+    image: fes-mcp
+    # No published ports: upstream mode trusts injected credentials and must
+    # never be reachable from outside the compose network.
+    environment:
+      FES_MCP_AUTH: upstream
+      # FES_MCP_ALLOW_MUTATIONS: "true"   # expose mutating tools (default off)
+    restart: unless-stopped
