@@ -3,6 +3,7 @@ name = "fes-mcp"
 version = "0.1.0"
 description = "Sisense Meta-Management MCP Server — environment operations as AI-ready tools (PySisense SDK)"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.11,<3.13"
 dependencies = [
     "fastmcp>=2.10,<3",
