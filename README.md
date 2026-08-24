@@ -23,9 +23,11 @@ that user can see and do in Sisense itself, enforced natively by Sisense's
 APIs.
 
 **Tools only, no agent.** Claude Desktop, Claude Code, claude.ai, Cursor — any
-MCP client brings its own agent; this project advertises and executes ~100
-curated tools (dashboards, data models, users/groups, folders, plugins,
-health checks, …).
+MCP client brings its own agent; this project advertises and executes a
+**curated set of ~35 tools** (dashboards, data models, users/groups, folders,
+plugins, queries, …) selected from the ~110 SDK methods in the registry —
+one tool per capability, duplicates deliberately excluded so an agent never
+has to choose between near-identical methods.
 
 ## Architecture
 
@@ -58,7 +60,7 @@ flowchart LR
             P[/mcp proxy\ninjects credential headers/]
         end
         subgraph RS [fes-mcp : resource server]
-            T[Tool layer\nregistry-driven, ~100 tools]
+            T[Tool layer\nregistry-driven, curated]
             D[Dispatcher\nper-credential PySisense client]
         end
     end
