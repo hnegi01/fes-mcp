@@ -5,6 +5,14 @@ from fes_mcp.dispatcher import DispatchError, SisenseDispatcher
 from tests.conftest import make_settings
 
 
+def _resolver_calls():
+    # The class actually patched in (conftest is imported under two module
+    # names by pytest, so grab the live one from pysisense).
+    import pysisense
+
+    return pysisense.Dashboard.resolver_calls
+
+
 @pytest.fixture
 def dispatcher(settings, sample_tools, fake_sdk):
     return SisenseDispatcher(settings, sample_tools)
@@ -85,3 +93,74 @@ def test_json_string_coercion(dispatcher):
         {"dashboard_id": "d1", "payload": '{"a": 1}'},
     )
     assert result["payload"] == {"a": 1}
+
+
+def test_error_string_result_becomes_error(dispatcher):
+    # A few SDK methods return bare "Error: ..." strings instead of dicts.
+    with pytest.raises(DispatchError, match="Error: boom"):
+        dispatcher.invoke("dashboard.get_dashboard_by_id", {"dashboard_id": "str-error"})
+
+
+# --- ID-or-title reference resolution ---------------------------------------
+
+
+def test_dashboard_title_resolves_to_id(dispatcher):
+    result = dispatcher.invoke(
+        "dashboard.get_dashboard_by_id", {"dashboard_id": "Sales Overview"}
+    )
+    assert result["oid"] == "a" * 24
+    assert _resolver_calls() == ["Sales Overview"]
+
+
+def test_hex24_dashboard_id_skips_resolver(dispatcher):
+    dispatcher.invoke("dashboard.get_dashboard_by_id", {"dashboard_id": "c" * 24})
+    assert _resolver_calls() == []
+
+
+def test_unresolvable_dashboard_is_clear_error(dispatcher):
+    with pytest.raises(DispatchError, match="Could not resolve dashboard"):
+        dispatcher.invoke("dashboard.get_dashboard_by_id", {"dashboard_id": "Nonexistent"})
+
+
+DATAMODEL_TOOL = {
+    "datamodel.describe_datamodel": {
+        "tool_id": "datamodel.describe_datamodel",
+        "module": "datamodel",
+        "class": "DataModel",
+        "method": "describe_datamodel",
+        "description": "Describe a data model.",
+        "mutates": False,
+        "parameters": {
+            "type": "object",
+            "properties": {"datamodel_name": {"type": "string"}},
+            "required": ["datamodel_name"],
+        },
+    }
+}
+
+
+class FakeDataModel:
+    def __init__(self, api_client):
+        self.api_client = api_client
+
+    def resolve_datamodel_reference(self, datamodel_ref):
+        return {"success": True, "status_code": 200, "datamodel_id": datamodel_ref,
+                "datamodel_title": "Sales Cube", "error": None}
+
+    def describe_datamodel(self, datamodel_name):
+        return {"title": datamodel_name}
+
+
+def test_datamodel_id_resolves_to_title(settings, fake_sdk, monkeypatch):
+    import pysisense
+
+    monkeypatch.setattr(pysisense, "DataModel", FakeDataModel, raising=False)
+    d = SisenseDispatcher(settings, DATAMODEL_TOOL)
+    guid = "12345678-abcd-abcd-abcd-1234567890ab"
+    assert d.invoke("datamodel.describe_datamodel", {"datamodel_name": guid}) == {
+        "title": "Sales Cube"
+    }
+    # a plain title passes through untouched
+    assert d.invoke("datamodel.describe_datamodel", {"datamodel_name": "My Cube"}) == {
+        "title": "My Cube"
+    }

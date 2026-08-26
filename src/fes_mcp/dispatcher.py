@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import threading
 import time
 from collections import OrderedDict
@@ -26,6 +27,12 @@ audit_logger = logging.getLogger("fes_mcp.mutations")
 
 # Cap on distinct cached (domain, token) clients; oldest evicted first.
 MAX_CACHED_CLIENTS = 200
+
+# Dashboard OIDs are 24 hex chars; DataModel (v2) ids are GUIDs.
+_HEX24 = re.compile(r"^[0-9a-fA-F]{24}$")
+_GUID = re.compile(
+    r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+)
 
 
 class DispatchError(Exception):
@@ -124,7 +131,9 @@ class SisenseDispatcher:
         args = _coerce_json_strings(arguments or {})
         _validate_arguments(tool_id, args, meta["parameters"])
 
-        instance = self._get_bundle(cred).module(meta["class"])
+        bundle = self._get_bundle(cred)
+        args = _resolve_references(bundle, tool_id, meta, args)
+        instance = bundle.module(meta["class"])
         method = getattr(instance, meta["method"], None)
         if method is None:
             raise DispatchError(f"Method '{meta['class']}.{meta['method']}' not found in SDK.")
@@ -156,6 +165,62 @@ class SisenseDispatcher:
         if sdk_error is not None:
             raise DispatchError(f"Sisense SDK error from {tool_id}: {sdk_error}")
         return result
+
+
+def _resolve_references(
+    bundle: _ClientBundle, tool_id: str, meta: dict[str, Any], args: dict[str, Any]
+) -> dict[str, Any]:
+    """Let every tool accept an ID or a title, whichever the user has.
+
+    The SDK is inconsistent: dashboard methods take a `dashboard_id` (24-hex
+    OID) while datamodel methods take a `datamodel_name` (title). Rather than
+    exposing the SDK's resolve_* helpers as separate tools, convert here:
+    a title passed as dashboard_id resolves to the OID, and an ID passed as
+    datamodel_name resolves to the title. Unresolvable references fail with
+    a clear error instead of a confusing SDK payload.
+    """
+    if meta["method"].startswith("resolve_"):
+        return args
+
+    out = dict(args)
+
+    ref = out.get("dashboard_id")
+    if isinstance(ref, str) and ref and not _HEX24.match(ref):
+        resolved = _call_resolver(
+            bundle, "Dashboard", "resolve_dashboard_reference", ref, tool_id
+        )
+        out["dashboard_id"] = resolved["dashboard_id"]
+        logger.info(
+            "tool=%s resolved dashboard %r -> %s", tool_id, ref, resolved["dashboard_id"]
+        )
+
+    ref = out.get("datamodel_name")
+    if isinstance(ref, str) and (_GUID.match(ref) or _HEX24.match(ref)):
+        resolved = _call_resolver(
+            bundle, "DataModel", "resolve_datamodel_reference", ref, tool_id
+        )
+        out["datamodel_name"] = resolved["datamodel_title"]
+        logger.info(
+            "tool=%s resolved datamodel %r -> %r", tool_id, ref, resolved["datamodel_title"]
+        )
+
+    return out
+
+
+def _call_resolver(
+    bundle: _ClientBundle, class_name: str, method: str, ref: str, tool_id: str
+) -> dict[str, Any]:
+    kind = "dashboard" if class_name == "Dashboard" else "data model"
+    try:
+        result = getattr(bundle.module(class_name), method)(ref)
+    except Exception as exc:
+        raise DispatchError(f"Could not resolve {kind} {ref!r} for {tool_id}: {exc}") from exc
+    if not (isinstance(result, dict) and result.get("success")):
+        detail = result.get("error") if isinstance(result, dict) else result
+        raise DispatchError(
+            f"Could not resolve {kind} {ref!r} for {tool_id}: {detail or 'not found'}"
+        )
+    return result
 
 
 def _validate_arguments(tool_id: str, args: dict[str, Any], schema: dict[str, Any]) -> None:
@@ -191,12 +256,15 @@ def _coerce_json_strings(arguments: dict[str, Any]) -> dict[str, Any]:
 
 def _sdk_error_message(result: Any) -> str | None:
     """PySisense methods report failures as {'error': '...'} (sometimes inside
-    a single-item list) instead of raising."""
+    a single-item list), and a few return bare 'Error: ...' strings, instead
+    of raising. Normalize them all to one error path."""
     candidate = result
     if isinstance(result, list) and len(result) == 1:
         candidate = result[0]
     if isinstance(candidate, dict) and list(candidate.keys()) == ["error"]:
         return str(candidate["error"])
+    if isinstance(candidate, str) and candidate.startswith("Error:"):
+        return candidate
     return None
 
 
