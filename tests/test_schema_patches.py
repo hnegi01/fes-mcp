@@ -120,6 +120,30 @@ def test_complete_user_data_dispatches(user_dispatcher):
     assert result == {"created": payload}
 
 
+def test_snapshot_without_plugins_key_rejected(registry, fake_sdk):
+    tools = {"plugins.restore_snapshot": registry["plugins.restore_snapshot"]}
+    d = SisenseDispatcher(make_settings(allow_mutations=True), tools)
+    with pytest.raises(DispatchError, match="'plugins' is a required property"):
+        d.invoke("plugins.restore_snapshot", {"snapshot": {"enabled": ["foo"]}})
+
+
+async def test_enriched_schema_reaches_mcp_clients(registry, fake_sdk):
+    # The point of the patch layer: list_tools must advertise the inner fields.
+    from fastmcp import Client, FastMCP
+
+    from fes_mcp.server import build_tool
+
+    entry = registry["access_management.create_user"]
+    d = SisenseDispatcher(make_settings(allow_mutations=True), {entry["tool_id"]: entry})
+    server = FastMCP(name="test")
+    server.add_tool(build_tool(entry, d))
+    async with Client(server) as client:
+        tools = await client.list_tools()
+    inner = tools[0].inputSchema["properties"]["user_data"]
+    assert inner["required"] == ["email", "role"]
+    assert "role" in inner["properties"]
+
+
 # --- stale-patch self-retirement ---------------------------------------------
 
 
