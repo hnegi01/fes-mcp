@@ -207,10 +207,10 @@ FES_MCP_PORT=8300 FES_MCP_RS_URL=http://127.0.0.1:8200 uv run fes-auth
 ## Layout
 
 - `src/fes_mcp/` — `settings` (env config) · `registry` (load/filter) ·
-  `dispatcher` (per-credential SDK dispatch) · `upstream` (RS credential
-  verification) · `auth` (OAuth provider + login page) · `authserver`
-  (fes-auth service + proxy) · `middleware` (access logs) · `server`
-  (FastMCP assembly)
+  `schema_patches` (inner schemas for dict params) · `dispatcher`
+  (per-credential SDK dispatch) · `upstream` (RS credential verification) ·
+  `auth` (OAuth provider + login page) · `authserver` (fes-auth service +
+  proxy) · `middleware` (access logs) · `server` (FastMCP assembly)
 - `config/tools.registry.with_examples.json` — auto-generated tool registry.
   **Never handwritten**; regenerate with `./refresh_registry.sh` when
   PySisense updates.
@@ -222,6 +222,12 @@ FES_MCP_PORT=8300 FES_MCP_RS_URL=http://127.0.0.1:8200 uv run fes-auth
 - Mutating tools are gated behind `FES_MCP_ALLOW_MUTATIONS=true` — see
   [Security](#technical-and-security-considerations) for the full mutation
   safeguards.
+- SDK parameters typed as bare dicts get their documented inner fields merged
+  into the advertised tool schema (`schema_patches.py`) — e.g. `create_user`'s
+  `user_data` declares `email` and `role` as required, so an agent gathers
+  them *before* calling instead of failing inside the SDK. Only contracts
+  provable in the installed SDK are encoded (drift-guarded by tests);
+  free-form payloads like JAQL stay unconstrained by design.
 
 ## Technical and security considerations
 

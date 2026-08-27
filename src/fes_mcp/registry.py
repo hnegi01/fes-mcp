@@ -14,6 +14,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from .schema_patches import SCHEMA_PATCHES
+
 logger = logging.getLogger("fes_mcp.registry")
 
 # Dual-tenant migration tools are out of scope for v1 (they need their own
@@ -45,6 +47,40 @@ def _normalize_parameters_schema(raw: Any) -> dict[str, Any]:
     return schema
 
 
+def _apply_schema_patches(tool_id: str, entry: dict[str, Any]) -> None:
+    """Merge SCHEMA_PATCHES inner schemas into bare dict-typed parameters.
+
+    A patch applies only while the generated schema for the parameter is
+    still a bare object (no properties) — once the SDK ships real payload
+    types and regeneration produces properties, the patch is stale and only
+    logs a warning, so it can be deleted.
+    """
+    for param, inner in SCHEMA_PATCHES.get(tool_id, {}).items():
+        target = entry["parameters"]["properties"].get(param)
+        if target is None:
+            logger.warning(
+                "SCHEMA_PATCHES: %s has no parameter %r (typo, or renamed by a "
+                "registry refresh?) — patch skipped",
+                tool_id,
+                param,
+            )
+            continue
+        if target.get("properties"):
+            logger.warning(
+                "SCHEMA_PATCHES stale: %s.%s already has properties (SDK ships "
+                "a real schema now?) — delete the patch",
+                tool_id,
+                param,
+            )
+            continue
+        merged = copy.deepcopy(inner)
+        # The generated description (from the SDK docstring) is useful model
+        # context — keep it unless the patch brings its own.
+        if target.get("description") and "description" not in merged:
+            merged["description"] = target["description"]
+        entry["parameters"]["properties"][param] = merged
+
+
 def load_registry(path: Path) -> dict[str, dict[str, Any]]:
     """Load the registry JSON and return {tool_id: normalized entry}."""
     if not path.exists():
@@ -67,6 +103,7 @@ def load_registry(path: Path) -> dict[str, dict[str, Any]]:
             tool_id, bool(entry.get("mutates", False))
         )
         entry["parameters"] = _normalize_parameters_schema(entry.get("parameters"))
+        _apply_schema_patches(tool_id, entry)
         tools[tool_id] = entry
 
     unknown_overrides = MUTATES_OVERRIDES.keys() - tools.keys()
@@ -75,6 +112,14 @@ def load_registry(path: Path) -> dict[str, dict[str, Any]]:
             "MUTATES_OVERRIDES keys not found in registry (typo, or tool renamed "
             "by a registry refresh?): %s",
             ", ".join(sorted(unknown_overrides)),
+        )
+
+    unknown_patches = SCHEMA_PATCHES.keys() - tools.keys()
+    if unknown_patches:
+        logger.warning(
+            "SCHEMA_PATCHES keys not found in registry (typo, or tool renamed "
+            "by a registry refresh?): %s",
+            ", ".join(sorted(unknown_patches)),
         )
 
     logger.info("Loaded registry: %d tools (%d rows skipped) from %s", len(tools), skipped, path)
