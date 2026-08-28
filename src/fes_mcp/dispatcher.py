@@ -254,15 +254,23 @@ def _coerce_json_strings(arguments: dict[str, Any]) -> dict[str, Any]:
     return coerced
 
 
+# The SDK's documented failure contract (pysisense >= 1.1.0 "Stable Contracts
+# for Programmatic Consumers") is {"error": <msg>, "status_code": <int>};
+# older releases emit bare {"error": <msg>}. Both may arrive list-wrapped.
+_ERROR_KEY_SETS = ({"error"}, {"error", "status_code"})
+
+
 def _sdk_error_message(result: Any) -> str | None:
-    """PySisense methods report failures as {'error': '...'} (sometimes inside
-    a single-item list), and a few return bare 'Error: ...' strings, instead
-    of raising. Normalize them all to one error path."""
+    """PySisense methods report failures as error dicts (sometimes inside a
+    single-item list), and a few return bare 'Error: ...' strings, instead of
+    raising. Normalize them all to one error path."""
     candidate = result
     if isinstance(result, list) and len(result) == 1:
         candidate = result[0]
-    if isinstance(candidate, dict) and list(candidate.keys()) == ["error"]:
-        return str(candidate["error"])
+    if isinstance(candidate, dict) and set(candidate.keys()) in _ERROR_KEY_SETS:
+        message = str(candidate["error"])
+        status = candidate.get("status_code")
+        return f"{message} (HTTP {status})" if status is not None else message
     if isinstance(candidate, str) and candidate.startswith("Error:"):
         return candidate
     return None
