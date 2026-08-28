@@ -247,13 +247,13 @@
     "class": "AccessManagement",
     "method": "create_user",
     "description": "Create a new user in Sisense.",
-    "full_doc": "Create a new user in Sisense.\n\nProcesses the provided user data to resolve the role name and group\nnames to their corresponding IDs, then sends a POST request to create\nthe user. The ``role`` field is matched case-insensitively (with\n``\"VIEWER\"`` mapped to ``\"CONSUMER\"`` and ``\"DESIGNER\"`` to\n``\"CONTRIBUTOR\"``) and replaced with the resolved ``roleId``; group\nnames in ``groups`` are resolved to group IDs.\n\nParameters\n----------\nuser_data : dict[str, Any]\n    Dictionary containing the user details. Supported fields use\n    canonical Sisense payload field names:\n\n    - ``email`` : str \u2014 the user's email address.\n    - ``firstName`` : str \u2014 the user's first name.\n    - ``lastName`` : str \u2014 the user's last name.\n    - ``role`` : str \u2014 role name to assign (resolved to ``roleId``).\n    - ``groups`` : list[str] \u2014 group names to assign (resolved to IDs).\n    - ``preferences`` : dict \u2014 user preference settings.\n\nReturns\n-------\ndict[str, Any]\n    The created user object returned by the API if successful, or a\n    dictionary with an ``error`` key if the operation fails.",
+    "full_doc": "Create a new user in Sisense.\n\nProcesses the provided user data to resolve the role name and group\nnames to their corresponding IDs, then sends a POST request to create\nthe user. The ``role`` field is matched case-insensitively (with\n``\"VIEWER\"`` mapped to ``\"CONSUMER\"`` and ``\"DESIGNER\"`` to\n``\"CONTRIBUTOR\"``) and replaced with the resolved ``roleId``; group\nnames in ``groups`` are resolved to group IDs.\n\nParameters\n----------\nuser_data : dict[str, Any]\n    Dictionary containing the user details. Supported fields use\n    canonical Sisense payload field names:\n\n    - ``email`` : str — the user's email address.\n    - ``firstName`` : str — the user's first name.\n    - ``lastName`` : str — the user's last name.\n    - ``role`` : str — role name to assign (resolved to ``roleId``).\n    - ``groups`` : list[str] — group names to assign (resolved to IDs).\n    - ``preferences`` : dict — user preference settings.\n\nReturns\n-------\ndict[str, Any]\n    The created user object returned by the API if successful, or a\n    dictionary with an ``error`` key if the operation fails.",
     "parameters": {
       "type": "object",
       "properties": {
         "user_data": {
           "type": "object",
-          "description": "Dictionary containing the user details. Supported fields use canonical Sisense payload field names: - ``email`` : str \u2014 the user's email address. - ``firstName`` : str \u2014 the user's first name. - ``lastName`` : str \u2014 the user's last name. - ``role`` : str \u2014 role name to assign (resolved to ``roleId``). - ``groups`` : list[str] \u2014 group names to assign (resolved to IDs). - ``preferences`` : dict \u2014 user preference settings."
+          "description": "Dictionary containing the user details. Supported fields use canonical Sisense payload field names: - ``email`` : str — the user's email address. - ``firstName`` : str — the user's first name. - ``lastName`` : str — the user's last name. - ``role`` : str — role name to assign (resolved to ``roleId``). - ``groups`` : list[str] — group names to assign (resolved to IDs). - ``preferences`` : dict — user preference settings."
         }
       },
       "required": [
@@ -708,7 +708,7 @@
             "dm_54321"
           ]
         },
-        "notes": "This call processes three data models\u2014two by ID and one by title\u2014to identify unused columns across all of them."
+        "notes": "This call processes three data models—two by ID and one by title—to identify unused columns across all of them."
       }
     ]
   },
@@ -1756,7 +1756,7 @@
         "shares": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object"
           },
           "description": "List of share definitions to add. Each dictionary should include: ``name`` (user email or group name), ``type`` (``\"user\"`` or ``\"group\"``), and ``permission`` (one of ``\"EDIT\"``, ``\"READ\"``, ``\"USE\"``)."
         }
@@ -3262,7 +3262,7 @@
         "rules": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object"
           },
           "description": "Datasecurity rules to add in Sisense API format. Each rule typically includes fields such as ``table``, ``column``, ``datatype``, ``members``, ``exclusionary``, and ``shares``."
         }
@@ -3638,7 +3638,7 @@
         "datasecurity": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object"
           },
           "description": "Complete datasecurity rule list in Sisense API format. Each rule typically includes fields such as ``table``, ``column``, ``datatype``, ``members``, ``exclusionary``, and ``shares``."
         }
@@ -3901,7 +3901,7 @@
         "shares": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object"
           },
           "description": "A list of share entries. Each entry must contain: - ``name`` (str): The username (email) or group name. - ``type`` (str): Either ``\"user\"`` or ``\"group\"``. - ``rule`` (str): The access level (for example ``\"view\"`` or ``\"edit\"``). The ``name`` is resolved to ``shareId`` internally; entries that cannot be resolved are skipped."
         }
@@ -4532,7 +4532,7 @@
     "class": "Dashboard",
     "method": "get_dashboard_widgets",
     "description": "Retrieve widget definitions from an admin export of the dashboard.",
-    "full_doc": "Retrieve widget definitions from an admin export of the dashboard.\n\nUses ``export_dashboard`` (``GET /api/v1/dashboards/export`` with\n``dashboardIds`` and ``adminAccess=true``), then reads the ``widgets``\nfield from the first exported dashboard object\u2014the same payload shape\nused by ``get_dashboard_script`` and ``get_widget_script``. If\n``widgets`` is missing or empty, an empty list is returned.\n\n``dashboard_ref`` is resolved with ``resolve_dashboard_reference`` so it\nmay be either a 24-character dashboard ``oid`` or a dashboard title.\n\nParameters\n----------\ndashboard_ref : str\n    Dashboard ``oid`` or title.\n\nReturns\n-------\nlist[dict[str, Any]] | dict[str, Any]\n    A list of widget objects on success (possibly empty). On failure,\n    ``{\"error\": \"...\"}`` when the reference cannot be resolved or\n    ``export_dashboard`` fails. If ``widgets`` is present but neither a\n    list nor a mapping of widget objects, returns an error dict.",
+    "full_doc": "Retrieve widget definitions from an admin export of the dashboard.\n\nUses ``export_dashboard`` (``GET /api/v1/dashboards/export`` with\n``dashboardIds`` and ``adminAccess=true``), then reads the ``widgets``\nfield from the first exported dashboard object—the same payload shape\nused by ``get_dashboard_script`` and ``get_widget_script``. If\n``widgets`` is missing or empty, an empty list is returned.\n\n``dashboard_ref`` is resolved with ``resolve_dashboard_reference`` so it\nmay be either a 24-character dashboard ``oid`` or a dashboard title.\n\nParameters\n----------\ndashboard_ref : str\n    Dashboard ``oid`` or title.\n\nReturns\n-------\nlist[dict[str, Any]] | dict[str, Any]\n    A list of widget objects on success (possibly empty). On failure,\n    ``{\"error\": \"...\"}`` when the reference cannot be resolved or\n    ``export_dashboard`` fails. If ``widgets`` is present but neither a\n    list nor a mapping of widget objects, returns an error dict.",
     "parameters": {
       "type": "object",
       "properties": {
@@ -4584,7 +4584,7 @@
     "class": "Dashboard",
     "method": "get_dashboards",
     "description": "Retrieve dashboards visible to the authenticated user.",
-    "full_doc": "Retrieve dashboards visible to the authenticated user.\n\nSends ``GET /api/v1/dashboards``, which returns dashboards the current\nuser owns or has been shared to \u2014 as opposed to\n``get_all_dashboards``, which uses the admin endpoint and requires\nelevated access.\n\nParameters\n----------\nfields : list[str], optional\n    Subset of fields to include in the response (for example\n    ``[\"oid\", \"title\", \"owner\"]``). When omitted, all fields are\n    returned.\n\nReturns\n-------\nlist[dict[str, Any]] | dict[str, Any]\n    List of dashboard objects on success, or ``{\"error\": \"...\"}`` on\n    failure.",
+    "full_doc": "Retrieve dashboards visible to the authenticated user.\n\nSends ``GET /api/v1/dashboards``, which returns dashboards the current\nuser owns or has been shared to — as opposed to\n``get_all_dashboards``, which uses the admin endpoint and requires\nelevated access.\n\nParameters\n----------\nfields : list[str], optional\n    Subset of fields to include in the response (for example\n    ``[\"oid\", \"title\", \"owner\"]``). When omitted, all fields are\n    returned.\n\nReturns\n-------\nlist[dict[str, Any]] | dict[str, Any]\n    List of dashboard objects on success, or ``{\"error\": \"...\"}`` on\n    failure.",
     "parameters": {
       "type": "object",
       "properties": {
@@ -5086,7 +5086,7 @@
     "class": "Folder",
     "method": "get_folder_ancestors",
     "description": "Retrieve folders by a caller-supplied structure value.",
-    "full_doc": "Retrieve folders by a caller-supplied structure value.\n\nThin alias for ``get_folders(structure)`` \u2014 passes the ``structure``\nstring through to ``GET /api/v1/folders?structure={structure}``\nunchanged. Provided for compatibility with win2linux workflows that\npass an ancestors-specific structure string.\n\nParameters\n----------\nstructure : str\n    Sisense folder structure type for the request.\n\nReturns\n-------\nlist[dict[str, Any]] | dict[str, Any]\n    Folder data from the API, or ``{\"error\": \"...\"}`` on failure.",
+    "full_doc": "Retrieve folders by a caller-supplied structure value.\n\nThin alias for ``get_folders(structure)`` — passes the ``structure``\nstring through to ``GET /api/v1/folders?structure={structure}``\nunchanged. Provided for compatibility with win2linux workflows that\npass an ancestors-specific structure string.\n\nParameters\n----------\nstructure : str\n    Sisense folder structure type for the request.\n\nReturns\n-------\nlist[dict[str, Any]] | dict[str, Any]\n    Folder data from the API, or ``{\"error\": \"...\"}`` on failure.",
     "parameters": {
       "type": "object",
       "properties": {
@@ -6719,7 +6719,7 @@
     "class": "Plugins",
     "method": "restore_snapshot",
     "description": "Restore plugin states to exactly match a previously saved snapshot.",
-    "full_doc": "Restore plugin states to exactly match a previously saved snapshot.\n\nCompares the snapshot's plugin list against the live instance state and\ncomputes the minimal set of changes needed \u2014 enabling plugins that should\nbe on, disabling plugins that should be off. Plugins already in the\ncorrect state are skipped.\n\nParameters\n----------\nsnapshot : dict[str, Any]\n    A snapshot dict as returned by :meth:`save_snapshot`, containing at\n    minimum a ``\"plugins\"`` key with a list of ``folderName`` values for\n    the plugins that should be enabled. All other plugins will be disabled.\nbulk : bool, optional\n    When ``True`` (default), all enable and disable changes are sent in a\n    single PATCH request. When ``False``, one PATCH request is made per\n    plugin change.\n\nReturns\n-------\ndict[str, Any]\n    A summary dict with keys:\n\n    - ``enabled`` (list[str]): ``folderName`` values that were enabled.\n    - ``disabled`` (list[str]): ``folderName`` values that were disabled.\n    - ``already_set`` (int): Count of plugins already in the correct state.\n    - ``not_in_instance`` (list[str]): Snapshot entries with no matching plugin.\n    - ``errors`` (list[str]): ``folderName`` values where the PATCH failed\n      (non-bulk mode only).\n\n    Returns ``{\"error\": \"...\"}`` if the plugin list could not be fetched or\n    the snapshot is missing the ``\"plugins\"`` key.",
+    "full_doc": "Restore plugin states to exactly match a previously saved snapshot.\n\nCompares the snapshot's plugin list against the live instance state and\ncomputes the minimal set of changes needed — enabling plugins that should\nbe on, disabling plugins that should be off. Plugins already in the\ncorrect state are skipped.\n\nParameters\n----------\nsnapshot : dict[str, Any]\n    A snapshot dict as returned by :meth:`save_snapshot`, containing at\n    minimum a ``\"plugins\"`` key with a list of ``folderName`` values for\n    the plugins that should be enabled. All other plugins will be disabled.\nbulk : bool, optional\n    When ``True`` (default), all enable and disable changes are sent in a\n    single PATCH request. When ``False``, one PATCH request is made per\n    plugin change.\n\nReturns\n-------\ndict[str, Any]\n    A summary dict with keys:\n\n    - ``enabled`` (list[str]): ``folderName`` values that were enabled.\n    - ``disabled`` (list[str]): ``folderName`` values that were disabled.\n    - ``already_set`` (int): Count of plugins already in the correct state.\n    - ``not_in_instance`` (list[str]): Snapshot entries with no matching plugin.\n    - ``errors`` (list[str]): ``folderName`` values where the PATCH failed\n      (non-bulk mode only).\n\n    Returns ``{\"error\": \"...\"}`` if the plugin list could not be fetched or\n    the snapshot is missing the ``\"plugins\"`` key.",
     "parameters": {
       "type": "object",
       "properties": {
