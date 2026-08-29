@@ -24,10 +24,10 @@ APIs.
 
 **Tools only, no agent.** Claude Desktop, Claude Code, claude.ai, Cursor — any
 MCP client brings its own agent; this project advertises and executes a
-**curated set of ~35 tools** (dashboards, data models, users/groups, folders,
-plugins, queries, …) selected from the ~110 SDK methods in the registry —
-one tool per capability, duplicates deliberately excluded so an agent never
-has to choose between near-identical methods.
+**curated subset of the ~170 SDK methods in the registry** (dashboards, data
+models, users/groups, folders, plugins, queries, …) — one tool per
+capability, near-duplicates deliberately excluded so an agent never has to
+choose between near-identical methods.
 
 ## Architecture
 
@@ -207,7 +207,7 @@ FES_MCP_PORT=8300 FES_MCP_RS_URL=http://127.0.0.1:8200 uv run fes-auth
 ## Layout
 
 - `src/fes_mcp/` — `settings` (env config) · `registry` (load/filter) ·
-  `schema_patches` (inner schemas for dict params) · `dispatcher`
+  `schema_patches` (field-description overlay) · `dispatcher`
   (per-credential SDK dispatch) · `upstream` (RS credential verification) ·
   `auth` (OAuth provider + login page) · `authserver` (fes-auth service +
   proxy) · `middleware` (access logs) · `server` (FastMCP assembly)
@@ -222,12 +222,13 @@ FES_MCP_PORT=8300 FES_MCP_RS_URL=http://127.0.0.1:8200 uv run fes-auth
 - Mutating tools are gated behind `FES_MCP_ALLOW_MUTATIONS=true` — see
   [Security](#technical-and-security-considerations) for the full mutation
   safeguards.
-- SDK parameters typed as bare dicts get their documented inner fields merged
-  into the advertised tool schema (`schema_patches.py`) — e.g. `create_user`'s
-  `user_data` declares `email` and `role` as required, so an agent gathers
-  them *before* calling instead of failing inside the SDK. Only contracts
-  provable in the installed SDK are encoded (drift-guarded by tests);
-  free-form payloads like JAQL stay unconstrained by design.
+- Payload parameters carry full nested schemas straight from the SDK's
+  TypedDict contracts (pysisense ≥ 1.1.0) — e.g. `create_user`'s `user_data`
+  declares `email` and `role` as required, so an agent gathers them *before*
+  calling instead of failing inside the SDK. `schema_patches.py` overlays
+  only human-written per-field descriptions (the contracts carry structure,
+  not prose), drift-guarded by tests; free-form payloads like JAQL stay
+  unconstrained by design.
 
 ## Technical and security considerations
 
@@ -332,7 +333,7 @@ uv run python -m pytest
 (`python -m` matters: it puts the repo root on `sys.path`, which the test
 modules' `from tests.conftest import …` imports rely on.)
 
-49 tests, no network and no credentials needed (Sisense and the SDK are
+77 tests, no network and no credentials needed (Sisense and the SDK are
 mocked): registry selection, dispatcher validation/errors, MCP round-trips,
 mutation confirmation (approve/abort/decline/no-capability), upstream
 credential verification (injected headers, 401 contract, origin allowlist,

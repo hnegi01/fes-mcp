@@ -14,7 +14,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from .schema_patches import SCHEMA_PATCHES
+from .schema_patches import FIELD_DESCRIPTIONS
 
 logger = logging.getLogger("fes_mcp.registry")
 
@@ -47,38 +47,36 @@ def _normalize_parameters_schema(raw: Any) -> dict[str, Any]:
     return schema
 
 
-def _apply_schema_patches(tool_id: str, entry: dict[str, Any]) -> None:
-    """Merge SCHEMA_PATCHES inner schemas into bare dict-typed parameters.
+def _apply_field_descriptions(tool_id: str, entry: dict[str, Any]) -> None:
+    """Overlay human-written field descriptions onto SDK payload schemas.
 
-    A patch applies only while the generated schema for the parameter is
-    still a bare object (no properties) — once the SDK ships real payload
-    types and regeneration produces properties, the patch is stale and only
-    logs a warning, so it can be deleted.
+    The SDK's TypedDict contracts define structure (properties/required) but
+    carry no per-field descriptions; this fills only that gap. Descriptions
+    are applied solely to fields the generated schema already has — a field
+    named here that the SDK dropped logs a drift warning.
     """
-    for param, inner in SCHEMA_PATCHES.get(tool_id, {}).items():
+    for param, fields in FIELD_DESCRIPTIONS.get(tool_id, {}).items():
         target = entry["parameters"]["properties"].get(param)
-        if target is None:
+        props = (target or {}).get("properties")
+        if not props:
             logger.warning(
-                "SCHEMA_PATCHES: %s has no parameter %r (typo, or renamed by a "
-                "registry refresh?) — patch skipped",
+                "FIELD_DESCRIPTIONS: %s.%s has no generated properties "
+                "(param renamed, or SDK contract regressed?) — overlay skipped",
                 tool_id,
                 param,
             )
             continue
-        if target.get("properties"):
-            logger.warning(
-                "SCHEMA_PATCHES stale: %s.%s already has properties (SDK ships "
-                "a real schema now?) — delete the patch",
-                tool_id,
-                param,
-            )
-            continue
-        merged = copy.deepcopy(inner)
-        # The generated description (from the SDK docstring) is useful model
-        # context — keep it unless the patch brings its own.
-        if target.get("description") and "description" not in merged:
-            merged["description"] = target["description"]
-        entry["parameters"]["properties"][param] = merged
+        for field, description in fields.items():
+            if field not in props:
+                logger.warning(
+                    "FIELD_DESCRIPTIONS drift: %s.%s no longer has field %r — "
+                    "delete its description",
+                    tool_id,
+                    param,
+                    field,
+                )
+                continue
+            props[field].setdefault("description", description)
 
 
 def load_registry(path: Path) -> dict[str, dict[str, Any]]:
@@ -103,7 +101,7 @@ def load_registry(path: Path) -> dict[str, dict[str, Any]]:
             tool_id, bool(entry.get("mutates", False))
         )
         entry["parameters"] = _normalize_parameters_schema(entry.get("parameters"))
-        _apply_schema_patches(tool_id, entry)
+        _apply_field_descriptions(tool_id, entry)
         tools[tool_id] = entry
 
     unknown_overrides = MUTATES_OVERRIDES.keys() - tools.keys()
@@ -114,10 +112,10 @@ def load_registry(path: Path) -> dict[str, dict[str, Any]]:
             ", ".join(sorted(unknown_overrides)),
         )
 
-    unknown_patches = SCHEMA_PATCHES.keys() - tools.keys()
+    unknown_patches = FIELD_DESCRIPTIONS.keys() - tools.keys()
     if unknown_patches:
         logger.warning(
-            "SCHEMA_PATCHES keys not found in registry (typo, or tool renamed "
+            "FIELD_DESCRIPTIONS keys not found in registry (typo, or tool renamed "
             "by a registry refresh?): %s",
             ", ".join(sorted(unknown_patches)),
         )

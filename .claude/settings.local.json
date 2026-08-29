@@ -6,7 +6,16 @@
       "Bash(git add *)",
       "Bash(git -c user.email=himanshu.negi@sisense.com -c 'user.name=Himanshu Negi' commit -qm 'Dispatcher: per-session credentials with per-credential client cache *)",
       "Bash(uv pip *)",
-      "Bash(/Users/himanshu_negi/Desktop/Sisense/fes_mcp/.venv/bin/python -c ' *)"
+      "Bash(/Users/himanshu_negi/Desktop/Sisense/fes_mcp/.venv/bin/python -c ' *)",
+      "Bash(uv run *)",
+      "Bash(git commit -m ' *)",
+      "WebFetch(domain:github.com)",
+      "Bash(curl -s https://raw.githubusercontent.com/hnegi01/fes-assistant/main/LICENSE)",
+      "Bash(git branch *)",
+      "Bash(awk '/def update_user/,/^        [a-z_]+ = |Returns/' .venv/lib/python3.11/site-packages/pysisense/access_management/users.py)",
+      "Bash(gh pr create --base main --head dev --title 'AS/RS architecture, curated tool surface, schema contracts' --body ' *)",
+      "Bash(sed -i '' 's/pysisense==1.0.2/pysisense==1.1.0/' pyproject.toml)",
+      "Bash(uv sync *)"
     ]
   }
 }

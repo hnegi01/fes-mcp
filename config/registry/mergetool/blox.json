@@ -1,0 +1,65 @@
+[
+  {
+    "tool_id": "mergetool.migrate_all_blox_actions",
+    "description": "Migrate all Blox actions from source to target.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "skip",
+            "overwrite",
+            "duplicate"
+          ],
+          "description": "Conflict strategy applied to every Blox action."
+        },
+        "concurrency": {
+          "type": "integer",
+          "description": "Same as in ``migrate_blox_actions``."
+        },
+        "emit": {
+          "type": "object",
+          "description": "Optional progress callback."
+        }
+      },
+      "required": []
+    },
+    "mutates": true
+  },
+  {
+    "tool_id": "mergetool.migrate_blox_actions",
+    "description": "Migrate specific Blox actions from source to target.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "action_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The ``type`` identifiers of the Blox actions to migrate. If ``None``, every Blox action on the source is migrated."
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "skip",
+            "overwrite",
+            "duplicate"
+          ],
+          "description": "Conflict strategy when an action with the same ``type`` already exists on the target. - ``\"skip\"`` — leave the existing action unchanged. - ``\"overwrite\"`` — delete the existing action then recreate from source. - ``\"duplicate\"`` — always create, regardless of conflicts."
+        },
+        "concurrency": {
+          "type": "integer",
+          "description": "Maximum number of Blox actions to migrate concurrently, run via a background thread pool (``asyncio.to_thread``) since the underlying HTTP client is synchronous. Blox actions are independent of each other, so any value is safe. Values <= 1 (the default) process actions one at a time."
+        },
+        "emit": {
+          "type": "object",
+          "description": "Optional progress callback. Each invocation receives a dict with at least ``type``, ``step``, and ``message`` keys. When ``concurrency`` is greater than 1, this callback may be invoked from multiple worker threads concurrently."
+        }
+      },
+      "required": []
+    },
+    "mutates": true
+  }
+]

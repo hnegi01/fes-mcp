@@ -1,0 +1,72 @@
+[
+  {
+    "tool_id": "mergetool.migrate_all_notebooks",
+    "description": "Migrate all notebooks from source to target.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "skip",
+            "overwrite",
+            "duplicate"
+          ],
+          "description": "Conflict strategy applied to every notebook."
+        },
+        "concurrency": {
+          "type": "integer",
+          "description": "Same as in ``migrate_notebooks``."
+        },
+        "emit": {
+          "type": "object",
+          "description": "Optional progress callback."
+        }
+      },
+      "required": []
+    },
+    "mutates": true
+  },
+  {
+    "tool_id": "mergetool.migrate_notebooks",
+    "description": "Migrate specific notebooks from source to target.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "notebook_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Notebook IDs to migrate. Provide either this or ``notebook_names``."
+        },
+        "notebook_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Notebook display names to migrate. Provide either this or ``notebook_ids``."
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "skip",
+            "overwrite",
+            "duplicate"
+          ],
+          "description": "Conflict strategy when a notebook with the same ``displayName`` already exists on the target. - ``\"skip\"`` — leave the existing notebook unchanged. - ``\"overwrite\"`` — delete the existing notebook then recreate from source. - ``\"duplicate\"`` — always create, regardless of conflicts."
+        },
+        "concurrency": {
+          "type": "integer",
+          "description": "Maximum number of notebooks to migrate concurrently, run via a background thread pool (``asyncio.to_thread``) since the underlying HTTP client is synchronous. Notebooks are independent of each other, so any value is safe. Values <= 1 (the default) process notebooks one at a time."
+        },
+        "emit": {
+          "type": "object",
+          "description": "Optional progress callback. Each invocation receives a dict with at least ``type``, ``step``, and ``message`` keys. When ``concurrency`` is greater than 1, this callback may be invoked from multiple worker threads concurrently."
+        }
+      },
+      "required": []
+    },
+    "mutates": true
+  }
+]

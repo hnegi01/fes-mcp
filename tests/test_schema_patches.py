@@ -1,8 +1,9 @@
-"""Schema patches for dict-typed params: drift guards + behavior.
+"""Field-description overlay + SDK payload contracts (pysisense >= 1.1.0).
 
-The drift guards introspect the INSTALLED pysisense: if a version bump
-renames a method/parameter or drops a documented field, these fail before a
-stale schema is ever advertised to a client.
+Structure (properties/required) now comes from the SDK's TypedDict contracts
+via the generator; this project only overlays per-field descriptions. Drift
+guards keep the overlay honest against the installed SDK, and the dispatcher
+tests prove the SDK-derived required fields are enforced before any call.
 """
 
 import inspect
@@ -11,8 +12,8 @@ import logging
 import pytest
 
 from fes_mcp.dispatcher import DispatchError, SisenseDispatcher
-from fes_mcp.registry import _apply_schema_patches, load_registry
-from fes_mcp.schema_patches import SCHEMA_PATCHES
+from fes_mcp.registry import _apply_field_descriptions, load_registry
+from fes_mcp.schema_patches import FIELD_DESCRIPTIONS
 from fes_mcp.settings import DEFAULT_REGISTRY_PATH
 from tests.conftest import make_settings
 
@@ -25,56 +26,59 @@ def registry():
 # --- drift guards against the installed SDK ---------------------------------
 
 
-def test_patched_methods_and_params_exist_in_installed_sdk(registry):
-    import pysisense
-
-    for tool_id, params in SCHEMA_PATCHES.items():
+def test_described_fields_exist_in_sdk_contracts(registry):
+    """Every field we describe must exist in the generated (SDK-derived)
+    schema — otherwise the overlay is describing a dropped field."""
+    for tool_id, params in FIELD_DESCRIPTIONS.items():
         entry = registry[tool_id]  # KeyError = tool gone from registry
-        cls = getattr(pysisense, entry["class"])
-        method = getattr(cls, entry["method"])
-        sig_params = inspect.signature(method).parameters
-        for param in params:
-            assert param in sig_params, (
-                f"{tool_id}: patched parameter {param!r} no longer in the "
-                f"installed SDK signature — update or delete the patch"
-            )
-
-
-def test_patched_fields_still_documented_in_sdk(registry):
-    import pysisense
-
-    for tool_id, params in SCHEMA_PATCHES.items():
-        entry = registry[tool_id]
-        doc = inspect.getdoc(getattr(getattr(pysisense, entry["class"]), entry["method"])) or ""
-        for param, inner in params.items():
-            for field in inner.get("properties", {}):
-                assert field in doc, (
-                    f"{tool_id}.{param}: field {field!r} not mentioned in the "
-                    f"installed SDK docstring — contract drifted, fix the patch"
+        for param, fields in params.items():
+            props = entry["parameters"]["properties"][param].get("properties", {})
+            assert props, f"{tool_id}.{param}: SDK contract has no properties"
+            for field in fields:
+                assert field in props, (
+                    f"{tool_id}.{param}: described field {field!r} not in the "
+                    f"SDK contract — delete its description"
                 )
 
 
-def test_no_patch_is_stale_on_installed_registry(caplog):
+def test_overlay_produces_no_warnings_on_installed_registry(caplog):
     with caplog.at_level(logging.WARNING, logger="fes_mcp.registry"):
         load_registry(DEFAULT_REGISTRY_PATH)
-    assert "SCHEMA_PATCHES" not in caplog.text
+    assert "FIELD_DESCRIPTIONS" not in caplog.text
 
 
-# --- advertised schema -------------------------------------------------------
+def test_overlay_never_defines_structure():
+    """This module's contract: descriptions only — plain strings, never
+    schema fragments (types/required/properties)."""
+    for params in FIELD_DESCRIPTIONS.values():
+        for fields in params.values():
+            for value in fields.values():
+                assert isinstance(value, str)
 
 
-def test_create_user_schema_declares_required_fields(registry):
+# --- SDK-contract schemas as advertised ---------------------------------------
+
+
+def test_create_user_schema_from_sdk_contract(registry):
     schema = registry["access_management.create_user"]["parameters"]["properties"]["user_data"]
-    assert set(schema["required"]) == {"email", "role"}
-    assert {"email", "firstName", "lastName", "role", "groups"} <= schema["properties"].keys()
-    assert schema["additionalProperties"] is True
-    assert schema.get("description")  # generated docstring text preserved
+    assert schema["type"] == "object"
+    assert schema["required"] == ["email", "role"]
+    assert len(schema["properties"]) >= 8  # SDK contract is richer than our old patch
+    # overlay attached our description to a contract field
+    assert schema["properties"]["email"]["description"] == "The user's email address."
 
 
-def test_update_user_has_properties_but_no_required(registry):
+def test_update_user_patch_semantics(registry):
     schema = registry["access_management.update_user"]["parameters"]["properties"]["user_data"]
-    assert schema["required"] == []
-    assert "userName" in schema["properties"]
+    assert schema["required"] == []  # PATCH semantics: only fields to change
+
+
+def test_connection_params_union_merged(registry):
+    schema = registry["datamodel.generate_connections_payload"]["parameters"]["properties"][
+        "connection_params"
+    ]
+    assert schema["type"] == "object"
+    assert len(schema["properties"]) >= 20  # merged across the 4 provider payloads
 
 
 # --- enforcement through the dispatcher --------------------------------------
@@ -98,13 +102,11 @@ def user_dispatcher(registry, fake_sdk, monkeypatch):
 
 
 def test_incomplete_user_data_rejected_before_sdk(user_dispatcher):
-    # both email and role are missing; jsonschema names the first one
     with pytest.raises(DispatchError, match="'(email|role)' is a required property"):
         user_dispatcher.invoke(
             "access_management.create_user",
             {"user_data": {"firstName": "Himanshu", "lastName": "Negi"}},
         )
-    # email supplied, role still missing → the error names role
     with pytest.raises(DispatchError, match="'role' is a required property"):
         user_dispatcher.invoke(
             "access_management.create_user",
@@ -120,19 +122,15 @@ def test_complete_user_data_dispatches(user_dispatcher):
     assert result == {"created": payload}
 
 
-def test_snapshot_without_plugins_key_rejected(registry, fake_sdk):
-    tools = {"plugins.restore_snapshot": registry["plugins.restore_snapshot"]}
-    d = SisenseDispatcher(make_settings(allow_mutations=True), tools)
-    with pytest.raises(DispatchError, match="'plugins' is a required property"):
-        d.invoke("plugins.restore_snapshot", {"snapshot": {"enabled": ["foo"]}})
+async def test_enriched_schema_reaches_mcp_clients(registry, fake_sdk, monkeypatch):
+    # list_tools must advertise the SDK contract + our descriptions.
+    import pysisense
 
-
-async def test_enriched_schema_reaches_mcp_clients(registry, fake_sdk):
-    # The point of the patch layer: list_tools must advertise the inner fields.
     from fastmcp import Client, FastMCP
 
     from fes_mcp.server import build_tool
 
+    monkeypatch.setattr(pysisense, "AccessManagement", FakeAccessManagement, raising=False)
     entry = registry["access_management.create_user"]
     d = SisenseDispatcher(make_settings(allow_mutations=True), {entry["tool_id"]: entry})
     server = FastMCP(name="test")
@@ -141,25 +139,28 @@ async def test_enriched_schema_reaches_mcp_clients(registry, fake_sdk):
         tools = await client.list_tools()
     inner = tools[0].inputSchema["properties"]["user_data"]
     assert inner["required"] == ["email", "role"]
-    assert "role" in inner["properties"]
+    assert inner["properties"]["role"]["description"]
 
 
-# --- stale-patch self-retirement ---------------------------------------------
+# --- drift-warning behavior ----------------------------------------------------
 
 
-def test_stale_patch_warns_and_keeps_generated_schema(caplog):
+def test_dropped_field_warns_and_skips(caplog):
     entry = {
         "parameters": {
             "type": "object",
             "properties": {
-                "user_data": {"type": "object", "properties": {"already": {"type": "string"}}}
+                "user_data": {
+                    "type": "object",
+                    "properties": {"email": {"type": "string"}},  # no "role" etc.
+                }
             },
             "required": [],
         }
     }
     with caplog.at_level(logging.WARNING, logger="fes_mcp.registry"):
-        _apply_schema_patches("access_management.create_user", entry)
-    assert "stale" in caplog.text
-    assert entry["parameters"]["properties"]["user_data"]["properties"] == {
-        "already": {"type": "string"}
-    }
+        _apply_field_descriptions("access_management.create_user", entry)
+    assert "drift" in caplog.text
+    assert entry["parameters"]["properties"]["user_data"]["properties"]["email"][
+        "description"
+    ] == "The user's email address."

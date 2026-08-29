@@ -1,0 +1,66 @@
+[
+  {
+    "tool_id": "mergetool.migrate_all_users",
+    "description": "Migrate all eligible users from source to target.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "skip",
+            "overwrite",
+            "duplicate"
+          ],
+          "description": "Conflict strategy applied to every user."
+        },
+        "ignore_custom_roles": {
+          "type": "boolean",
+          "description": "When ``True``, strips a ``custom_`` prefix from source role names before matching them against target roles."
+        },
+        "emit": {
+          "type": "object",
+          "description": "Optional progress callback."
+        }
+      },
+      "required": []
+    },
+    "mutates": true
+  },
+  {
+    "tool_id": "mergetool.migrate_users",
+    "description": "Migrate specific users from source to target.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "user_emails": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "format": "email"
+          },
+          "description": "Email addresses of the users to migrate. If ``None``, every user on the source is migrated."
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "skip",
+            "overwrite",
+            "duplicate"
+          ],
+          "description": "Conflict strategy when a user with the same ``email`` already exists on the target. - ``\"skip\"`` — leave the existing user unchanged. - ``\"overwrite\"`` — delete the existing user then recreate from source. - ``\"duplicate\"`` — always create, regardless of conflicts."
+        },
+        "ignore_custom_roles": {
+          "type": "boolean",
+          "description": "When ``True``, strips a ``custom_`` prefix from source role names before matching them against target roles (and matches target roles with the same prefix stripped)."
+        },
+        "emit": {
+          "type": "object",
+          "description": "Optional progress callback. Each invocation receives a dict with at least ``type``, ``step``, and ``message`` keys."
+        }
+      },
+      "required": []
+    },
+    "mutates": true
+  }
+]

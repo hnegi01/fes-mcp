@@ -1,0 +1,12 @@
+[
+  {
+    "tool_id": "access_management.get_tenants",
+    "description": "Retrieve all tenants.",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "mutates": false
+  }
+]

@@ -1,0 +1,62 @@
+[
+  {
+    "tool_id": "blox.get_blox_widget_style",
+    "description": "Retrieve the style objects of a BloX widget.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "dashboard_id": {
+          "type": "string",
+          "description": "The ``oid`` of the dashboard that contains the widget."
+        },
+        "widget_id": {
+          "type": "string",
+          "description": "The ``oid`` of the BloX widget."
+        },
+        "admin_access": {
+          "type": "boolean",
+          "description": "When ``True`` (default), appends ``?adminAccess=true`` to the request, allowing access to dashboards the API token user does not own."
+        }
+      },
+      "required": [
+        "dashboard_id",
+        "widget_id"
+      ]
+    },
+    "mutates": false
+  },
+  {
+    "tool_id": "blox.update_blox_widget_style",
+    "description": "Update the style objects of a BloX widget.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "dashboard_id": {
+          "type": "string",
+          "description": "The ``oid`` of the dashboard that contains the widget."
+        },
+        "widget_id": {
+          "type": "string",
+          "description": "The ``oid`` of the BloX widget to update."
+        },
+        "current_card": {
+          "type": "object",
+          "description": "Replacement for the ``style.currentCard`` object. Omit to leave the current value unchanged."
+        },
+        "current_config": {
+          "type": "object",
+          "description": "Replacement for the ``style.currentConfig`` object. Omit to leave the current value unchanged."
+        },
+        "executing_user_id": {
+          "type": "string",
+          "description": "Sisense user ID of the user who should own the dashboard during the write. Required when the API token user is not the dashboard owner."
+        }
+      },
+      "required": [
+        "dashboard_id",
+        "widget_id"
+      ]
+    },
+    "mutates": true
+  }
+]
