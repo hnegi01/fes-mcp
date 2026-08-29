@@ -4510,7 +4510,23 @@
     ],
     "sdk_version": "1.1.0",
     "updated_at": "2026-08-29T23:13:44Z",
-    "examples": []
+    "examples": [
+      {
+        "user_query": "How can I see all the connections available in my Sisense environment?",
+        "arguments": {},
+        "notes": "This call retrieves a list of all connections configured in the Sisense instance. Use it to review available data sources."
+      },
+      {
+        "user_query": "I need to check which data connections are currently set up in the system.",
+        "arguments": {},
+        "notes": "This call provides a complete list of data connections, useful for auditing or verifying existing configurations."
+      },
+      {
+        "user_query": "Can I get a list of all the data connections in Sisense?",
+        "arguments": {},
+        "notes": "This call returns all configured connections, helping users understand the data sources linked to their Sisense instance."
+      }
+    ]
   },
   {
     "tool_id": "datamodel.get_data",
