@@ -9,16 +9,17 @@ echo
 
 cd "${REPO_ROOT}"
 
-echo "[0/2] Installing pinned pysisense (constrained by requirements.txt)..."
-# -c installs ONLY pysisense at the version pinned in requirements.txt without
-# re-resolving every other dependency (which can downgrade unrelated packages).
-pip install -c requirements.txt pysisense
+echo "[0/3] Syncing the pinned environment..."
+uv sync
 
-echo "[1/2] Building tool registry from SDK..."
-python -m scripts.01_build_registry_from_sdk
+echo "[1/3] Building tool registry from SDK..."
+uv run python -m scripts.01_build_registry_from_sdk
 
-echo "[2/2] Adding LLM examples and building hierarchical registry..."
-python -m scripts.02_add_llm_examples_to_registry
+echo "[2/3] Reconciling: port examples across renames, merge, stage/deprecate allowlist..."
+uv run python -m scripts.03_reconcile
+
+echo "[3/3] (optional) LLM examples for NEW tools — needs LLM_PROVIDER env:"
+echo "        uv run python -m scripts.02_add_llm_examples_to_registry"
 
 echo
 echo "Generated files:"
