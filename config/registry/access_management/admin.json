@@ -111,5 +111,15 @@
         "notes": "This retrieves all dashboards and their associated user sharing details, which is useful for reviewing individual user access."
       }
     ]
+  },
+  {
+    "tool_id": "access_management.get_user_email_and_group_name_maps",
+    "description": "Fetch all users and groups and build ID-to-name lookup maps.",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "mutates": false
   }
 ]

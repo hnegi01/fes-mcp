@@ -274,6 +274,30 @@
     ]
   },
   {
+    "tool_id": "dashboard.import_dashboards_bulk",
+    "description": "Import one or more dashboards via the bulk import endpoint.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "Dashboard objects to import."
+        },
+        "action": {
+          "type": "string",
+          "description": "Conflict behavior for dashboards whose ``oid`` already exists. One of ``\"skip\"``, ``\"overwrite\"``, or ``\"duplicate\"``. Default is ``\"skip\"``."
+        }
+      },
+      "required": [
+        "dashboards"
+      ]
+    },
+    "mutates": true
+  },
+  {
     "tool_id": "dashboard.move_dashboard_to_folder",
     "description": "Move a dashboard into a folder.",
     "parameters": {

@@ -8,6 +8,14 @@ from typing import Any, Dict, List
 
 import pysisense
 
+try:
+    # The SDK's payload contracts subclass typing_extensions.TypedDict; on
+    # some Python/typing_extensions combinations typing.is_typeddict does not
+    # recognize those, so prefer the typing_extensions checker.
+    from typing_extensions import is_typeddict as _is_typeddict
+except ImportError:  # pragma: no cover
+    from typing import is_typeddict as _is_typeddict
+
 from .registry_core import (
     MODULES,
     _parse_class_docstring,  # noqa: F401 — re-exported for test_registry_builder.py compat
@@ -249,6 +257,24 @@ def _schema_from_annotation(annotation: Any, _depth: int = 0) -> Dict[str, Any] 
         non_none = [a for a in args if a is not type(None)]
         if len(non_none) == 1:
             return _schema_from_annotation(non_none[0], _depth + 1)
+        # Union of TypedDict contracts (e.g. Athena | RedShift | BigQuery
+        # params): merge branches into one object — union of properties,
+        # intersection of required keys (only what EVERY branch demands).
+        if non_none and all(_is_typeddict(a) for a in non_none):
+            branches = [_schema_from_annotation(a, _depth + 1) for a in non_none]
+            props: Dict[str, Any] = {}
+            for b in branches:
+                for field, sub in b["properties"].items():
+                    props.setdefault(field, sub)
+            required = set(branches[0]["required"])
+            for b in branches[1:]:
+                required &= set(b["required"])
+            return {
+                "type": "object",
+                "properties": props,
+                "required": sorted(required),
+                "additionalProperties": True,
+            }
         return None
 
     # Literal["a", "b"] → enum
@@ -263,7 +289,7 @@ def _schema_from_annotation(annotation: Any, _depth: int = 0) -> Dict[str, Any] 
         return {"type": js_type, "enum": values}
 
     # TypedDict payload contract → nested object schema
-    if typing.is_typeddict(annotation):
+    if _is_typeddict(annotation):
         try:
             hints = typing.get_type_hints(annotation)
         except Exception:
@@ -815,13 +841,11 @@ def _mixin_to_sub_module(module_key: str, mixin_class: type) -> str:
 # Registry builder
 # ---------------------------------------------------------------------------
 
-# Tool IDs excluded from the registry entirely.
-# Add here when a method's output is incompatible with the app's rendering pipeline.
-_EXCLUDED_TOOL_IDS: frozenset = frozenset(
-    {
-        "wellcheck.run_full_wellcheck",  # nested multi-section output; use individual checks instead
-    }
-)
+# Tool IDs excluded from the registry entirely. (run_full_wellcheck was
+# excluded here for a rendering constraint inherited from another consumer;
+# MCP clients handle nested JSON fine, so it now lands in the registry and
+# the allowlist decides exposure like any other tool.)
+_EXCLUDED_TOOL_IDS: frozenset = frozenset()
 
 
 def build_registry() -> list:

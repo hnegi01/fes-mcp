@@ -11,11 +11,11 @@
         },
         "datamodel_type": {
           "type": "string",
-          "description": "Either 'extract' (Elasticube/EC) or 'live'. If user says 'elasticube' or 'ec', normalize to 'extract'.",
           "enum": [
             "extract",
             "live"
           ],
+          "description": "Either 'extract' (Elasticube/EC) or 'live'. If user says 'elasticube' or 'ec', normalize to 'extract'.",
           "x-aliases": {
             "extract": [
               "ec",
@@ -231,11 +231,11 @@
         },
         "build_type": {
           "type": "string",
-          "description": "Build strategy for extract models. Omit for live/publish.",
           "enum": [
             "full",
             "by_table"
           ],
+          "description": "Build strategy for extract models. Omit for live/publish.",
           "x-aliases": {
             "full": [
               "build",
@@ -259,11 +259,11 @@
         },
         "schema_origin": {
           "type": "string",
-          "description": "Schema source for EXTRACT builds. One of ``\"latest\"`` (schema as seen in the Data page, the default) or ``\"running\"`` (last successfully built version). Ignored for LIVE models.",
           "enum": [
             "latest",
             "schema_changes"
-          ]
+          ],
+          "description": "Schema source for EXTRACT builds. One of ``\"latest\"`` (schema as seen in the Data page, the default) or ``\"running\"`` (last successfully built version). Ignored for LIVE models."
         }
       },
       "required": [
@@ -312,11 +312,11 @@
         },
         "datamodel_type": {
           "type": "string",
-          "description": "Type of the data model. Should be either ``\"extract\"`` (for Elasticube) or ``\"live\"`` (for Live).",
           "enum": [
             "extract",
             "live"
           ],
+          "description": "Type of the data model: ``\"extract\"`` (Elasticube) or ``\"live\"``.",
           "x-aliases": {
             "extract": [
               "ec",

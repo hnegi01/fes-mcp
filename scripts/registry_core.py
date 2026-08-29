@@ -15,12 +15,16 @@ from __future__ import annotations
 import inspect
 import json
 import re
-import typing
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import pysisense
+
+try:
+    from typing_extensions import is_typeddict as _is_typeddict
+except ImportError:  # pragma: no cover
+    from typing import is_typeddict as _is_typeddict
 
 # ---------------------------------------------------------------------------
 # Facade class discovery
@@ -51,7 +55,7 @@ def _discover_facade_classes(sdk: Any = pysisense) -> Dict[str, Any]:
             obj = getattr(sdk, name, None)
             if obj is None or not inspect.isclass(obj):
                 continue
-            if name in _SKIP_CLASSES or typing.is_typeddict(obj):
+            if name in _SKIP_CLASSES or _is_typeddict(obj):
                 continue
             candidates.append(obj)
 

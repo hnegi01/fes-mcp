@@ -19,29 +19,28 @@
 # agent never chooses between near-identical tools. Each commented duplicate
 # carries an [excluded: dup group N — reason] note; uncomment to re-expose.
 #
-# Better variants that DON'T exist in the pinned SDK (pysisense 1.0.2) and
-# are worth revisiting after an SDK upgrade + registry refresh: get_groups,
-# run_full_wellcheck (would replace the 8 individual checks),
-# change_dashboard_owner, update_datamodel_permissions_extract/_live,
-# get_widget_by_id/update_widget, get_reports/run_report, get_tenants.
+# SDK 1.1.0 (2026-08-29) landed every previously-missing better variant plus
+# two new facades — none are listed below yet, so all stay HIDDEN until
+# curated here. Awaiting a curation pass: get_groups, run_full_wellcheck
+# (could replace the 8 individual checks), change_dashboard_owner,
+# update_datamodel_permissions_extract/_live, get_widget_by_id/update_widget,
+# get_tenants, report_manager.* (6 tools), mergetool.* (20 tools), and the
+# rest of the ~49 new methods. `get_connections` was renamed by the SDK to
+# `get_connections_all` (updated below).
 
 # ===== access_management (13 read / 6 write) =====
-# [excluded: dup group 3 — burns extra calls fetching all users+groups to resolve names]
-# access_management.get_all_dashboard_shares                   # Retrieve all dashboard shares, including user and group details for e...
-# [excluded: dup group 17 — 1+1+N paginated requests vs one for get_model_schema]
-# access_management.get_datamodel_columns                      # Retrieve columns from a DataModel by collecting them from its dataset...
+
+access_management.get_all_dashboard_shares                   # Retrieve all dashboard shares, including user and group details for e...
+access_management.get_datamodel_columns                      # Retrieve columns from a DataModel by collecting them from its dataset...
 access_management.get_group                                  # Retrieve group details by name.
 access_management.get_my_user                                # Retrieve the currently logged-in user for the API token.
 access_management.get_roles                                  # Retrieve all Sisense roles.
-# [excluded: dup group 18 — bulk variant accepts single-or-list and never raises]
-# access_management.get_unused_columns                         # Identify unused columns in a DataModel by comparing all columns again...
-access_management.get_unused_columns_bulk                    # Run unused-column analysis for one or more data models and return a
+access_management.get_unused_columns                         # Identify unused columns in a DataModel by comparing all columns again...
 access_management.get_user                                   # Retrieve a user's details by email address, expanding group and role ...
 # [excluded: dup group 4 — same GET /users?expand=groups,role as get_user]
 # access_management.get_user_with_role_and_group_names         # Retrieve a single user by email/username with role and group details.
 access_management.get_users_all                              # Retrieve all users with group and role information.
-# [excluded: dup group 4 — 3 requests to rebuild what get_users_all returns]
-# access_management.get_users_with_role_names_and_group_names  # Retrieve all users enriched with role names and group names.
+access_management.get_users_with_role_names_and_group_names  # Retrieve all users enriched with role names and group names.
 access_management.users_per_group                            # Retrieve all users within a specific group by name.
 # [excluded: dup group 6 — renames keys, drops Everyone, injects synthetic Admins bucket]
 # access_management.users_per_group_all                        # Retrieve all groups mapped to the users belonging to them.
@@ -100,7 +99,7 @@ datamodel.describe_datamodel              # Retrieve data model structure in a f
 # datamodel.describe_datamodel_raw          # Retrieve detailed information about a specific data model.
 datamodel.get_all_datamodel               # Retrieve metadata for all data models using an internal API.
 datamodel.get_connection                  # Retrieve connections matching a name.
-datamodel.get_connections                 # Retrieve all connections.
+datamodel.get_connections_all             # Retrieve all connections. (renamed from get_connections in SDK 1.1.0)
 datamodel.get_data                        # Retrieve data from a specific table in a data model.
 # [excluded: dup group 7 — describe_datamodel + get_model_schema cover it without the raw payload]
 # datamodel.get_datamodel                   # Retrieve a data model by its title.

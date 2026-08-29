@@ -1,0 +1,87 @@
+[
+  {
+    "tool_id": "dashboard.find_widgets_by_type",
+    "description": "Find all widgets matching a given type across one or more dashboards.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "widget_type": {
+          "type": "string",
+          "description": "The widget type to match (for example ``\"BloX\"``, ``\"chart\"``, ``\"pivot\"``). Comparison is case-sensitive."
+        },
+        "dashboards": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "One or more dashboard IDs or titles to search. A bare string is treated as a single-item list. When ``None`` (default), all dashboards on the instance are searched."
+        },
+        "admin_access": {
+          "type": "boolean",
+          "description": "When ``True`` (default), enumerates all dashboards on the instance via the admin endpoint and fetches widgets using ``adminAccess=true``, so dashboards owned by other users are included. When ``False``, only dashboards visible to the API token user are scanned."
+        },
+        "max_results": {
+          "type": "integer",
+          "description": "Stop after collecting this many matching widgets. ``None`` (default) means no limit."
+        }
+      },
+      "required": [
+        "widget_type"
+      ]
+    },
+    "mutates": false
+  },
+  {
+    "tool_id": "dashboard.get_widget_by_id",
+    "description": "Retrieve a single widget by its dashboard and widget IDs.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "dashboard_id": {
+          "type": "string",
+          "description": "The ``oid`` of the dashboard that contains the widget."
+        },
+        "widget_id": {
+          "type": "string",
+          "description": "The ``oid`` of the widget to retrieve."
+        },
+        "admin_access": {
+          "type": "boolean",
+          "description": "When ``True`` (default), appends ``?adminAccess=true`` to the request, allowing access to dashboards the API token user does not own. Some Sisense versions reject the ``adminAccess`` query parameter with HTTP 422 (strict query-schema validation); the request is then retried automatically without it."
+        }
+      },
+      "required": [
+        "dashboard_id",
+        "widget_id"
+      ]
+    },
+    "mutates": false
+  },
+  {
+    "tool_id": "dashboard.update_widget",
+    "description": "Write updated widget data back to Sisense.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "dashboard_id": {
+          "type": "string",
+          "description": "The ``oid`` of the dashboard that contains the widget."
+        },
+        "widget_id": {
+          "type": "string",
+          "description": "The ``oid`` of the widget to update."
+        },
+        "widget_data": {
+          "type": "object",
+          "description": "The full widget payload with the desired changes applied. Server-managed fields are removed automatically before the PUT request."
+        }
+      },
+      "required": [
+        "dashboard_id",
+        "widget_id",
+        "widget_data"
+      ]
+    },
+    "mutates": true
+  }
+]

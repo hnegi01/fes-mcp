@@ -1,5 +1,42 @@
 [
   {
+    "tool_id": "access_management.create_groups_bulk",
+    "description": "Create multiple groups in a single bulk request.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "Group definitions to create. Each dictionary should use canonical Sisense group fields, at minimum ``name``."
+        }
+      },
+      "required": [
+        "groups"
+      ]
+    },
+    "mutates": true
+  },
+  {
+    "tool_id": "access_management.delete_group",
+    "description": "Delete a group by ID.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "group_id": {
+          "type": "string",
+          "description": "The ID of the group to delete."
+        }
+      },
+      "required": [
+        "group_id"
+      ]
+    },
+    "mutates": true
+  },
+  {
     "tool_id": "access_management.get_group",
     "description": "Retrieve group details by name.",
     "parameters": {
@@ -38,6 +75,16 @@
         "notes": "This retrieves the 'Marketing Users' group details, which can help confirm its default role or troubleshoot access issues."
       }
     ]
+  },
+  {
+    "tool_id": "access_management.get_groups",
+    "description": "Retrieve all groups.",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "mutates": false
   },
   {
     "tool_id": "access_management.users_per_group",

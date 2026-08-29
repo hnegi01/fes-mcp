@@ -55,7 +55,41 @@
       "properties": {
         "user_data": {
           "type": "object",
-          "description": "Dictionary containing the user details. Supported fields use canonical Sisense payload field names: - ``email`` : str — the user's email address. - ``firstName`` : str — the user's first name. - ``lastName`` : str — the user's last name. - ``role`` : str — role name to assign (resolved to ``roleId``). - ``groups`` : list[str] — group names to assign (resolved to IDs). - ``preferences`` : dict — user preference settings."
+          "properties": {
+            "email": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string"
+            },
+            "userName": {
+              "type": "string"
+            },
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            },
+            "groups": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "password": {
+              "type": "string"
+            },
+            "preferences": {
+              "type": "object"
+            }
+          },
+          "required": [
+            "email",
+            "role"
+          ],
+          "additionalProperties": true,
+          "description": "User details, using canonical Sisense payload field names: - ``email`` : str — the user's email address. **Required.** - ``role`` : str — role name to assign (resolved to ``roleId``). **Required.** - ``userName`` : str — the user's login name (optional). - ``firstName`` : str — the user's first name (optional). - ``lastName`` : str — the user's last name (optional). - ``groups`` : list[str] — group names to assign, resolved to IDs (optional). - ``password`` : str — initial password; if omitted, the user receives an email to set one (optional). - ``preferences`` : dict — user preference settings (optional)."
         }
       },
       "required": [
@@ -121,6 +155,26 @@
         "notes": "This call creates a new user named Admin User with the Admin role, does not assign them to any groups, and sets their preferences for language and timezone."
       }
     ]
+  },
+  {
+    "tool_id": "access_management.create_users_bulk",
+    "description": "Create multiple users in a single bulk request.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "users": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "User definitions to create. Each dictionary should use canonical Sisense user fields (at minimum ``email``, ``firstName``, and ``roleId``)."
+        }
+      },
+      "required": [
+        "users"
+      ]
+    },
+    "mutates": true
   },
   {
     "tool_id": "access_management.delete_user",
@@ -327,6 +381,16 @@
     ]
   },
   {
+    "tool_id": "access_management.get_users_expanded",
+    "description": "Retrieve all users with raw, unmodified role and group objects.",
+    "parameters": {
+      "type": "object",
+      "properties": {},
+      "required": []
+    },
+    "mutates": false
+  },
+  {
     "tool_id": "access_management.get_users_with_role_names_and_group_names",
     "description": "Retrieve all users enriched with role names and group names.",
     "parameters": {
@@ -366,6 +430,37 @@
         },
         "user_data": {
           "type": "object",
+          "properties": {
+            "email": {
+              "type": "string"
+            },
+            "userName": {
+              "type": "string"
+            },
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            },
+            "role": {
+              "type": "string"
+            },
+            "groups": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "password": {
+              "type": "string"
+            },
+            "preferences": {
+              "type": "object"
+            }
+          },
+          "required": [],
+          "additionalProperties": true,
           "description": "Dictionary of fields to update. Only include fields you want to change. Supported fields ---------------- - email : str Update the user's email address. - userName : str Update the user's username/login name. - firstName : str Update the user's first name. - lastName : str Update the user's last name. - role : str Role name (e.g., \"viewer\", \"designer\"). This is resolved to ``roleId`` before sending the API request. - groups : list[str] List of group names to apply. Group names are resolved to group IDs before sending the API request. If ``groups`` is explicitly provided as an empty list (``[]``), group memberships are cleared (tenant defaults may still apply)."
         }
       },
