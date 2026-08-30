@@ -1470,7 +1470,7 @@
     "updated_at": "2026-08-29T23:13:44Z",
     "examples": [
       {
-        "user_query": "How can I save a new custom action for my dashboard's export button?",
+        "user_query": "Save a custom Blox action named 'ExportDashboardAction' that exports dashboard 'dashboard_12345' as PDF.",
         "arguments": {
           "action": {
             "name": "ExportDashboardAction",
@@ -2157,7 +2157,7 @@
         "notes": "This call adds a custom JavaScript function to the sales dashboard, allowing for tailored behavior. Use this when you need to enhance dashboard functionality."
       },
       {
-        "user_query": "I need to overwrite the script on the marketing dashboard with a new JSON payload.",
+        "user_query": "Overwrite the script on dashboard 'dashboard_67890' with the updateChart JSON script, executing as marketing.manager@sisense.com.",
         "arguments": {
           "dashboard_id": "dashboard_67890",
           "script": {
@@ -2348,7 +2348,7 @@
         "notes": "This call overwrites the existing script for a KPI widget in the marketing dashboard. It uses a conditional JavaScript snippet to alert users when the KPI value exceeds 100."
       },
       {
-        "user_query": "Can I add a pre-built payload script to a widget in the executive summary dashboard?",
+        "user_query": "Add the onLoad/onClick payload script to widget 'summary_widget_01' on dashboard 'exec_summary_2023', executing as ceo@sisense.com.",
         "arguments": {
           "dashboard_id": "exec_summary_2023",
           "widget_id": "summary_widget_01",
@@ -5347,7 +5347,7 @@
         "notes": "This call adds rules to the 'HR_Live' datamodel to restrict access to salary and SSN data."
       },
       {
-        "user_query": "Can I add rules to limit access to the 'Finance_Live' datamodel for specific departments?",
+        "user_query": "On the 'Finance_Live' datamodel, add rules on the Transactions table: allow only Accounting and Audit in the Department column, and an exclusionary rule on the Confidential column for member 'false'.",
         "arguments": {
           "datamodel_name": "Finance_Live",
           "rules": [
@@ -5868,7 +5868,7 @@
         "notes": "This call applies new datasecurity rules to the 'HR_Analytics' datamodel, ensuring sensitive columns like 'Salary' and 'SSN' are restricted."
       },
       {
-        "user_query": "Can I set up datasecurity rules for the 'Marketing_Campaigns' datamodel to allow only specific regions?",
+        "user_query": "Replace datasecurity on the 'Marketing_Campaigns' datamodel so the Campaigns table's Region column allows only APAC and EMEA.",
         "arguments": {
           "datamodel_name": "Marketing_Campaigns",
           "datasecurity": [
@@ -5918,7 +5918,7 @@
     "updated_at": "2026-08-29T23:13:44Z",
     "examples": [
       {
-        "user_query": "How can I decrypt the encrypted database password stored in my datamodel?",
+        "user_query": "Decrypt the value 'ENCRYPTED_PASSWORD_12345'.",
         "arguments": {
           "payload": {
             "value": "ENCRYPTED_PASSWORD_12345"
@@ -5975,7 +5975,7 @@
     "updated_at": "2026-08-29T23:13:44Z",
     "examples": [
       {
-        "user_query": "How can I encrypt a database password before saving it in Sisense?",
+        "user_query": "Encrypt the value 'my_secure_password_123' before saving it in Sisense.",
         "arguments": {
           "payload": {
             "value": "my_secure_password_123"
@@ -8954,7 +8954,7 @@
         "notes": "This query retrieves the top 5 products by revenue for the first quarter of 2023 from the 'ProductAnalytics' datasource."
       },
       {
-        "user_query": "Retrieve monthly website traffic for the last 12 months.",
+        "user_query": "From the 'WebTrafficElasticube' elasticube, get the sum of Visits by Month for the last 12 months.",
         "arguments": {
           "datasource_name": "WebTrafficElasticube",
           "jaql_payload": {
@@ -9020,7 +9020,7 @@
     "updated_at": "2026-08-29T23:13:44Z",
     "examples": [
       {
-        "user_query": "Export sales data for Q3 2023 as a CSV file.",
+        "user_query": "Export from 'sales_elasticube' the sum of sales.amount by sales.date for 2023-Q3 as a CSV file.",
         "arguments": {
           "datasource_name": "sales_elasticube",
           "jaql_payload": {

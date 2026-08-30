@@ -211,7 +211,7 @@
         "notes": "This call adds rules to the 'HR_Live' datamodel to restrict access to salary and SSN data."
       },
       {
-        "user_query": "Can I add rules to limit access to the 'Finance_Live' datamodel for specific departments?",
+        "user_query": "On the 'Finance_Live' datamodel, add rules on the Transactions table: allow only Accounting and Audit in the Department column, and an exclusionary rule on the Confidential column for member 'false'.",
         "arguments": {
           "datamodel_name": "Finance_Live",
           "rules": [
@@ -323,7 +323,7 @@
         "notes": "This call applies new datasecurity rules to the 'HR_Analytics' datamodel, ensuring sensitive columns like 'Salary' and 'SSN' are restricted."
       },
       {
-        "user_query": "Can I set up datasecurity rules for the 'Marketing_Campaigns' datamodel to allow only specific regions?",
+        "user_query": "Replace datasecurity on the 'Marketing_Campaigns' datamodel so the Campaigns table's Region column allows only APAC and EMEA.",
         "arguments": {
           "datamodel_name": "Marketing_Campaigns",
           "datasecurity": [
