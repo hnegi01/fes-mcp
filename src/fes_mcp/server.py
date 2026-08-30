@@ -21,6 +21,7 @@ from mcp.types import ToolAnnotations
 from pydantic import ConfigDict
 
 from .credentials import SisenseCredential
+from .descriptions import compose_description
 from .dispatcher import DispatchError, SisenseDispatcher, _scrub
 from .registry import load_registry, select_tools
 from .settings import Settings
@@ -156,7 +157,7 @@ def build_tool(
         credential_resolver=credential_resolver,
         mutates=mutates,
         name=_mcp_tool_name(entry["tool_id"]),
-        description=entry.get("description") or f"PySisense {entry['tool_id']}",
+        description=compose_description(entry) or f"PySisense {entry['tool_id']}",
         parameters=entry["parameters"],
         annotations=ToolAnnotations(
             title=entry["tool_id"],
