@@ -28,7 +28,9 @@ _SECTION_RE = re.compile(r"^(Parameters|Returns|Yields|Raises|Notes|Examples)\n-
 
 _INTRO_LIMIT = 600
 _SECTION_LIMIT = 220
-_EXAMPLE_LIMIT = 400
+# An example is only included whole — truncating mid-JSON would advertise
+# malformed arguments, worse than no example.
+_EXAMPLE_LIMIT = 700
 
 # Free-form payload tools: their payload "schema" is a language, so one worked
 # example is the guidance that matters.
@@ -133,6 +135,7 @@ def compose_description(entry: dict[str, Any]) -> str:
             f'Example — "{example.get("user_query", "")}": '
             f'{json.dumps(example.get("arguments", {}))}'
         )
-        pieces.append(rendered[:_EXAMPLE_LIMIT])
+        if len(rendered) <= _EXAMPLE_LIMIT:
+            pieces.append(rendered)
 
     return "\n".join(pieces)
