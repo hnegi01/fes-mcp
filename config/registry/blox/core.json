@@ -84,7 +84,7 @@
     "mutates": true,
     "examples": [
       {
-        "user_query": "How can I save a new custom action for my dashboard's export button?",
+        "user_query": "Save a custom Blox action named 'ExportDashboardAction' that exports dashboard 'dashboard_12345' as PDF.",
         "arguments": {
           "action": {
             "name": "ExportDashboardAction",

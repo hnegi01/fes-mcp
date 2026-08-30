@@ -39,7 +39,7 @@
         "notes": "This call adds a custom JavaScript function to the sales dashboard, allowing for tailored behavior. Use this when you need to enhance dashboard functionality."
       },
       {
-        "user_query": "I need to overwrite the script on the marketing dashboard with a new JSON payload.",
+        "user_query": "Overwrite the script on dashboard 'dashboard_67890' with the updateChart JSON script, executing as marketing.manager@sisense.com.",
         "arguments": {
           "dashboard_id": "dashboard_67890",
           "script": {
@@ -123,7 +123,7 @@
         "notes": "This call overwrites the existing script for a KPI widget in the marketing dashboard. It uses a conditional JavaScript snippet to alert users when the KPI value exceeds 100."
       },
       {
-        "user_query": "Can I add a pre-built payload script to a widget in the executive summary dashboard?",
+        "user_query": "Add the onLoad/onClick payload script to widget 'summary_widget_01' on dashboard 'exec_summary_2023', executing as ceo@sisense.com.",
         "arguments": {
           "dashboard_id": "exec_summary_2023",
           "widget_id": "summary_widget_01",
