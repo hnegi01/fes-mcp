@@ -1,268 +1,213 @@
-# Curated tool surface for fes_mcp — hand-edit this file.
+# Curated tool surface for fes_mcp — hand-edited.
 #
-# One tool_id per line. To REMOVE a tool from the MCP surface, delete its
-# line or comment it out with '#'. Tools not listed here are never exposed,
-# so new SDK methods added by a registry refresh stay hidden until you add
-# them. Override at runtime with FES_MCP_TOOLS.
+# One tool_id per line. A line that is present and uncommented is ADVERTISED to
+# MCP clients; commenting it out or deleting it removes the tool. Tools absent
+# from this file are never exposed, so a registry refresh can add SDK methods
+# without widening the surface. Enforced when the tool list is built AND again
+# at dispatch, so a delisted tool is unreachable, not merely unlisted.
+# Runtime override: FES_MCP_TOOLS.
 #
-# [write] tools are additionally gated: only exposed when
+# Organised READ first, then WRITE, and by module within each — a read tool
+# cannot change anything, so the split is the fastest way to see what an
+# untrusted prompt could reach.
+#
+# WRITE tools are additionally gated: they are only advertised when
 # FES_MCP_ALLOW_MUTATIONS=true, always carry destructiveHint, and ask the user
-# for approval via MCP elicitation on clients that support it. Authorization
-# itself is enforced by Sisense per user on every API call.
-# [read, reclassified] marks tools the generated heuristic misflagged as
-# writes; corrected after verifying the SDK source (registry.MUTATES_OVERRIDES).
-# The migration module (dual-tenant) is excluded in code and not listed.
+# to approve via MCP elicitation on clients that support it. Authorization
+# itself is always Sisense's: every call runs with the caller's own token.
 #
-# CURATED from a full SDK duplicate-method review (2026-08-26 policy): every
-# tool is exposed EXCEPT near-duplicates — where two methods hit the same
-# endpoint or wrap each other, only the better one is uncommented, so an
-# agent never chooses between near-identical tools. Each commented duplicate
-# carries an [excluded: ... reason] note; uncomment to re-expose.
+# A disabled line carries its reason after an em dash — mostly near-duplicates,
+# where two SDK methods hit the same endpoint or one wraps the other and only
+# the better one is advertised, so an agent never picks between near-identical
+# tools. [fes:on] / [fes:off] mark where this surface differs from the
+# fes-assistant project's, for reconciling the two.
 #
-# RE-AUDITED against pysisense 2.0.1 source (2026-09-01): every exclusion was
-# re-checked by reading the actual endpoints and delegation. Claims that did
-# not hold up are now advertised and carry a [verified ...] note — an
-# "excluded as duplicate" line that hits a different endpoint was a bug in
-# the review, not a curation choice. Exclusions that survived the audit are
-# genuine wrappers (one method calls the other) or same-fetch reformatters.
+# Cross-environment modules (migration, mergetool) are excluded in code, not
+# here: their SDK facades need a source AND a target credential, which this
+# server's per-user session cannot express.
 #
-# SDK-upgrade automation (scripts/03_reconcile.py, part of
-# refresh_registry.sh) maintains two sections at the END of this file:
-# DEPRECATED (ids the SDK removed — history, never uncomment) and STAGED
-# (ids new in the registry, commented — delete one '#' to expose). It never
-# touches listed/hidden/staged ids, so hand edits are safe. SDK 2.0 collapsed
-# the user/group family into canonical methods (get_users_all / get_groups /
-# users_per_group(group_name=None)); the retired variants are in DEPRECATED.
-#
-# [fes: …] markers are a comparison snapshot against the fes-assistant
-# project's approved allowlist (2026-09-01), for reconciling the two surfaces:
-#   [fes: not exposed] — we advertise it, that project does not
-#   [fes: EXPOSED]     — that project advertises it, we do not
-# Unmarked lines mean both projects agree. Divergences are intentional where
-# the projects differ in shape: fes-assistant routes hierarchically (a
-# selecting model sees ~10 tools at a time) so near-duplicates cost it little,
-# while every tool here lands in one flat list in the client's context; and it
-# treats migration as a first-class mode, whereas the migration/mergetool
-# modules are excluded here (they need dual source+target credentials, which
-# this server's per-user session model has no way to express).
+# New SDK methods and removals are filed into review sections at the end of
+# this file by scripts/03_reconcile.py (part of ./refresh_registry.sh); triage
+# them into the sections above.
 
-# ===== access_management — advertising 18 of 19 (9 read / 9 write) =====
-access_management.get_all_dashboard_shares               # Retrieve all dashboard shares, including user and group details for e...
-access_management.get_datamodel_columns                  # Retrieve columns from a DataModel by collecting them from its dataset...
-access_management.get_my_user                            # Retrieve the currently logged-in user for the API token.
-access_management.get_roles                              # Retrieve all Sisense roles.
-access_management.get_user                               # Retrieve a user's details by email address, expanding group and role ...
-access_management.get_users_all                          # Retrieve all users with group and role information.
-access_management.users_per_group                        # Retrieve all users within a specific group by name.
-access_management.change_folder_and_dashboard_ownership  # [write] Change the ownership of folders and optionally dashboards.
-access_management.change_user_password                   # [write] Change a user's password.
-access_management.create_schedule_build                  # [write] Create a schedule build for a DataModel.
-access_management.create_user                            # [write] Create a new user in Sisense.
-access_management.delete_user                            # [write] Delete a user by their email (username).
-access_management.update_user                            # [write] Update an existing Sisense user identified by their email address.
-# [promoted 2026-09-01: SDK 2.0 retired get_unused_columns, leaving no unused-column tool exposed at all]
-access_management.get_unused_columns_bulk                # Run unused-column analysis for one or more data models and return a
-# [promoted 2026-09-01: canonical group lister (SDK 2.0 collapse)]
-access_management.get_groups                             # Retrieve groups — one named group, or all of them.
-# [promoted 2026-09-01: new capability (fes-assistant exposes it)]
-access_management.create_groups_bulk                     # [write] Create multiple groups in a single bulk request.
-# [promoted 2026-09-01: new capability (fes-assistant exposes it)]
-access_management.create_users_bulk                      # [write] Create multiple users in a single bulk request.
-# [promoted 2026-09-01: new capability (fes-assistant exposes it)]
-access_management.delete_group                           # [write] Delete a group by ID.
+#==============================================================================
+#  READ TOOLS — advertising 52 of 75  (no tool here can change anything)
+#==============================================================================
 
-# ===== blox — advertising 3 of 5 (1 read / 2 write) =====
-blox.get_blox_actions    # Retrieve all custom Blox actions from the Sisense instance.  [fes: not exposed]
-blox.delete_blox_action  # [write] Delete a custom Blox action from the Sisense instance.  [fes: not exposed]
-blox.save_blox_action    # [write] Save a custom Blox action on the Sisense instance.  [fes: not exposed]
+# ----- access_management (9/10) -----
+access_management.get_all_dashboard_shares  # Retrieve all dashboard shares, including user and group…
+access_management.get_datamodel_columns     # Retrieve columns from a DataModel by collecting them from…
+access_management.get_groups                # Retrieve groups — one named group, or all of them.
+access_management.get_my_user               # Retrieve the currently logged-in user for the API token.
+access_management.get_roles                 # Retrieve all Sisense roles.
+access_management.get_unused_columns_bulk   # Run unused-column analysis for one or more data models…
+access_management.get_user                  # Retrieve one named user by email address, in the…
+access_management.get_users_all             # Retrieve every user, one canonical user row each.
+access_management.users_per_group           # Retrieve group memberships — one group's members, or…
+# access_management.get_tenants             # Retrieve all tenants.  — multi-tenant instances only; no demand yet
 
-# ===== custom_code — advertising 8 of 8 (3 read / 5 write) =====
-custom_code.export_notebook                # Export a notebook definition.  [fes: not exposed]
-custom_code.get_notebooks                  # Retrieve notebooks from Sisense.  [fes: not exposed]
-custom_code.list_notebook_folder_contents  # List contents of a custom-code notebook folder.  [fes: not exposed]
-custom_code.create_notebook                # [write] Create a new notebook.  [fes: not exposed]
-custom_code.delete_notebook                # [write] Delete a notebook by ID.  [fes: not exposed]
-custom_code.rename_notebook_file           # [write] Rename or update a notebook resource file.  [fes: not exposed]
-custom_code.rename_notebook_folder         # [write] Rename a custom-code notebook folder.  [fes: not exposed]
-custom_code.update_notebook                # [write] Update an existing notebook.  [fes: not exposed]
+# ----- blox (0/2) -----
+# blox.get_blox_actions       # Retrieve all custom Blox actions from the Sisense…
+# blox.get_blox_widget_style  # Retrieve the style objects of a BloX widget.  — narrow BloX styling niche
 
-# ===== dashboard — advertising 19 of 24 (11 read / 8 write) =====
-dashboard.can_be_owned                   # Check whether a dashboard can be owned by the current user.
-dashboard.export_dashboard               # Export a dashboard definition using the Sisense admin export endpoint.  [fes: not exposed]
-# [verified 2026-09-01: NOT a duplicate — /api/v1/dashboards/admin returns every dashboard on the instance; get_dashboards only returns the caller's own+shared]
+# ----- custom_code (3/3) -----
+custom_code.export_notebook                # Export a notebook definition.  [fes:off]
+custom_code.get_notebooks                  # Retrieve notebooks from Sisense.  [fes:off]
+custom_code.list_notebook_folder_contents  # List contents of a custom-code notebook folder.  [fes:off]
+
+# ----- dashboard (11/15) -----
+dashboard.can_be_owned                   # Check whether a dashboard can be owned by the current…
+dashboard.export_dashboard               # Export a dashboard definition using the Sisense admin…  [fes:off]
+dashboard.find_widgets_by_type           # Find all widgets matching a given type across one or more…
 dashboard.get_all_dashboards             # Retrieve all dashboards from the Sisense server.
-# [verified 2026-09-01: NOT a duplicate — admin-scope single fetch; the dispatcher resolves titles, so this also accepts a dashboard title]
 dashboard.get_dashboard_by_id            # Retrieve a specific dashboard by its ID.
-# [excluded: get_dashboard_by_id covers it — the dispatcher resolves a title to its OID before dispatch]
-# dashboard.get_dashboard_by_name        # Retrieve a specific dashboard by its name.  [fes: EXPOSED]
-dashboard.get_dashboard_columns          # Retrieve columns referenced by a dashboard, including widget and filt...
+dashboard.get_dashboard_columns          # Retrieve columns referenced by a dashboard, including…
 dashboard.get_dashboard_script           # Build a formatted dashboard script helper object.
-# [verified 2026-09-01: preferred over get_dashboard_shares_v1 — resolves user/group names; v1 returns raw partyIds (matches the fes-assistant call)]
-dashboard.get_dashboard_share            # Retrieve share details (users and groups) for a dashboard by title.
-# [excluded: raw payload keyed by OID with partyIds; get_dashboard_share resolves names]
-# dashboard.get_dashboard_shares_v1      # Retrieve share details for a dashboard using the v1 shares endpoint.
-# [excluded: dup group 2 — calls export_dashboard and returns its widgets key]
-# dashboard.get_dashboard_widgets        # Retrieve widget definitions from an admin export of the dashboard.  [fes: EXPOSED]
+dashboard.get_dashboard_share            # Retrieve share details (users and groups) for a dashboard…
 dashboard.get_dashboards                 # Retrieve dashboards visible to the authenticated user.
-dashboard.get_widget_script              # Build a formatted widget script helper object.
-# [excluded: dup group 1 — plumbing; belongs in the dispatcher, not the tool list]
-# dashboard.resolve_dashboard_reference  # Resolve a dashboard reference (ID or name) to a concrete dashboard ID...
-dashboard.add_dashboard_script           # [write] Add or overwrite a script on a dashboard.
-dashboard.add_dashboard_shares           # [write] Add or update shares for a dashboard for the given users and groups.
-dashboard.add_widget_script              # [write] Add or overwrite a script for a specific widget within a dashboard.
-dashboard.move_dashboard_to_folder       # [write] Move a dashboard into a folder.
-dashboard.publish_dashboard              # [write] Publish (republish) a dashboard.
-dashboard.rename_dashboard               # [write] Rename a dashboard.
-# [promoted 2026-09-01: new capability (fes-assistant exposes it)]
-dashboard.change_dashboard_owner         # [write] Transfer ownership of a dashboard to a different user.
-# [promoted 2026-09-01: new capability (fes-assistant exposes it)]
-dashboard.find_widgets_by_type           # Find all widgets matching a given type across one or more dashboards.
-# [promoted 2026-09-01: new capability (fes-assistant exposes it)]
 dashboard.get_widget_by_id               # Retrieve a single widget by its dashboard and widget IDs.
-# [promoted 2026-09-01: new capability (fes-assistant exposes it)]
-dashboard.update_widget                  # [write] Write updated widget data back to Sisense.
+dashboard.get_widget_script              # Build a formatted widget script helper object.
+# dashboard.get_dashboard_by_name        # Retrieve a specific dashboard by its name.  — get_dashboard_by_id covers it — the dispatcher resolves a title to its OID before dispatch  [fes:on]
+# dashboard.get_dashboard_shares_v1      # Retrieve share details for a dashboard using the v1…  — raw payload keyed by OID with partyIds; get_dashboard_share resolves names
+# dashboard.get_dashboard_widgets        # Retrieve widget definitions from an admin export of the…  — dup group 2 — calls export_dashboard and returns its widgets key  [fes:on]
+# dashboard.resolve_dashboard_reference  # Resolve a dashboard reference (ID or name) to a concrete…  — dup group 1 — plumbing; belongs in the dispatcher, not the tool list
 
-# ===== datamodel — advertising 22 of 36 (11 read / 11 write) =====
-datamodel.describe_datamodel              # Retrieve data model structure in a flat, row-based format.
-# [excluded: dup group 7 — raw formatter over the same schema fetch]
-# datamodel.describe_datamodel_raw        # Retrieve detailed information about a specific data model.
-datamodel.get_all_datamodel               # Retrieve metadata for all data models using an internal API.
-datamodel.get_connection                  # Retrieve connections matching a name.
-datamodel.get_connections_all             # Retrieve all connections. (renamed from get_connections in SDK 1.1.0)
-datamodel.get_data                        # Retrieve data from a specific table in a data model.
-# [excluded: dup group 7 — describe_datamodel + get_model_schema cover it without the raw payload]
-# datamodel.get_datamodel                 # Retrieve a data model by its title.  [fes: EXPOSED]
-datamodel.get_datamodel_shares            # Retrieve all share entries (users and groups) for a given data model.
-# [excluded: dup group 9 — get_datasecurity_detail is a strict superset]
-# datamodel.get_datasecurity              # Retrieve datasecurity table and column entries for a given data model.
-datamodel.get_datasecurity_detail         # Retrieve detailed datasecurity rules for a data model, including shar...
-# [verified 2026-09-01: NOT a duplicate — v1 endpoint that works on Windows-based Sisense; get_all_datamodel's v2 ECM route is Linux-only]
-datamodel.get_elasticubes                 # List all ElastiCubes using the legacy v1 endpoint.
-datamodel.get_model_schema                # Retrieve the schema of a data model, including tables and columns.
-# [excluded: dup group 14 — get_data can express SELECT COUNT(*) itself]
-# datamodel.get_row_count                 # Retrieve the row count for each table in a specific data model.  [fes: EXPOSED]
-datamodel.get_table_schema                # Retrieve the schema of a table within a connection's data source.
-# datamodel.resolve_datamodel_reference   # Resolve a data model reference (ID or title) to a concrete data model...
-datamodel.add_datamodel_shares            # [write] Add share entries (users and groups) to a data model.
-datamodel.create_connections              # [write] Create a new connection using the provided payload.
-# [excluded: creates an unrescuable skeleton — setup_datamodel can't finish it and create_table can't infer from a dataset-less model; setup_datamodel covers from-scratch creation in one call (fes-assistant finding)]
-# datamodel.create_datamodel              # [write] Create a new data model in Sisense.
-datamodel.create_dataset                  # [write] Create a new dataset in the specified data model.
-datamodel.create_table                    # [write] Create a new table in the specified data model.
-datamodel.delete_datamodel                # [write] Delete a data model by title and server using the GraphQL ECM endpoint.
-datamodel.deploy_datamodel                # [write] Deploy (build or publish) the specified data model based on its type.
-datamodel.generate_connections_payload    # [read, reclassified] Generate a connection payload for a given data source type.
-# [excluded: OID-by-title lookup — the dispatcher already resolves references before dispatch (fes-assistant delisted it too)]
-# datamodel.load_datamodel                # [read, reclassified] Look up a data model's OID by title using the GraphQL ECM endpoint.
-datamodel.set_live_datasecurity_add_many  # [write] Add multiple datasecurity rules to a LIVE datamodel.
-datamodel.setup_datamodel                 # [write] Set up a data model end to end using an existing connection.
-datamodel.update_connection               # [write] Update an existing connection.
-datamodel.update_datasecurity             # [write] Replace datasecurity rules on an EXTRACT (Elasticube) datamodel.
-# [promoted 2026-09-01: the missing revoke half of datasecurity management]
-datamodel.delete_datasecurity             # [write] Delete all datasecurity rules for one table/column of a datamodel.
+# ----- datamodel (11/21) -----
+datamodel.describe_datamodel                   # Retrieve data model structure in a flat, row-based format.
+datamodel.generate_connections_payload         # Generate a connection payload for a given data source…
+datamodel.get_all_datamodel                    # Retrieve metadata for all data models using an internal…
+datamodel.get_connection                       # Retrieve connections matching a name.
+datamodel.get_connections_all                  # Retrieve all connections.
+datamodel.get_data                             # Retrieve data from a specific table in a data model.
+datamodel.get_datamodel_shares                 # Retrieve all share entries (users and groups) for a given…
+datamodel.get_datasecurity_detail              # Retrieve detailed datasecurity rules for a data model,…
+datamodel.get_elasticubes                      # List all ElastiCubes using the legacy v1 endpoint.
+datamodel.get_model_schema                     # Retrieve the schema of a data model, including tables and…
+datamodel.get_table_schema                     # Retrieve the schema of a table within a connection's data…
+# datamodel.describe_datamodel_raw             # Retrieve detailed information about a specific data model.  — dup group 7 — raw formatter over the same schema fetch
+# datamodel.export_datamodel_schema            # Export a data model's full schema definition for…  — cross-environment primitive
+# datamodel.get_datamodel                      # Retrieve a data model by its title.  — dup group 7 — describe_datamodel + get_model_schema cover it without the raw payload  [fes:on]
+# datamodel.get_datamodel_permissions_extract  # Retrieve raw share entries for an EXTRACT (Elasticube)…  — raw partyId shares; get_datamodel_shares resolves names
+# datamodel.get_datamodel_permissions_live     # Retrieve raw share entries for a LIVE data model.  — raw partyId shares; get_datamodel_shares resolves names
+# datamodel.get_datasecurity                   # Retrieve datasecurity table and column entries for a…  — dup group 9 — get_datasecurity_detail is a strict superset
+# datamodel.get_datasecurity_raw               # Retrieve the raw, unprocessed datasecurity rules for a…  — raw twin of get_datasecurity_detail
+# datamodel.get_row_count                      # Retrieve the row count for each table in a specific data…  — dup group 14 — get_data can express SELECT COUNT(*) itself  [fes:on]
+# datamodel.load_datamodel                     # Look up a data model's OID by title using the GraphQL ECM…  — OID-by-title lookup — the dispatcher already resolves references before dispatch (fes-assistant delisted it too)
+# datamodel.resolve_datamodel_reference        # Resolve a data model reference (ID or title) to a…
 
-# ===== encryption — advertising 2 of 2 (0 read / 2 write) =====
-encryption.decrypt  # [write] Decrypt a value using the Sisense encryption service.  [fes: not exposed]
-encryption.encrypt  # [write] Encrypt a value using the Sisense encryption service.  [fes: not exposed]
-
-# ===== folder — advertising 5 of 8 (2 read / 3 write) =====
-# [excluded: dup group 12 — literally get_folders('tree')]
-# folder.get_all_folders       # Retrieve the full folder tree.  [fes: EXPOSED]
-# [excluded: dup group 12 — pure alias of get_folders]
-# folder.get_folder_ancestors  # Retrieve folders by a caller-supplied structure value.  [fes: EXPOSED]
+# ----- folder (2/5) -----
 folder.get_folder_id           # Retrieve a single folder by OID.
-folder.get_folders             # Retrieve folders using a configurable ``structure`` query parameter.
-# [excluded: separate /navver UI payload; get_folders(structure='tree') answers hierarchy questions]
-# folder.get_navver            # Retrieve the Sisense navigation tree (navver payload).  [fes: EXPOSED]
-folder.create_folder           # [write] Create a new Sisense folder.
-folder.delete_folder           # [write] Delete a folder by OID.
-folder.update_folder           # [write] Update an existing folder.
+folder.get_folders             # Retrieve folders using a configurable ``structure`` query…
+# folder.get_all_folders       # Retrieve the full folder tree.  — dup group 12 — literally get_folders('tree')  [fes:on]
+# folder.get_folder_ancestors  # Retrieve folders by a caller-supplied structure value.  — dup group 12 — pure alias of get_folders  [fes:on]
+# folder.get_navver            # Retrieve the Sisense navigation tree (navver payload).  — separate /navver UI payload; get_folders(structure='tree') answers hierarchy questions  [fes:on]
 
-# ===== metadata — advertising 5 of 5 (3 read / 2 write) =====
-metadata.get_datasource_dimensions  # Retrieve saved filter dimensions for a datasource.  [fes: not exposed]
-metadata.get_datasource_measures    # Retrieve saved formula measures for a datasource.  [fes: not exposed]
-# [verified 2026-09-01: NOT a duplicate — datasource vocabulary the JAQL/measures/dimensions tools take; get_all_datamodel lists datamodels]
-metadata.get_datasources            # Retrieve all datasources visible to the authenticated user.  [fes: not exposed]
-metadata.add_datasource_measure     # [write] Create a saved formula measure in Sisense metadata.  [fes: not exposed]
-metadata.post_metadata_query        # [write] Execute a metadata query against Sisense.  [fes: not exposed]
+# ----- metadata (3/3) -----
+metadata.get_datasource_dimensions  # Retrieve saved filter dimensions for a datasource.  [fes:off]
+metadata.get_datasource_measures    # Retrieve saved formula measures for a datasource.  [fes:off]
+metadata.get_datasources            # Retrieve all datasources visible to the authenticated…  [fes:off]
 
-# ===== plugins — advertising 5 of 8 (2 read / 3 write) =====
-plugins.get_all_plugins   # Retrieve all plugins installed on the Sisense instance.
-# [excluded: dup group 15 — fetches the full list anyway and filters client-side]
-# plugins.get_plugin      # Get a single plugin by its name or folder name.  [fes: EXPOSED]
-# [excluded: dup group 15 — disable_plugins is a strict input superset]
-# plugins.disable_plugin  # [write] Disable a single plugin by name or folder name.  [fes: EXPOSED]
-plugins.disable_plugins   # [write] Disable one or more plugins by name or folder name.
-# [excluded: dup group 15 — enable_plugins accepts a bare string and returns richer results]
-# plugins.enable_plugin   # [write] Enable a single plugin by name or folder name.  [fes: EXPOSED]
-plugins.enable_plugins    # [write] Enable one or more plugins by name or folder name.
-plugins.restore_snapshot  # [write] Restore plugin states to exactly match a previously saved snapshot.
-plugins.save_snapshot     # [read, reclassified] Capture the current plugin enable/disable state as a snapshot.
+# ----- plugins (2/3) -----
+plugins.get_all_plugins  # Retrieve all plugins installed on the Sisense instance.
+plugins.save_snapshot    # Capture the current plugin enable/disable state as a…
+# plugins.get_plugin     # Get a single plugin by its name or folder name.  — dup group 15 — fetches the full list anyway and filters client-side  [fes:on]
 
-# ===== queries — advertising 1 of 2 (1 read / 0 write) =====
-queries.elasticube_run_jaql_query   # [read, reclassified] Run a JAQL query against a datasource (elasticube).
-# [excluded: same query as elasticube_run_jaql_query via /jaql/csv; structured JSON is what an agent can reason over]
-# queries.elasticubes_run_jaql_csv  # [read, reclassified] Run a JAQL query and return CSV output.  [fes: EXPOSED]
+# ----- queries (1/2) -----
+queries.elasticube_run_jaql_query   # Run a JAQL query against a datasource (elasticube).
+# queries.elasticubes_run_jaql_csv  # Run a JAQL query and return CSV output.  — same query as elasticube_run_jaql_query via /jaql/csv; structured JSON is what an agent can reason over  [fes:on]
 
-# ===== report_manager — advertising 6 of 6 (2 read / 4 write) =====
-# [promoted 2026-09-01: new Report Manager facade in SDK 1.1.0; fes-assistant exposes all six]
-report_manager.get_reports    # Retrieve all reports configured in Report Manager.
-report_manager.get_report     # Retrieve a single Report Manager report by id.
-report_manager.create_report  # [write] Create a new Report Manager report.
-report_manager.update_report  # [write] Update an existing Report Manager report.
-report_manager.delete_report  # [write] Delete a Report Manager report by id.
-report_manager.run_report     # [write] Trigger an immediate run of a Report Manager report.
-# ===== wellcheck — advertising 8 of 9 (8 read / 0 write) =====
+# ----- report_manager (2/2) -----
+report_manager.get_report   # Retrieve a single Report Manager report by id.
+report_manager.get_reports  # Retrieve all reports configured in Report Manager.
+
+# ----- wellcheck (8/9) -----
 wellcheck.check_dashboard_structure          # Analyze the structure of one or more dashboards.
 wellcheck.check_dashboard_widget_counts      # Compute widget counts for one or more dashboards.
-wellcheck.check_datamodel_custom_tables      # Inspect custom tables in one or more data models and flag the use of ...
-wellcheck.check_datamodel_import_queries     # Inspect tables in one or more data models for import queries.
-wellcheck.check_datamodel_island_tables      # Identify island tables (tables with no relationships) in one or more ...
-wellcheck.check_datamodel_m2m_relationships  # Check for potential many-to-many (M2M) relationships between tables
-wellcheck.check_datamodel_rls_datatypes      # Inspect row-level security (RLS) rules for one or more data models and
-wellcheck.check_pivot_widget_fields          # Analyze pivot widgets on one or more dashboards and report those with...
+wellcheck.check_datamodel_custom_tables      # Inspect custom tables in one or more data models and flag…
+wellcheck.check_datamodel_import_queries     # Inspect tables in one or more data models for import…
+wellcheck.check_datamodel_island_tables      # Identify island tables (tables with no relationships) in…
+wellcheck.check_datamodel_m2m_relationships  # Check for potential many-to-many (M2M) relationships…
+wellcheck.check_datamodel_rls_datatypes      # Inspect row-level security (RLS) rules for one or more…
+wellcheck.check_pivot_widget_fields          # Analyze pivot widgets on one or more dashboards and…
+# wellcheck.run_full_wellcheck               # Run a composite "full" wellcheck across dashboards and…  — composite of the eight checks; slow (m2m runs aggregate SQL) — enable to trade nine tools for one
 
-# ===== DEPRECATED: removed from the SDK — history only, never uncomment =====
-# --- removed in pysisense 2.0.1 ---
-# access_management.get_group                                  # Retrieve group details by name.
-# access_management.get_unused_columns                         # Identify unused columns in a DataModel by comparing all columns again...
-# access_management.get_user_with_role_and_group_names         # Retrieve a single user by email/username with role and group details.
-# access_management.get_users_with_role_names_and_group_names  # Retrieve all users enriched with role names and group names.
-# access_management.users_per_group_all                        # Retrieve all groups mapped to the users belonging to them.
-# access_management.get_user_email_and_group_name_maps         # Fetch all users and groups and build ID-to-name lookup maps.
-# access_management.get_users_expanded                         # Retrieve all users with raw, unmodified role and group objects.
+#==============================================================================
+#  WRITE TOOLS — advertising 47 of 57
+#==============================================================================
 
-# ===== STAGED: new in the registry — uncomment a line to expose the tool =====
-# --- new in pysisense 1.1.0 ---
-# access_management.get_tenants                   # Retrieve all tenants.
-# blox.get_blox_widget_style                      # Retrieve the style objects of a BloX widget.
-# blox.update_blox_widget_style                   # [write] Update the style objects of a BloX widget.
-# dashboard.import_dashboards_bulk                # [write] Import one or more dashboards via the bulk import endpoint.
-# datamodel.export_datamodel_schema               # Export a data model's full schema definition for re-import elsewhere.
-# datamodel.get_datamodel_permissions_extract     # Retrieve raw share entries for an EXTRACT (Elasticube) data model.
-# datamodel.get_datamodel_permissions_live        # Retrieve raw share entries for a LIVE data model.
-# datamodel.get_datasecurity_raw                  # Retrieve the raw, unprocessed datasecurity rules for a data model.
-# datamodel.import_datamodel_schema               # [write] Import a data model schema (as produced by ``export_datamodel_schema``).
-# datamodel.update_datamodel_permissions_extract  # [write] Replace share entries for an EXTRACT (Elasticube) data model.
-# datamodel.update_datamodel_permissions_live     # [write] Replace share entries for a LIVE data model.
-# mergetool.migrate_all_blox_actions              # [write] Migrate all Blox actions from source to target.
-# mergetool.migrate_all_dashboards                # [write] Migrate all dashboards from source to target.
-# mergetool.migrate_all_datamodels                # [write] Migrate all data models from source to target.
-# mergetool.migrate_all_datasecurity              # [write] Migrate datasecurity rules for all data models from source to target.
-# mergetool.migrate_all_folders                   # [write] Migrate all folders from source to target, preserving full hierarchy.
-# mergetool.migrate_all_groups                    # [write] Migrate all eligible groups from source to target.
-# mergetool.migrate_all_notebooks                 # [write] Migrate all notebooks from source to target.
-# mergetool.migrate_all_saved_filters             # [write] Migrate saved filter dimensions for all data models from source to target.
-# mergetool.migrate_all_saved_formulas            # [write] Migrate saved formula measures for all data models from source to target.
-# mergetool.migrate_all_users                     # [write] Migrate all eligible users from source to target.
-# mergetool.migrate_blox_actions                  # [write] Migrate specific Blox actions from source to target.
-# mergetool.migrate_dashboards                    # [write] Migrate specific dashboards from source to target.
-# mergetool.migrate_datamodels                    # [write] Migrate specific data models from source to target.
-# mergetool.migrate_datasecurity                  # [write] Migrate row-level datasecurity rules for specific data models from source to target.
-# mergetool.migrate_folders                       # [write] Migrate specific folders and their full subtrees from source to target.
-# mergetool.migrate_groups                        # [write] Migrate specific groups from source to target.
-# mergetool.migrate_notebooks                     # [write] Migrate specific notebooks from source to target.
-# mergetool.migrate_saved_filters                 # [write] Migrate saved filter dimensions for specific data models from source to target.
-# mergetool.migrate_saved_formulas                # [write] Migrate saved formula measures for specific data models from source to target.
-# mergetool.migrate_users                         # [write] Migrate specific users from source to target.
-# wellcheck.run_full_wellcheck                    # Run a composite "full" wellcheck across dashboards and data models.
+# ----- access_management (9/9) -----
+access_management.change_folder_and_dashboard_ownership  # Change the ownership of folders and optionally dashboards.
+access_management.change_user_password                   # Change a user's password.
+access_management.create_groups_bulk                     # Create multiple groups in a single bulk request.
+access_management.create_schedule_build                  # Create a schedule build for a DataModel.
+access_management.create_user                            # Create a new user in Sisense.
+access_management.create_users_bulk                      # Create multiple users in a single bulk request.
+access_management.delete_group                           # Delete a group by ID.
+access_management.delete_user                            # Delete a user by their email (username).
+access_management.update_user                            # Update an existing Sisense user identified by their email…
+
+# ----- blox (0/3) -----
+# blox.delete_blox_action        # Delete a custom Blox action from the Sisense instance.
+# blox.save_blox_action          # Save a custom Blox action on the Sisense instance.
+# blox.update_blox_widget_style  # Update the style objects of a BloX widget.  — narrow BloX styling niche
+
+# ----- custom_code (5/5) -----
+custom_code.create_notebook         # Create a new notebook.  [fes:off]
+custom_code.delete_notebook         # Delete a notebook by ID.  [fes:off]
+custom_code.rename_notebook_file    # Rename or update a notebook resource file.  [fes:off]
+custom_code.rename_notebook_folder  # Rename a custom-code notebook folder.  [fes:off]
+custom_code.update_notebook         # Update an existing notebook.  [fes:off]
+
+# ----- dashboard (8/9) -----
+dashboard.add_dashboard_script      # Add or overwrite a script on a dashboard.
+dashboard.add_dashboard_shares      # Add or update shares for a dashboard for the given users…
+dashboard.add_widget_script         # Add or overwrite a script for a specific widget within a…
+dashboard.change_dashboard_owner    # Transfer ownership of a dashboard to a different user.
+dashboard.move_dashboard_to_folder  # Move a dashboard into a folder.
+dashboard.publish_dashboard         # Publish (republish) a dashboard.
+dashboard.rename_dashboard          # Rename a dashboard.
+dashboard.update_widget             # Write updated widget data back to Sisense.
+# dashboard.import_dashboards_bulk  # Import one or more dashboards via the bulk import…  — cross-environment primitive: pairs with export_dashboard into a DIY migration path
+
+# ----- datamodel (11/15) -----
+datamodel.add_datamodel_shares                    # Add share entries (users and groups) to a data model.
+datamodel.create_connections                      # Create a new connection using the provided payload.
+datamodel.create_dataset                          # Create a new dataset in the specified data model.
+datamodel.create_table                            # Create a new table in the specified data model.
+datamodel.delete_datamodel                        # Delete a data model by title and server using the GraphQL…
+datamodel.delete_datasecurity                     # Delete all datasecurity rules for one table/column of a…
+datamodel.deploy_datamodel                        # Deploy (build or publish) the specified data model based…
+datamodel.set_live_datasecurity_add_many          # Add multiple datasecurity rules to a LIVE datamodel.
+datamodel.setup_datamodel                         # Set up a data model end to end using an existing…
+datamodel.update_connection                       # Update an existing connection.
+datamodel.update_datasecurity                     # Add datasecurity rules to an EXTRACT (Elasticube)…
+# datamodel.create_datamodel                      # Create a new data model in Sisense.  — creates an unrescuable skeleton — setup_datamodel can't finish it and create_table can't infer from a dataset-less model; setup_datamodel covers from-scratch creation in one call (fes-assistant finding)
+# datamodel.import_datamodel_schema               # Import a data model schema (as produced by…  — cross-environment primitive
+# datamodel.update_datamodel_permissions_extract  # Replace share entries for an EXTRACT (Elasticube) data…  — wholesale replace; add_datamodel_shares is additive
+# datamodel.update_datamodel_permissions_live     # Replace share entries for a LIVE data model.  — wholesale replace; add_datamodel_shares is additive
+
+# ----- encryption (2/2) -----
+encryption.decrypt  # Decrypt a value using the Sisense encryption service.  [fes:off]
+encryption.encrypt  # Encrypt a value using the Sisense encryption service.  [fes:off]
+
+# ----- folder (3/3) -----
+folder.create_folder  # Create a new Sisense folder.
+folder.delete_folder  # Delete a folder by OID.
+folder.update_folder  # Update an existing folder.
+
+# ----- metadata (2/2) -----
+metadata.add_datasource_measure  # Create a saved formula measure in Sisense metadata.  [fes:off]
+metadata.post_metadata_query     # Execute a metadata query against Sisense.  [fes:off]
+
+# ----- plugins (3/5) -----
+plugins.disable_plugins   # Disable one or more plugins by name or folder name.
+plugins.enable_plugins    # Enable one or more plugins by name or folder name.
+plugins.restore_snapshot  # Restore plugin states to exactly match a previously saved…
+# plugins.disable_plugin  # Disable a single plugin by name or folder name.  — dup group 15 — disable_plugins is a strict input superset  [fes:on]
+# plugins.enable_plugin   # Enable a single plugin by name or folder name.  — dup group 15 — enable_plugins accepts a bare string and returns richer results  [fes:on]
+
+# ----- report_manager (4/4) -----
+report_manager.create_report  # Create a new Report Manager report.
+report_manager.delete_report  # Delete a Report Manager report by id.
+report_manager.run_report     # Trigger an immediate run of a Report Manager report.
+report_manager.update_report  # Update an existing Report Manager report.

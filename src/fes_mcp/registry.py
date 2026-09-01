@@ -18,9 +18,11 @@ from .schema_patches import FIELD_DESCRIPTIONS
 
 logger = logging.getLogger("fes_mcp.registry")
 
-# Dual-tenant migration tools are out of scope for v1 (they need their own
-# source/target connection mode).
-EXCLUDED_MODULES = {"migration"}
+# Cross-environment tools are out of scope: their SDK facades are built from a
+# SOURCE plus a TARGET client, which a per-user session credential cannot
+# express. They stay out of the registry selection entirely rather than sitting
+# in the allowlist as tools that could never run.
+EXCLUDED_MODULES = {"migration", "mergetool"}
 
 # Corrections to the generated `mutates` heuristic, verified against the SDK
 # source: these only execute queries or lookups (POSTs to query/GraphQL
