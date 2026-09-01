@@ -64,6 +64,18 @@ USAGE_NOTES: dict[str, str] = {
         "Uses an internal Linux-only route; on Windows-based Sisense use "
         "get_elasticubes instead."
     ),
+    # Open SDK issue (reported 2026-09-01): partial success must not read as
+    # plain success.
+    "datamodel.add_datamodel_shares": (
+        "IMPORTANT: check the `skipped` array in the result — those shares "
+        "were requested but NOT applied (unknown or inactive user); report "
+        "them to the user, never as success."
+    ),
+    # Open SDK issue: LIVE silently discards mis-keyed share entries.
+    "datamodel.set_live_datasecurity_add_many": (
+        "Share entries must use the `partyId` key — entries keyed `party` "
+        "are silently discarded on LIVE models."
+    ),
 }
 
 

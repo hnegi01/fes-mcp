@@ -47,41 +47,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I transfer ownership of the 'Sales Reports' folder to another user and ensure they also own the dashboards inside it?",
-        "arguments": {
-          "executing_user": "admin@example.com",
-          "folder_name": "Sales Reports",
-          "new_owner_name": "jane.doe@example.com",
-          "original_owner_rule": "edit",
-          "change_dashboard_ownership": true
-        },
-        "notes": "This call transfers ownership of the 'Sales Reports' folder and all dashboards within it to Jane Doe. The original owner retains 'edit' permissions."
-      },
-      {
-        "user_query": "I need to change the owner of the 'Marketing Data' folder to John Smith but leave the dashboards ownership unchanged.",
-        "arguments": {
-          "executing_user": "admin@example.com",
-          "folder_name": "Marketing Data",
-          "new_owner_name": "john.smith@example.com",
-          "original_owner_rule": "view",
-          "change_dashboard_ownership": false
-        },
-        "notes": "This call transfers ownership of the 'Marketing Data' folder to John Smith, sets the original owner's permissions to 'view', and leaves dashboard ownership unchanged."
-      },
-      {
-        "user_query": "Can I reassign the 'Finance Team' folder to a new owner while keeping the original owner as an editor?",
-        "arguments": {
-          "executing_user": "admin@example.com",
-          "folder_name": "Finance Team",
-          "new_owner_name": "alice.jones@example.com",
-          "original_owner_rule": "edit",
-          "change_dashboard_ownership": true
-        },
-        "notes": "This call transfers ownership of the 'Finance Team' folder and its dashboards to Alice Jones. The original owner retains 'edit' permissions."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "access_management.change_user_password",
@@ -116,32 +82,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Reset the password for the user with ID 'user123'.",
-        "arguments": {
-          "user_id": "user123",
-          "password": "NewSecurePassword123!"
-        },
-        "notes": "This call updates the password for the user with ID 'user123' to a new secure value. Use this when a user requests a password reset or if their account security is compromised."
-      },
-      {
-        "user_query": "Change the password for the admin user with ID 'admin001' to a new value.",
-        "arguments": {
-          "user_id": "admin001",
-          "password": "AdminPass2023!"
-        },
-        "notes": "This call changes the password for the admin user with ID 'admin001'. This is useful for enforcing password updates for administrative accounts."
-      },
-      {
-        "user_query": "Update the password for the user with ID 'teamlead45' to a stronger one.",
-        "arguments": {
-          "user_id": "teamlead45",
-          "password": "Str0ngP@ssw0rd!"
-        },
-        "notes": "This call sets a stronger password for the user with ID 'teamlead45'. Use this to improve account security for key team members."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "access_management.create_groups_bulk",
@@ -234,44 +175,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I schedule a full build for the 'SalesDataModel' to run every Monday at 3:00 UTC?",
-        "arguments": {
-          "datamodel_name": "SalesDataModel",
-          "build_type": "FULL",
-          "days": [
-            "MON"
-          ],
-          "hour": 3,
-          "minute": 0
-        },
-        "notes": "This call schedules a full build of the 'SalesDataModel' to run every Monday at 3:00 AM UTC using a cron-based schedule."
-      },
-      {
-        "user_query": "I need to set up an interval-based build for 'MarketingAnalytics' to run every 2 days and 6 hours. How can I do that?",
-        "arguments": {
-          "datamodel_name": "MarketingAnalytics",
-          "build_type": "ACCUMULATE",
-          "interval_days": 2,
-          "interval_hours": 6
-        },
-        "notes": "This call creates an interval-based schedule for the 'MarketingAnalytics' DataModel to build every 2 days and 6 hours. The build type defaults to 'ACCUMULATE'."
-      },
-      {
-        "user_query": "Can I create a schema changes build for 'FinanceModel' to run daily at 12:30 UTC?",
-        "arguments": {
-          "datamodel_name": "FinanceModel",
-          "build_type": "SCHEMA_CHANGES",
-          "days": [
-            "*"
-          ],
-          "hour": 12,
-          "minute": 30
-        },
-        "notes": "This call schedules a schema changes build for the 'FinanceModel' to run daily at 12:30 PM UTC using a cron-based schedule."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "access_management.create_user",
@@ -335,64 +239,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Add a new user with the Viewer role and assign them to the Sales and Marketing groups.",
-        "arguments": {
-          "user_data": {
-            "email": "jane.doe@example.com",
-            "firstName": "Jane",
-            "lastName": "Doe",
-            "role": "VIEWER",
-            "groups": [
-              "Sales",
-              "Marketing"
-            ],
-            "preferences": {
-              "language": "en",
-              "timezone": "America/New_York"
-            }
-          }
-        },
-        "notes": "This call creates a new user named Jane Doe with the Viewer role, assigns them to the Sales and Marketing groups, and sets their preferences for language and timezone."
-      },
-      {
-        "user_query": "Create a new Designer user and assign them to the Data Analysts group.",
-        "arguments": {
-          "user_data": {
-            "email": "john.smith@example.com",
-            "firstName": "John",
-            "lastName": "Smith",
-            "role": "DESIGNER",
-            "groups": [
-              "Data Analysts"
-            ],
-            "preferences": {
-              "language": "en",
-              "timezone": "Europe/London"
-            }
-          }
-        },
-        "notes": "This call creates a new user named John Smith with the Designer role, assigns them to the Data Analysts group, and configures their preferences for language and timezone."
-      },
-      {
-        "user_query": "Add a new admin user with no group assignments.",
-        "arguments": {
-          "user_data": {
-            "email": "admin.user@example.com",
-            "firstName": "Admin",
-            "lastName": "User",
-            "role": "ADMIN",
-            "groups": [],
-            "preferences": {
-              "language": "en",
-              "timezone": "UTC"
-            }
-          }
-        },
-        "notes": "This call creates a new user named Admin User with the Admin role, does not assign them to any groups, and sets their preferences for language and timezone."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "access_management.create_users_bulk",
@@ -486,29 +333,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Remove the user with the email john.doe@example.com from the system.",
-        "arguments": {
-          "user_name": "john.doe@example.com"
-        },
-        "notes": "This call deletes the user account associated with the email john.doe@example.com. Use this when a user is no longer part of the organization or should no longer have access."
-      },
-      {
-        "user_query": "Delete the account for jane.smith@company.com.",
-        "arguments": {
-          "user_name": "jane.smith@company.com"
-        },
-        "notes": "This operation removes the user jane.smith@company.com from the system. Use this to revoke access for a specific user permanently."
-      },
-      {
-        "user_query": "I need to delete the user with the email admin@org.com.",
-        "arguments": {
-          "user_name": "admin@org.com"
-        },
-        "notes": "This deletes the user admin@org.com from the system. Ensure that this user is not critical for administrative tasks before proceeding."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "access_management.get_all_dashboard_shares",
@@ -531,23 +356,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Show me all the dashboards and who they are shared with.",
-        "arguments": {},
-        "notes": "This retrieves a list of all dashboards along with details of the users and groups they are shared with. Useful for auditing dashboard sharing settings."
-      },
-      {
-        "user_query": "I need to see which groups have access to our dashboards.",
-        "arguments": {},
-        "notes": "This call fetches all dashboards and includes group sharing details, making it helpful for understanding group-level access."
-      },
-      {
-        "user_query": "Can I get a list of all users who have access to our dashboards?",
-        "arguments": {},
-        "notes": "This retrieves all dashboards and their associated user sharing details, which is useful for reviewing individual user access."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "access_management.get_datamodel_columns",
@@ -577,29 +386,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What columns are available in the 'SalesAnalytics' DataModel?",
-        "arguments": {
-          "datamodel_name": "SalesAnalytics"
-        },
-        "notes": "This call retrieves all columns from the 'SalesAnalytics' DataModel, including columns from its datasets and tables. Use this to explore the structure of the DataModel."
-      },
-      {
-        "user_query": "Can you list the columns in the 'CustomerInsights' DataModel?",
-        "arguments": {
-          "datamodel_name": "CustomerInsights"
-        },
-        "notes": "This call gathers column information from the 'CustomerInsights' DataModel. Useful for understanding the data available for analysis in this model."
-      },
-      {
-        "user_query": "I need to check the columns in the 'MarketingPerformance' DataModel for a report. Can you help?",
-        "arguments": {
-          "datamodel_name": "MarketingPerformance"
-        },
-        "notes": "This call extracts all columns from the 'MarketingPerformance' DataModel, enabling you to verify the data structure for reporting purposes."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "access_management.get_groups",
@@ -650,23 +437,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Who am I logged in as right now?",
-        "arguments": {},
-        "notes": "This call retrieves the details of the currently authenticated user based on the API token. Useful for verifying the identity of the logged-in user."
-      },
-      {
-        "user_query": "Can you fetch the user details for the current API token?",
-        "arguments": {},
-        "notes": "This call returns the user object associated with the API token, including information like email, username, and internal ID. Ideal for debugging or auditing purposes."
-      },
-      {
-        "user_query": "What is the email address of the user associated with this token?",
-        "arguments": {},
-        "notes": "This retrieves the logged-in user's information, which can be used to confirm the email address or other identifying details of the API token owner."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "access_management.get_roles",
@@ -688,23 +459,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What roles are available in our Sisense instance?",
-        "arguments": {},
-        "notes": "This call retrieves all roles defined in the Sisense instance. Useful for understanding role configurations or preparing for role-based access control setup."
-      },
-      {
-        "user_query": "Can you list all the roles so I can map them to user groups in our system?",
-        "arguments": {},
-        "notes": "This call fetches the complete list of roles, which can be used to map Sisense roles to external user groups during integration or migration workflows."
-      },
-      {
-        "user_query": "I need to see all roles to verify if a new role needs to be created.",
-        "arguments": {},
-        "notes": "Use this call to review the existing roles and determine if additional roles are necessary for new user access requirements."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "access_management.get_tenants",
@@ -758,38 +513,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Which columns are unused in the 'Sales Data' and 'Marketing Analytics' data models?",
-        "arguments": {
-          "datamodels": [
-            "Sales Data",
-            "Marketing Analytics"
-          ]
-        },
-        "notes": "This call analyzes the 'Sales Data' and 'Marketing Analytics' data models to identify columns that are not being used."
-      },
-      {
-        "user_query": "Find unused columns in the data model with ID 'dm_12345'.",
-        "arguments": {
-          "datamodels": [
-            "dm_12345"
-          ]
-        },
-        "notes": "This call checks the data model with ID 'dm_12345' for any unused columns. Useful when you know the specific ID of the data model."
-      },
-      {
-        "user_query": "Run unused-column analysis on multiple data models: 'dm_67890', 'Customer Insights', and 'dm_54321'.",
-        "arguments": {
-          "datamodels": [
-            "dm_67890",
-            "Customer Insights",
-            "dm_54321"
-          ]
-        },
-        "notes": "This call processes three data models—two by ID and one by title—to identify unused columns across all of them."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "access_management.get_user",
@@ -820,29 +544,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Find details for the user with email john.doe@example.com.",
-        "arguments": {
-          "user_email": "john.doe@example.com"
-        },
-        "notes": "This call retrieves detailed information about John Doe, including their groups and roles."
-      },
-      {
-        "user_query": "Get user information for jane.smith@company.com.",
-        "arguments": {
-          "user_email": "jane.smith@company.com"
-        },
-        "notes": "Use this to fetch Jane Smith's user details, including expanded group and role data."
-      },
-      {
-        "user_query": "Retrieve the profile for admin@organization.org.",
-        "arguments": {
-          "user_email": "admin@organization.org"
-        },
-        "notes": "This call is useful for verifying the admin user's access and role assignments."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "access_management.get_users_all",
@@ -865,23 +567,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Show me all the users in the system along with their roles and group memberships.",
-        "arguments": {},
-        "notes": "This call retrieves a list of all users in the system, including their associated roles and group memberships. Useful for auditing or managing user access."
-      },
-      {
-        "user_query": "I need to see which groups and roles are assigned to each user.",
-        "arguments": {},
-        "notes": "This call provides detailed information about each user's group and role assignments. It excludes the 'Everyone' group if the user belongs to other groups."
-      },
-      {
-        "user_query": "Can I get a full list of users with their roles and groups for reporting purposes?",
-        "arguments": {},
-        "notes": "This call generates a comprehensive list of users, including their roles and group memberships, which can be used for reporting or compliance checks."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "access_management.update_user",
@@ -948,41 +634,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Update the email and role of a user with the email john.doe@example.com.",
-        "arguments": {
-          "user_email": "john.doe@example.com",
-          "user_data": {
-            "email": "john.doe.new@example.com",
-            "role": "designer"
-          }
-        },
-        "notes": "This call updates the user's email address and assigns them the 'designer' role."
-      },
-      {
-        "user_query": "Change the username and clear all group memberships for jane.smith@example.com.",
-        "arguments": {
-          "user_email": "jane.smith@example.com",
-          "user_data": {
-            "userName": "jane.smith.new",
-            "groups": []
-          }
-        },
-        "notes": "This call updates the user's username and removes all group memberships."
-      },
-      {
-        "user_query": "Update the first and last name of a user with the email admin.user@example.com.",
-        "arguments": {
-          "user_email": "admin.user@example.com",
-          "user_data": {
-            "firstName": "Admin",
-            "lastName": "User"
-          }
-        },
-        "notes": "This call updates the user's first and last name while leaving other fields unchanged."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "access_management.users_per_group",
@@ -1011,29 +663,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Who are the members of the 'Data Analysts' group?",
-        "arguments": {
-          "group_name": "Data Analysts"
-        },
-        "notes": "This call retrieves all users belonging to the 'Data Analysts' group. Use it to audit group membership or fetch user details for further processing."
-      },
-      {
-        "user_query": "List all users in the 'Executive Team' group.",
-        "arguments": {
-          "group_name": "Executive Team"
-        },
-        "notes": "Use this call to fetch the members of the 'Executive Team' group, which might include high-level stakeholders or decision-makers."
-      },
-      {
-        "user_query": "Get the list of users in the 'Marketing Specialists' group.",
-        "arguments": {
-          "group_name": "Marketing Specialists"
-        },
-        "notes": "This call is helpful for identifying members of the 'Marketing Specialists' group, enabling targeted communication or permissions management."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "blox.delete_blox_action",
@@ -1062,29 +692,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I remove a custom Blox action called 'export_to_csv' from my Sisense instance?",
-        "arguments": {
-          "action_type": "export_to_csv"
-        },
-        "notes": "This call deletes the 'export_to_csv' custom Blox action from the Sisense instance. Use this when the action is no longer needed or requires replacement."
-      },
-      {
-        "user_query": "I need to delete the 'send_email_notification' Blox action. How do I do that?",
-        "arguments": {
-          "action_type": "send_email_notification"
-        },
-        "notes": "This call removes the 'send_email_notification' custom Blox action. Use this to clean up unused or outdated actions."
-      },
-      {
-        "user_query": "Can I delete the 'generate_pdf_report' action from Sisense?",
-        "arguments": {
-          "action_type": "generate_pdf_report"
-        },
-        "notes": "This call deletes the 'generate_pdf_report' custom Blox action. Use this when the action is no longer relevant or needs to be replaced."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "blox.get_blox_actions",
@@ -1106,23 +714,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What custom Blox actions are available in my Sisense instance?",
-        "arguments": {},
-        "notes": "This call retrieves all custom Blox actions configured in the Sisense instance. Use this to review available actions for dashboards or widgets."
-      },
-      {
-        "user_query": "Can you list all the custom actions defined for Blox?",
-        "arguments": {},
-        "notes": "This call fetches a list of all custom Blox actions. Useful for administrators managing Blox configurations."
-      },
-      {
-        "user_query": "Show me the custom Blox actions I can use for my widgets.",
-        "arguments": {},
-        "notes": "This call provides a list of custom Blox actions that can be applied to widgets or dashboards in Sisense."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "blox.get_blox_widget_style",
@@ -1189,59 +781,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Save a custom Blox action named 'ExportDashboardAction' that exports dashboard 'dashboard_12345' as PDF.",
-        "arguments": {
-          "action": {
-            "name": "ExportDashboardAction",
-            "type": "custom",
-            "payload": {
-              "dashboardId": "dashboard_12345",
-              "actionType": "export",
-              "format": "PDF"
-            }
-          }
-        },
-        "notes": "This saves a custom action that allows exporting a specific dashboard to PDF format."
-      },
-      {
-        "user_query": "I want to create a custom action that triggers a webhook when a widget is updated. How do I do that?",
-        "arguments": {
-          "action": {
-            "name": "WidgetUpdateWebhook",
-            "type": "custom",
-            "payload": {
-              "widgetId": "widget_67890",
-              "actionType": "webhook",
-              "url": "https://example.com/webhook",
-              "method": "POST"
-            }
-          }
-        },
-        "notes": "This creates a custom action that triggers a POST request to a specified webhook URL whenever the specified widget is updated."
-      },
-      {
-        "user_query": "Can I define a custom action to send an email notification when a data alert is triggered?",
-        "arguments": {
-          "action": {
-            "name": "DataAlertEmailNotification",
-            "type": "custom",
-            "payload": {
-              "alertId": "alert_54321",
-              "actionType": "email",
-              "recipients": [
-                "user@example.com",
-                "admin@example.com"
-              ],
-              "subject": "Data Alert Triggered",
-              "body": "The data alert has been triggered. Please review the details."
-            }
-          }
-        },
-        "notes": "This defines a custom action that sends an email notification to specified recipients when a specific data alert is triggered."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "blox.update_blox_widget_style",
@@ -1336,63 +876,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Create a new Python notebook for data analysis with the name 'Sales Analysis 2023'.",
-        "arguments": {
-          "notebook_data": {
-            "notebookType": "python",
-            "displayName": "Sales Analysis 2023",
-            "manifest": {
-              "description": "Notebook for analyzing sales data for 2023",
-              "tags": [
-                "sales",
-                "analysis",
-                "2023"
-              ]
-            }
-          },
-          "use_internal_header": true
-        },
-        "notes": "This call creates a Python notebook named 'Sales Analysis 2023' with metadata describing its purpose."
-      },
-      {
-        "user_query": "Generate a new R notebook for forecasting with a custom manifest.",
-        "arguments": {
-          "notebook_data": {
-            "notebookType": "r",
-            "displayName": "Forecasting Notebook",
-            "manifest": {
-              "description": "Notebook for forecasting models",
-              "tags": [
-                "forecasting",
-                "models"
-              ]
-            }
-          },
-          "use_internal_header": true
-        },
-        "notes": "This call creates an R notebook named 'Forecasting Notebook' with a manifest for forecasting tasks."
-      },
-      {
-        "user_query": "Create a Jupyter notebook for machine learning experiments without the internal header.",
-        "arguments": {
-          "notebook_data": {
-            "notebookType": "jupyter",
-            "displayName": "ML Experiments",
-            "manifest": {
-              "description": "Notebook for running machine learning experiments",
-              "tags": [
-                "machine learning",
-                "experiments"
-              ]
-            }
-          },
-          "use_internal_header": false
-        },
-        "notes": "This call creates a Jupyter notebook named 'ML Experiments' for machine learning tasks, omitting the internal header."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "custom_code.delete_notebook",
@@ -1421,29 +905,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I delete the notebook with ID 'abc123'?",
-        "arguments": {
-          "notebook_id": "abc123"
-        },
-        "notes": "This call deletes the notebook with the specified ID 'abc123'. Use this when you no longer need the notebook or want to remove outdated content."
-      },
-      {
-        "user_query": "I need to remove the notebook 'sales_analysis_2023'. What's the process?",
-        "arguments": {
-          "notebook_id": "sales_analysis_2023"
-        },
-        "notes": "This call deletes the notebook named 'sales_analysis_2023'. Use this to clean up notebooks that are no longer relevant or have been replaced."
-      },
-      {
-        "user_query": "Can I delete the notebook with UUID 'd4f5e6g7h8i9'?",
-        "arguments": {
-          "notebook_id": "d4f5e6g7h8i9"
-        },
-        "notes": "This call removes the notebook identified by UUID 'd4f5e6g7h8i9'. Use this when you need to free up space or remove obsolete notebooks."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "custom_code.export_notebook",
@@ -1472,29 +934,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I export the notebook definition for the sales analysis notebook?",
-        "arguments": {
-          "notebook_id": "123e4567-e89b-12d3-a456-426614174000"
-        },
-        "notes": "This call exports the definition of the 'sales analysis' notebook using its unique identifier. Use this to retrieve the notebook's configuration or share it with others."
-      },
-      {
-        "user_query": "I need to export the notebook for the quarterly revenue report. What should I do?",
-        "arguments": {
-          "notebook_id": "987f6543-b21c-34d5-c678-123456789abc"
-        },
-        "notes": "This call retrieves the definition of the 'quarterly revenue report' notebook. Useful for backing up or transferring the notebook."
-      },
-      {
-        "user_query": "Can I get the export file for the customer segmentation notebook?",
-        "arguments": {
-          "notebook_id": "abc12345-6789-0def-1122-334455667788"
-        },
-        "notes": "This call exports the 'customer segmentation' notebook definition. Use this to analyze or replicate the notebook in another environment."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "custom_code.get_notebooks",
@@ -1525,31 +965,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Fetch all available notebooks in the system.",
-        "arguments": {},
-        "notes": "This retrieves all notebooks without filtering by type or additional parameters."
-      },
-      {
-        "user_query": "Get all notebooks of type 'CustomCodeTransformation'.",
-        "arguments": {
-          "notebook_type": "CustomCodeTransformation"
-        },
-        "notes": "This fetches only notebooks categorized as 'CustomCodeTransformation'. Useful for filtering specific types of notebooks."
-      },
-      {
-        "user_query": "Retrieve notebooks with additional query parameters for filtering.",
-        "arguments": {
-          "notebook_type": "CustomCodeTransformation",
-          "params": {
-            "createdBy": "admin_user",
-            "limit": 10
-          }
-        },
-        "notes": "This retrieves up to 10 notebooks of type 'CustomCodeTransformation' created by 'admin_user'. Useful for narrowing down results based on specific criteria."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "custom_code.list_notebook_folder_contents",
@@ -1578,29 +994,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What files are in the 'data-analysis' notebook folder?",
-        "arguments": {
-          "folder_id": "data-analysis"
-        },
-        "notes": "This call retrieves the list of files and subfolders in the 'data-analysis' notebook folder. Use this to explore the contents of a specific folder."
-      },
-      {
-        "user_query": "Can you show me the contents of the folder with ID 'project-123'?",
-        "arguments": {
-          "folder_id": "project-123"
-        },
-        "notes": "This call lists all items in the folder identified by 'project-123'. Useful for checking the resources available in a specific project folder."
-      },
-      {
-        "user_query": "I need to see what's inside the 'shared-reports' folder.",
-        "arguments": {
-          "folder_id": "shared-reports"
-        },
-        "notes": "This call fetches the contents of the 'shared-reports' folder. Ideal for reviewing shared resources or collaborative workspaces."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "custom_code.rename_notebook_file",
@@ -1634,39 +1028,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I rename the notebook file 'analysis.ipynb' to 'sales_analysis.ipynb'?",
-        "arguments": {
-          "resource_path": "notebooks/custom_code_notebooks/12345/analysis.ipynb",
-          "payload": {
-            "name": "sales_analysis.ipynb"
-          }
-        },
-        "notes": "This call renames the notebook file 'analysis.ipynb' to 'sales_analysis.ipynb' within the specified resource path."
-      },
-      {
-        "user_query": "I need to move the notebook file 'forecasting.ipynb' to a different folder. How can I do that?",
-        "arguments": {
-          "resource_path": "notebooks/custom_code_notebooks/67890/forecasting.ipynb",
-          "payload": {
-            "path": "notebooks/custom_code_notebooks/archived/forecasting.ipynb"
-          }
-        },
-        "notes": "This call updates the file path for 'forecasting.ipynb', effectively moving it to the 'archived' folder."
-      },
-      {
-        "user_query": "Can I rename and move the notebook file 'data_cleaning.ipynb' at the same time?",
-        "arguments": {
-          "resource_path": "notebooks/custom_code_notebooks/54321/data_cleaning.ipynb",
-          "payload": {
-            "name": "cleaned_data.ipynb",
-            "path": "notebooks/custom_code_notebooks/completed/cleaned_data.ipynb"
-          }
-        },
-        "notes": "This call simultaneously renames 'data_cleaning.ipynb' to 'cleaned_data.ipynb' and moves it to the 'completed' folder."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "custom_code.rename_notebook_folder",
@@ -1700,38 +1062,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I rename the 'DataScienceProjects' notebook folder to 'MLProjects'?",
-        "arguments": {
-          "old_id": "DataScienceProjects",
-          "payload": {
-            "new_name": "MLProjects"
-          }
-        },
-        "notes": "This call renames the 'DataScienceProjects' folder to 'MLProjects'. Use this when you want to update the folder name for better organization."
-      },
-      {
-        "user_query": "I need to move the 'ArchivedNotebooks' folder under the 'OldProjects' folder. How can I do that?",
-        "arguments": {
-          "old_id": "ArchivedNotebooks",
-          "payload": {
-            "target_id": "OldProjects"
-          }
-        },
-        "notes": "This call moves the 'ArchivedNotebooks' folder to be a subfolder under 'OldProjects'. Use this to reorganize your folder structure."
-      },
-      {
-        "user_query": "Can I rename the folder with ID 'TempFolder123' to 'FinalizedReports'?",
-        "arguments": {
-          "old_id": "TempFolder123",
-          "payload": {
-            "new_name": "FinalizedReports"
-          }
-        },
-        "notes": "This call renames the folder with ID 'TempFolder123' to 'FinalizedReports'. Use this to finalize the naming of a temporary folder."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "custom_code.update_notebook",
@@ -1783,48 +1114,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I update the title and description of a notebook?",
-        "arguments": {
-          "notebook_id": "123e4567-e89b-12d3-a456-426614174000",
-          "notebook_data": {
-            "title": "Updated Sales Analysis",
-            "description": "Notebook with updated insights for Q4 sales."
-          },
-          "use_internal_header": true
-        },
-        "notes": "This call updates the title and description of the specified notebook. Use this when you need to modify metadata for an existing notebook."
-      },
-      {
-        "user_query": "I need to change the owner of a notebook to another user. How can I do that?",
-        "arguments": {
-          "notebook_id": "987f6543-b21c-34d5-c678-123456789abc",
-          "notebook_data": {
-            "owner_id": "user-5678"
-          },
-          "use_internal_header": false
-        },
-        "notes": "This call changes the owner of the specified notebook. Setting `use_internal_header` to `false` excludes the `Internal` header."
-      },
-      {
-        "user_query": "Can I update multiple fields in a notebook at once?",
-        "arguments": {
-          "notebook_id": "abc12345-def6-7890-gh12-ijklmnopqrst",
-          "notebook_data": {
-            "title": "New Marketing Dashboard",
-            "tags": [
-              "marketing",
-              "dashboard",
-              "Q1"
-            ],
-            "is_public": true
-          },
-          "use_internal_header": true
-        },
-        "notes": "This call updates multiple fields in the notebook, including the title, tags, and visibility. Use this when making several changes at once."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.add_dashboard_script",
@@ -1864,46 +1154,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I add a custom script to my sales dashboard to modify its behavior?",
-        "arguments": {
-          "dashboard_id": "dashboard_12345",
-          "script": {
-            "type": "raw",
-            "content": "function customBehavior() { console.log('Custom script executed'); }"
-          },
-          "executing_user": "admin@sisense.com"
-        },
-        "notes": "This call adds a custom JavaScript function to the sales dashboard, allowing for tailored behavior. Use this when you need to enhance dashboard functionality."
-      },
-      {
-        "user_query": "Overwrite the script on dashboard 'dashboard_67890' with the updateChart JSON script, executing as marketing.manager@sisense.com.",
-        "arguments": {
-          "dashboard_id": "dashboard_67890",
-          "script": {
-            "type": "json",
-            "content": "{\"functionName\": \"updateChart\", \"code\": \"function updateChart() { /* logic here */ }\"}"
-          },
-          "executing_user": "marketing.manager@sisense.com"
-        },
-        "notes": "This call replaces the existing script on the marketing dashboard with a new JSON-formatted script. Use this when updating or replacing scripts programmatically."
-      },
-      {
-        "user_query": "Can I add a pre-built script payload to the finance dashboard without changing ownership?",
-        "arguments": {
-          "dashboard_id": "dashboard_54321",
-          "script": {
-            "type": "payload",
-            "content": {
-              "functionName": "calculateTotals",
-              "code": "function calculateTotals() { /* logic for totals */ }"
-            }
-          }
-        },
-        "notes": "This call adds a pre-built script payload to the finance dashboard. Use this when you already have a structured script object ready for deployment."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.add_dashboard_shares",
@@ -1941,65 +1192,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I give view access to a dashboard for a specific user and a group?",
-        "arguments": {
-          "dashboard_id": "63f2c9e4b8a4e2001d3f9a23",
-          "shares": [
-            {
-              "name": "john.doe@example.com",
-              "type": "user",
-              "rule": "view"
-            },
-            {
-              "name": "sales-team",
-              "type": "group",
-              "rule": "view"
-            }
-          ]
-        },
-        "notes": "This call adds view access for a user and a group to the specified dashboard. Use this when you want to share a dashboard with new users or groups."
-      },
-      {
-        "user_query": "I need to update a user's access level on a dashboard from view to edit. How can I do that?",
-        "arguments": {
-          "dashboard_id": "63f2c9e4b8a4e2001d3f9a23",
-          "shares": [
-            {
-              "name": "jane.smith@example.com",
-              "type": "user",
-              "rule": "edit"
-            }
-          ]
-        },
-        "notes": "This call updates the access level for a specific user on the given dashboard. Use this when you need to modify an existing share's permissions."
-      },
-      {
-        "user_query": "How do I share a dashboard with multiple users and groups, giving some edit access and others view access?",
-        "arguments": {
-          "dashboard_id": "63f2c9e4b8a4e2001d3f9a23",
-          "shares": [
-            {
-              "name": "alice.wonderland@example.com",
-              "type": "user",
-              "rule": "edit"
-            },
-            {
-              "name": "engineering-team",
-              "type": "group",
-              "rule": "view"
-            },
-            {
-              "name": "bob.builder@example.com",
-              "type": "user",
-              "rule": "view"
-            }
-          ]
-        },
-        "notes": "This call shares the dashboard with multiple users and groups, assigning different access levels. Use this when you need to set up complex sharing rules for a dashboard."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.add_widget_script",
@@ -2043,48 +1236,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I add a custom JavaScript script to a widget in my sales dashboard?",
-        "arguments": {
-          "dashboard_id": "dashboard_12345",
-          "widget_id": "widget_67890",
-          "script": {
-            "code": "console.log('Widget script executed');"
-          },
-          "executing_user": "admin@sisense.com"
-        },
-        "notes": "This call adds a simple JavaScript logging script to a widget in the specified sales dashboard. It temporarily changes the dashboard ownership to the admin user to ensure the script can be added."
-      },
-      {
-        "user_query": "I need to overwrite the script for a KPI widget in the marketing dashboard. How can I do that?",
-        "arguments": {
-          "dashboard_id": "marketing_dashboard_001",
-          "widget_id": "kpi_widget_002",
-          "script": {
-            "code": "if (value > 100) { alert('High KPI value!'); }"
-          },
-          "executing_user": "marketing_lead@sisense.com"
-        },
-        "notes": "This call overwrites the existing script for a KPI widget in the marketing dashboard. It uses a conditional JavaScript snippet to alert users when the KPI value exceeds 100."
-      },
-      {
-        "user_query": "Add the onLoad/onClick payload script to widget 'summary_widget_01' on dashboard 'exec_summary_2023', executing as ceo@sisense.com.",
-        "arguments": {
-          "dashboard_id": "exec_summary_2023",
-          "widget_id": "summary_widget_01",
-          "script": {
-            "type": "payload",
-            "data": {
-              "onLoad": "function() { console.log('Widget loaded'); }",
-              "onClick": "function() { alert('Widget clicked'); }"
-            }
-          },
-          "executing_user": "ceo@sisense.com"
-        },
-        "notes": "This call adds a pre-built payload script to a widget in the executive summary dashboard. The script includes both onLoad and onClick event handlers for enhanced interactivity."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.can_be_owned",
@@ -2113,29 +1265,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Can I take ownership of the dashboard with ID '12345abcde'?",
-        "arguments": {
-          "dashboard_id": "12345abcde"
-        },
-        "notes": "This checks if the dashboard with the specified ID can be owned by the current user. Useful for determining ownership eligibility before attempting to claim it."
-      },
-      {
-        "user_query": "Am I allowed to own the dashboard with ID '67890fghij'?",
-        "arguments": {
-          "dashboard_id": "67890fghij"
-        },
-        "notes": "This verifies whether the user has the ability to own the dashboard with the given ID. Typically used in workflows involving dashboard ownership changes."
-      },
-      {
-        "user_query": "Is it possible for me to own the dashboard with ID 'abc123xyz'?",
-        "arguments": {
-          "dashboard_id": "abc123xyz"
-        },
-        "notes": "This call determines if the current user can take ownership of the specified dashboard. Useful for validating permissions before proceeding with ownership transfer."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.change_dashboard_owner",
@@ -2208,29 +1338,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I export the definition of the sales dashboard?",
-        "arguments": {
-          "dashboard_id": "5f7d3b2e4c8b9a0012345678"
-        },
-        "notes": "This call exports the definition of the dashboard with the ID '5f7d3b2e4c8b9a0012345678', which might represent a sales dashboard. Use this to retrieve the dashboard's structure and configuration."
-      },
-      {
-        "user_query": "I need to back up the marketing dashboard configuration. How do I do that?",
-        "arguments": {
-          "dashboard_id": "6a8e4f9d5b7c2a0098765432"
-        },
-        "notes": "This call retrieves the definition of the dashboard with the ID '6a8e4f9d5b7c2a0098765432', which could be a marketing dashboard. This is useful for creating a backup of the dashboard's settings and layout."
-      },
-      {
-        "user_query": "Can I get the layout and widgets of the executive overview dashboard?",
-        "arguments": {
-          "dashboard_id": "7b9f5c1d6e8a3b0043210987"
-        },
-        "notes": "This call exports the definition of the dashboard with the ID '7b9f5c1d6e8a3b0043210987', potentially representing an executive overview dashboard. Use this to access details like widgets, layout, and filters."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.find_widgets_by_type",
@@ -2297,23 +1405,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I list all dashboards available on the Sisense server?",
-        "arguments": {},
-        "notes": "This call retrieves all dashboards accessible to the user, including their metadata."
-      },
-      {
-        "user_query": "I need to fetch all dashboards to review their configurations.",
-        "arguments": {},
-        "notes": "Use this to get a complete list of dashboards for auditing or configuration review purposes."
-      },
-      {
-        "user_query": "Can I get a list of all dashboards owned by me?",
-        "arguments": {},
-        "notes": "This retrieves all dashboards, including those owned by the user, using the admin endpoint."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.get_dashboard_by_id",
@@ -2343,29 +1435,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I retrieve the dashboard with ID '5f7d3a2e4b8c9a0012345678'?",
-        "arguments": {
-          "dashboard_id": "5f7d3a2e4b8c9a0012345678"
-        },
-        "notes": "This call retrieves the dashboard with the specified ID. Use this when you need details about a specific dashboard."
-      },
-      {
-        "user_query": "I need to fetch the dashboard with the ID '63a1b2c3d4e5f67890123456'. How do I do that?",
-        "arguments": {
-          "dashboard_id": "63a1b2c3d4e5f67890123456"
-        },
-        "notes": "This retrieves the dashboard corresponding to the given ID. Useful for accessing dashboard metadata or verifying its existence."
-      },
-      {
-        "user_query": "Can you get me the dashboard with ID '7e8f9a0b1c2d3e4f56789012'?",
-        "arguments": {
-          "dashboard_id": "7e8f9a0b1c2d3e4f56789012"
-        },
-        "notes": "This call fetches the dashboard identified by the provided ID. Ideal for retrieving specific dashboards for review or updates."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.get_dashboard_by_name",
@@ -2395,29 +1465,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Find the dashboard named 'Sales Performance Overview'.",
-        "arguments": {
-          "dashboard_name": "Sales Performance Overview"
-        },
-        "notes": "This retrieves the dashboard titled 'Sales Performance Overview', typically used to analyze sales KPIs and trends."
-      },
-      {
-        "user_query": "Get the dashboard called 'Marketing Campaign Analysis'.",
-        "arguments": {
-          "dashboard_name": "Marketing Campaign Analysis"
-        },
-        "notes": "Use this to fetch the 'Marketing Campaign Analysis' dashboard, which might contain insights on campaign performance and ROI."
-      },
-      {
-        "user_query": "Retrieve the dashboard with the name 'Executive Summary'.",
-        "arguments": {
-          "dashboard_name": "Executive Summary"
-        },
-        "notes": "This call is useful for accessing the 'Executive Summary' dashboard, often used for high-level business reporting."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.get_dashboard_columns",
@@ -2447,29 +1495,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What columns are used in the Sales Performance dashboard?",
-        "arguments": {
-          "dashboard_name": "Sales Performance"
-        },
-        "notes": "This retrieves all columns referenced by the 'Sales Performance' dashboard, including those used in widgets and filters."
-      },
-      {
-        "user_query": "Can you list the columns in the Marketing Overview dashboard?",
-        "arguments": {
-          "dashboard_name": "Marketing Overview"
-        },
-        "notes": "This call identifies all columns associated with the 'Marketing Overview' dashboard, ensuring a complete view of its data dependencies."
-      },
-      {
-        "user_query": "I need to find the columns used in the Executive Summary dashboard for auditing purposes.",
-        "arguments": {
-          "dashboard_name": "Executive Summary"
-        },
-        "notes": "Use this to extract and review all columns tied to the 'Executive Summary' dashboard, helping with data audits or dependency checks."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.get_dashboard_script",
@@ -2499,29 +1525,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I get the script for the sales dashboard?",
-        "arguments": {
-          "dashboard_id": "sales_dashboard_2023"
-        },
-        "notes": "This retrieves the script for the 'sales_dashboard_2023' dashboard, which can be used for exporting or rendering the dashboard content."
-      },
-      {
-        "user_query": "I need the script for the marketing performance dashboard to include in a report. How do I get it?",
-        "arguments": {
-          "dashboard_id": "marketing_perf_dash"
-        },
-        "notes": "This call fetches the script for the 'marketing_perf_dash' dashboard, enabling you to include its content in reports or other outputs."
-      },
-      {
-        "user_query": "Can I export the script for the executive summary dashboard?",
-        "arguments": {
-          "dashboard_id": "exec_summary_001"
-        },
-        "notes": "This retrieves the script for the 'exec_summary_001' dashboard, which can be used for exporting or rendering the executive summary content."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.get_dashboard_share",
@@ -2551,29 +1555,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Who has access to the 'Sales Overview' dashboard?",
-        "arguments": {
-          "dashboard_name": "Sales Overview"
-        },
-        "notes": "This retrieves the share details for the 'Sales Overview' dashboard, including users and groups with access."
-      },
-      {
-        "user_query": "Can you show me the sharing settings for the 'Marketing Performance' dashboard?",
-        "arguments": {
-          "dashboard_name": "Marketing Performance"
-        },
-        "notes": "This call fetches the sharing information for the 'Marketing Performance' dashboard, listing all users and groups with access."
-      },
-      {
-        "user_query": "I need to check who can view the 'Executive Summary' dashboard.",
-        "arguments": {
-          "dashboard_name": "Executive Summary"
-        },
-        "notes": "Use this to get a list of users and groups that have access to the 'Executive Summary' dashboard."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.get_dashboard_shares_v1",
@@ -2607,32 +1589,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Who has access to the sales performance dashboard?",
-        "arguments": {
-          "dashboard_id": "5f7d3a2b8e4b0c0012345678",
-          "admin_access": true
-        },
-        "notes": "This retrieves the share details for the 'Sales Performance' dashboard, including users and groups with access. Admin access is enabled to include all relevant details."
-      },
-      {
-        "user_query": "Can you show me the share settings for the marketing overview dashboard without admin access?",
-        "arguments": {
-          "dashboard_id": "63a9f0ea7b8c9d0012345678",
-          "admin_access": false
-        },
-        "notes": "This retrieves the share details for the 'Marketing Overview' dashboard, but without admin access, so the response may exclude some administrative details."
-      },
-      {
-        "user_query": "I need to verify the sharing configuration for the executive summary dashboard.",
-        "arguments": {
-          "dashboard_id": "7e4b2c3d9f0a6b0012345678",
-          "admin_access": true
-        },
-        "notes": "This retrieves the share details for the 'Executive Summary' dashboard with admin access enabled, ensuring all sharing configurations are visible."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.get_dashboard_widgets",
@@ -2662,29 +1619,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What widgets are included in the dashboard titled 'Sales Overview'?",
-        "arguments": {
-          "dashboard_ref": "Sales Overview"
-        },
-        "notes": "This retrieves all widget definitions from the 'Sales Overview' dashboard using its title as a reference."
-      },
-      {
-        "user_query": "Can you list the widgets in the dashboard with ID '63a9f0ea7bb9805e7e5e1f7c'?",
-        "arguments": {
-          "dashboard_ref": "63a9f0ea7bb9805e7e5e1f7c"
-        },
-        "notes": "This fetches widget definitions from the dashboard identified by its unique 24-character ID."
-      },
-      {
-        "user_query": "I need to check the widgets in the 'Marketing Performance' dashboard. Can you help?",
-        "arguments": {
-          "dashboard_ref": "Marketing Performance"
-        },
-        "notes": "This retrieves widget definitions from the 'Marketing Performance' dashboard using its title as the reference."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.get_dashboards",
@@ -2715,35 +1650,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Show me the dashboards I own with their titles and IDs.",
-        "arguments": {
-          "fields": [
-            "oid",
-            "title"
-          ]
-        },
-        "notes": "This call retrieves only the 'oid' and 'title' fields for dashboards visible to the authenticated user. Use this to get a concise list of dashboard identifiers and names."
-      },
-      {
-        "user_query": "I need to see all dashboards shared with me, including their owners and titles.",
-        "arguments": {
-          "fields": [
-            "title",
-            "owner"
-          ]
-        },
-        "notes": "This call fetches the 'title' and 'owner' fields for dashboards accessible to the user. Useful for understanding who owns the dashboards shared with you."
-      },
-      {
-        "user_query": "Get all available details for dashboards I can access.",
-        "arguments": {
-          "fields": []
-        },
-        "notes": "This call retrieves all fields for dashboards visible to the authenticated user. Use this when you need comprehensive dashboard details without filtering specific fields."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.get_widget_by_id",
@@ -2815,32 +1722,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I get the script for the 'Sales Overview' widget in the 'Q3_Performance' dashboard?",
-        "arguments": {
-          "dashboard_id": "Q3_Performance",
-          "widget_id": "Sales_Overview"
-        },
-        "notes": "This retrieves the script content for the 'Sales Overview' widget in the 'Q3_Performance' dashboard, useful for customizing or analyzing widget behavior."
-      },
-      {
-        "user_query": "I need the script for the widget with ID 'Widget_12345' in the dashboard 'Annual_Report_2023'.",
-        "arguments": {
-          "dashboard_id": "Annual_Report_2023",
-          "widget_id": "Widget_12345"
-        },
-        "notes": "Use this call to fetch the script for a specific widget by its ID in the 'Annual_Report_2023' dashboard."
-      },
-      {
-        "user_query": "Can I extract the script for the 'Revenue_Chart' widget from the 'Financial_Summary' dashboard?",
-        "arguments": {
-          "dashboard_id": "Financial_Summary",
-          "widget_id": "Revenue_Chart"
-        },
-        "notes": "This call retrieves the script for the 'Revenue_Chart' widget in the 'Financial_Summary' dashboard, enabling further customization or integration."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.import_dashboards_bulk",
@@ -2912,32 +1794,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I move the 'Sales Overview' dashboard into the 'Q4 Reports' folder?",
-        "arguments": {
-          "dashboard_id": "dashboard_12345",
-          "folder_id": "folder_67890"
-        },
-        "notes": "This moves the 'Sales Overview' dashboard into the 'Q4 Reports' folder. Use this when reorganizing dashboards into specific folders."
-      },
-      {
-        "user_query": "I need to transfer the 'Marketing Performance' dashboard to the 'Archived Dashboards' folder. How do I do that?",
-        "arguments": {
-          "dashboard_id": "dashboard_54321",
-          "folder_id": "folder_09876"
-        },
-        "notes": "This transfers the 'Marketing Performance' dashboard to the 'Archived Dashboards' folder. Useful for archiving older dashboards."
-      },
-      {
-        "user_query": "Can I move the 'Executive Summary' dashboard to the 'Leadership Reports' folder?",
-        "arguments": {
-          "dashboard_id": "dashboard_11223",
-          "folder_id": "folder_44556"
-        },
-        "notes": "This action relocates the 'Executive Summary' dashboard into the 'Leadership Reports' folder. Ideal for organizing dashboards by audience."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.publish_dashboard",
@@ -2975,35 +1832,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Publish the dashboard with ID 'dashboard_12345'.",
-        "arguments": {
-          "dashboard_id": "dashboard_12345",
-          "admin_access": true,
-          "force": false
-        },
-        "notes": "This call republishes the specified dashboard with admin access enabled. Use this when the caller has access but is not the owner."
-      },
-      {
-        "user_query": "Force publish the dashboard 'sales_dashboard_2023' after script updates.",
-        "arguments": {
-          "dashboard_id": "sales_dashboard_2023",
-          "admin_access": true,
-          "force": true
-        },
-        "notes": "This call forces the republishing of the dashboard, typically used after updates to scripts or configurations."
-      },
-      {
-        "user_query": "Republish the dashboard 'marketing_dashboard' without admin access.",
-        "arguments": {
-          "dashboard_id": "marketing_dashboard",
-          "admin_access": false,
-          "force": false
-        },
-        "notes": "This call republishes the dashboard without admin access. Use this when the caller is the owner or already has sufficient permissions."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.rename_dashboard",
@@ -3038,32 +1867,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How do I rename the sales dashboard to 'Q3 Sales Performance'?",
-        "arguments": {
-          "dashboard_id": "62f1a2b3c4d5e6f7890abc12",
-          "title": "Q3 Sales Performance"
-        },
-        "notes": "This renames the dashboard with the specified ID to 'Q3 Sales Performance'. Use this when updating the title to reflect a new reporting period or focus."
-      },
-      {
-        "user_query": "Can I change the name of the 'Marketing Overview' dashboard to '2023 Marketing Strategy'?",
-        "arguments": {
-          "dashboard_id": "5e4d3c2b1a0f987654321abc",
-          "title": "2023 Marketing Strategy"
-        },
-        "notes": "This updates the title of the 'Marketing Overview' dashboard to '2023 Marketing Strategy'. Useful for aligning dashboard names with updated organizational goals."
-      },
-      {
-        "user_query": "I need to rename the 'Executive Summary' dashboard to 'Monthly Executive Summary'. How can I do that?",
-        "arguments": {
-          "dashboard_id": "abc123def456ghi789jkl012",
-          "title": "Monthly Executive Summary"
-        },
-        "notes": "This renames the 'Executive Summary' dashboard to 'Monthly Executive Summary'. Ideal for clarifying the dashboard's purpose or frequency."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.resolve_dashboard_reference",
@@ -3093,29 +1897,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What is the ID and title of the dashboard named 'Sales Overview'?",
-        "arguments": {
-          "dashboard_ref": "Sales Overview"
-        },
-        "notes": "This resolves the dashboard name 'Sales Overview' to its corresponding ID and title. Use this when you know the dashboard name but need its ID."
-      },
-      {
-        "user_query": "Can you find the dashboard with the ID '5f8d04b2c9a123456789abcd'?",
-        "arguments": {
-          "dashboard_ref": "5f8d04b2c9a123456789abcd"
-        },
-        "notes": "This resolves the dashboard ID '5f8d04b2c9a123456789abcd' to its corresponding title. Use this when you have the ID but want to confirm its title."
-      },
-      {
-        "user_query": "I need the details for the dashboard called 'Marketing Performance'.",
-        "arguments": {
-          "dashboard_ref": "Marketing Performance"
-        },
-        "notes": "This resolves the dashboard name 'Marketing Performance' to its ID and title. Use this when you know the dashboard name but need its metadata."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "dashboard.update_widget",
@@ -3191,60 +1973,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I give edit access to the Sales team and read access to John Doe for the 'Revenue Analysis' data model?",
-        "arguments": {
-          "datamodel_name": "Revenue Analysis",
-          "shares": [
-            {
-              "name": "Sales Team",
-              "type": "group",
-              "permission": "EDIT"
-            },
-            {
-              "name": "john.doe@example.com",
-              "type": "user",
-              "permission": "READ"
-            }
-          ]
-        },
-        "notes": "This call adds edit access for the Sales team and read access for John Doe to the 'Revenue Analysis' data model."
-      },
-      {
-        "user_query": "I need to grant usage permissions to the Marketing group for the 'Customer Insights' data model.",
-        "arguments": {
-          "datamodel_name": "Customer Insights",
-          "shares": [
-            {
-              "name": "Marketing",
-              "type": "group",
-              "permission": "USE"
-            }
-          ]
-        },
-        "notes": "This call grants usage permissions to the Marketing group for the 'Customer Insights' data model."
-      },
-      {
-        "user_query": "Can I add both read access for Jane Smith and edit access for the Admin group to the 'Product Performance' data model?",
-        "arguments": {
-          "datamodel_name": "Product Performance",
-          "shares": [
-            {
-              "name": "jane.smith@example.com",
-              "type": "user",
-              "permission": "READ"
-            },
-            {
-              "name": "Admin Group",
-              "type": "group",
-              "permission": "EDIT"
-            }
-          ]
-        },
-        "notes": "This call adds read access for Jane Smith and edit access for the Admin group to the 'Product Performance' data model."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.create_connections",
@@ -3305,76 +2034,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I create a new connection for a PostgreSQL database?",
-        "arguments": {
-          "connection_payload": {
-            "provider": "postgresql",
-            "name": "SalesDB Connection",
-            "description": "Connection to the Sales database for analytics.",
-            "parameters": {
-              "host": "sales-db.example.com",
-              "port": 5432,
-              "database": "sales",
-              "username": "analytics_user",
-              "password": "securepassword123"
-            },
-            "enabled": true,
-            "supportedModelTypes": [
-              "live",
-              "elasticube"
-            ]
-          }
-        },
-        "notes": "This creates a connection to a PostgreSQL database named 'sales' hosted on 'sales-db.example.com'. Use this when setting up a new data source for analytics."
-      },
-      {
-        "user_query": "I need to add a connection for a Google BigQuery project. How can I do that?",
-        "arguments": {
-          "connection_payload": {
-            "provider": "bigquery",
-            "name": "Marketing Analytics",
-            "description": "BigQuery connection for marketing data.",
-            "parameters": {
-              "projectId": "marketing-project-123",
-              "credentials": {
-                "type": "service_account",
-                "client_email": "service-account@marketing-project-123.iam.gserviceaccount.com",
-                "private_key": "-----BEGIN PRIVATE KEY-----\\nMIIEv...\\n-----END PRIVATE KEY-----\\n"
-              }
-            },
-            "enabled": true,
-            "supportedModelTypes": [
-              "live"
-            ]
-          }
-        },
-        "notes": "This sets up a connection to a Google BigQuery project for live data analysis. Use this for integrating marketing data stored in BigQuery."
-      },
-      {
-        "user_query": "Can I create a connection to an Amazon Redshift cluster?",
-        "arguments": {
-          "connection_payload": {
-            "provider": "redshift",
-            "name": "Redshift Cluster Connection",
-            "description": "Connection to the main Redshift cluster for company data.",
-            "parameters": {
-              "host": "redshift-cluster.example.com",
-              "port": 5439,
-              "database": "company_data",
-              "username": "redshift_user",
-              "password": "anothersecurepassword456"
-            },
-            "enabled": false,
-            "supportedModelTypes": [
-              "elasticube"
-            ]
-          }
-        },
-        "notes": "This creates a connection to an Amazon Redshift cluster but keeps it disabled initially. Use this when preparing a connection for future use or testing."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.create_datamodel",
@@ -3426,32 +2086,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Create a new data model called 'Sales Analytics' using an Elasticube.",
-        "arguments": {
-          "datamodel_name": "Sales Analytics",
-          "datamodel_type": "extract"
-        },
-        "notes": "This call creates a new data model named 'Sales Analytics' using the 'extract' type, which corresponds to an Elasticube."
-      },
-      {
-        "user_query": "Set up a live data model for real-time analysis named 'Customer Insights'.",
-        "arguments": {
-          "datamodel_name": "Customer Insights",
-          "datamodel_type": "live"
-        },
-        "notes": "This call creates a live data model named 'Customer Insights' for real-time data analysis."
-      },
-      {
-        "user_query": "I need a new Elasticube data model for 'Marketing Dashboard'.",
-        "arguments": {
-          "datamodel_name": "Marketing Dashboard",
-          "datamodel_type": "extract"
-        },
-        "notes": "This call creates a new data model named 'Marketing Dashboard' using the 'extract' type for an Elasticube."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.create_dataset",
@@ -3499,40 +2134,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Create a dataset for the sales data model using the 'SalesDB' connection and the 'public' schema.",
-        "arguments": {
-          "datamodel_name": "SalesDataModel",
-          "connection_name": "SalesDB",
-          "database_name": "SalesDatabase",
-          "schema_name": "public",
-          "dataset_name": "SalesDataset"
-        },
-        "notes": "This call creates a dataset named 'SalesDataset' in the 'SalesDataModel' data model using the 'public' schema from the 'SalesDB' connection."
-      },
-      {
-        "user_query": "Add a dataset to the 'MarketingAnalytics' data model using the 'MarketingDB' connection and default to the schema name.",
-        "arguments": {
-          "datamodel_name": "MarketingAnalytics",
-          "connection_name": "MarketingDB",
-          "database_name": "MarketingDatabase",
-          "schema_name": "campaigns"
-        },
-        "notes": "This call creates a dataset in the 'MarketingAnalytics' data model using the 'campaigns' schema from the 'MarketingDB' connection. The dataset name defaults to the schema name, 'campaigns'."
-      },
-      {
-        "user_query": "Create a dataset in the 'FinanceModel' using the 'FinanceConnection' and the 'accounts' schema, but name it 'AccountDataset'.",
-        "arguments": {
-          "datamodel_name": "FinanceModel",
-          "connection_name": "FinanceConnection",
-          "database_name": "FinanceDB",
-          "schema_name": "accounts",
-          "dataset_name": "AccountDataset"
-        },
-        "notes": "This call creates a dataset named 'AccountDataset' in the 'FinanceModel' data model using the 'accounts' schema from the 'FinanceConnection'."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.create_table",
@@ -3597,37 +2199,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Create a new table named 'sales_summary' in the 'ecommerce_data' data model.",
-        "arguments": {
-          "datamodel_name": "ecommerce_data",
-          "table_name": "sales_summary"
-        },
-        "notes": "This call creates a new table named 'sales_summary' in the 'ecommerce_data' data model, inferring the database, schema, and dataset from the data model."
-      },
-      {
-        "user_query": "Add a table named 'customer_orders' to the 'retail_analytics' data model using a custom SQL query.",
-        "arguments": {
-          "datamodel_name": "retail_analytics",
-          "table_name": "customer_orders",
-          "import_query": "SELECT * FROM orders WHERE order_date >= '2023-01-01'"
-        },
-        "notes": "This call creates a table named 'customer_orders' in the 'retail_analytics' data model, using a custom SQL query to filter data from the source."
-      },
-      {
-        "user_query": "Create a table named 'daily_transactions' in the 'finance_data' data model with incremental build behavior.",
-        "arguments": {
-          "datamodel_name": "finance_data",
-          "table_name": "daily_transactions",
-          "build_behavior_config": {
-            "mode": "increment",
-            "column_name": "transaction_date"
-          }
-        },
-        "notes": "This call creates a table named 'daily_transactions' in the 'finance_data' data model and configures it for incremental builds based on the 'transaction_date' column."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.delete_datamodel",
@@ -3661,32 +2233,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I delete the 'Sales Data' model from the LocalHost server?",
-        "arguments": {
-          "title": "Sales Data",
-          "server": "LocalHost"
-        },
-        "notes": "This call deletes the 'Sales Data' data model hosted on the LocalHost server. Use this when the model is no longer needed or needs to be replaced."
-      },
-      {
-        "user_query": "I need to remove the 'Marketing Analytics' model from the 'AnalyticsServer'. How can I do that?",
-        "arguments": {
-          "title": "Marketing Analytics",
-          "server": "AnalyticsServer"
-        },
-        "notes": "This call removes the 'Marketing Analytics' data model from the 'AnalyticsServer'. Use this to clean up unused or outdated models."
-      },
-      {
-        "user_query": "Can you help me delete the 'Customer Insights' model from the 'DataHubServer'?",
-        "arguments": {
-          "title": "Customer Insights",
-          "server": "DataHubServer"
-        },
-        "notes": "This call deletes the 'Customer Insights' data model from the 'DataHubServer'. Use this when the model is obsolete or needs to be retired."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.delete_datasecurity",
@@ -3790,34 +2337,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I fully rebuild the 'Sales_Analytics' data model?",
-        "arguments": {
-          "datamodel_name": "Sales_Analytics",
-          "build_type": "full"
-        },
-        "notes": "This call triggers a full rebuild of the 'Sales_Analytics' data model, which is useful for ensuring all data is refreshed and up-to-date."
-      },
-      {
-        "user_query": "I want to incrementally build the 'Marketing_Performance' data model with a row limit of 100,000. How can I do that?",
-        "arguments": {
-          "datamodel_name": "Marketing_Performance",
-          "build_type": "by_table",
-          "row_limit": 100000
-        },
-        "notes": "This call performs an incremental build of the 'Marketing_Performance' data model, processing up to 100,000 rows per table. This is ideal for large datasets where a full rebuild is unnecessary."
-      },
-      {
-        "user_query": "Can I deploy the 'Customer_Insights' data model using the latest schema?",
-        "arguments": {
-          "datamodel_name": "Customer_Insights",
-          "build_type": "full",
-          "schema_origin": "latest"
-        },
-        "notes": "This call deploys the 'Customer_Insights' data model using the latest schema configuration. It ensures the model reflects the most recent changes made in the Data page."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.describe_datamodel",
@@ -3846,29 +2366,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What is the structure of the 'Sales Analytics' data model?",
-        "arguments": {
-          "datamodel_name": "Sales Analytics"
-        },
-        "notes": "This call retrieves the structure of the 'Sales Analytics' data model, including datasets and tables, in a flat format suitable for analysis or export."
-      },
-      {
-        "user_query": "Can you describe the 'Customer Insights' data model for me?",
-        "arguments": {
-          "datamodel_name": "Customer Insights"
-        },
-        "notes": "This call provides a detailed, row-based description of the 'Customer Insights' data model, useful for understanding its datasets and tables."
-      },
-      {
-        "user_query": "I need to export the structure of the 'Marketing Performance' data model to a CSV file. Can you get the details?",
-        "arguments": {
-          "datamodel_name": "Marketing Performance"
-        },
-        "notes": "This call retrieves the structure of the 'Marketing Performance' data model, which can then be exported to a CSV file for further analysis."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.describe_datamodel_raw",
@@ -3897,29 +2395,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What are the details of the 'Sales Analytics' data model?",
-        "arguments": {
-          "datamodel_name": "Sales Analytics"
-        },
-        "notes": "This call retrieves detailed metadata about the 'Sales Analytics' data model, including its datasets, connections, and tables."
-      },
-      {
-        "user_query": "Can you provide information about the 'Customer Insights' data model?",
-        "arguments": {
-          "datamodel_name": "Customer Insights"
-        },
-        "notes": "Use this call to get a nested structure with metadata for the 'Customer Insights' data model, including its last build and update timestamps."
-      },
-      {
-        "user_query": "I need to review the structure of the 'Marketing Performance' data model.",
-        "arguments": {
-          "datamodel_name": "Marketing Performance"
-        },
-        "notes": "This call is helpful for reviewing the structure and metadata of the 'Marketing Performance' data model, including its datasets and tables."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.export_datamodel_schema",
@@ -4068,59 +2544,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How do I create a connection payload for an Athena data source?",
-        "arguments": {
-          "datasource_type": "Athena",
-          "connection_params": {
-            "name": "Athena_Connection_1",
-            "region": "us-west-2",
-            "s3_output_location": "s3://athena-query-results/",
-            "aws_access_key": "AKIAEXAMPLE",
-            "aws_secret_key": "SECRETEXAMPLE",
-            "description": "Connection to Athena for analytics",
-            "schema": "default",
-            "additional_parameters": "{\"workgroup\": \"primary\"}"
-          }
-        },
-        "notes": "This call generates a connection payload for an Athena data source, specifying the required AWS credentials and S3 output location."
-      },
-      {
-        "user_query": "I need to set up a connection payload for a BigQuery data source. How can I do that?",
-        "arguments": {
-          "datasource_type": "BigQuery",
-          "connection_params": {
-            "name": "BigQuery_Analytics",
-            "service_account_key_path": "/path/to/service_account.json",
-            "description": "BigQuery connection for marketing data",
-            "use_service_account": true,
-            "use_dynamic_schema": false,
-            "record_field_flattening_level": "none",
-            "unnest_arrays": true,
-            "allow_large_results": true,
-            "database": "marketing_db"
-          }
-        },
-        "notes": "This call creates a connection payload for a BigQuery data source, using a service account key and enabling array unnesting for query results."
-      },
-      {
-        "user_query": "Can you help me generate a connection payload for a RedShift data source?",
-        "arguments": {
-          "datasource_type": "RedShift",
-          "connection_params": {
-            "server": "redshift-cluster-1.example.com",
-            "username": "admin",
-            "password": "securepassword123",
-            "name": "RedShift_Cluster_Connection",
-            "description": "Connection to RedShift cluster for sales data",
-            "default_database": "sales_db",
-            "additional_parameters": "{\"ssl\": true}"
-          }
-        },
-        "notes": "This call generates a connection payload for a RedShift data source, including the server address, credentials, and default database."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.get_all_datamodel",
@@ -4142,23 +2566,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What metadata is available for all data models in the system?",
-        "arguments": {},
-        "notes": "This call retrieves metadata for all data models, including details like build status, size, and timestamps. Useful for auditing or understanding the state of all data models."
-      },
-      {
-        "user_query": "Can I get a list of all data models with their sizes and statuses?",
-        "arguments": {},
-        "notes": "This call provides a comprehensive list of data models with their metadata, including size and status. Ideal for monitoring or reporting purposes."
-      },
-      {
-        "user_query": "I need to check the build status of all data models in the system.",
-        "arguments": {},
-        "notes": "This call fetches metadata for all data models, including their build statuses. Useful for tracking the progress or health of data models."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.get_connection",
@@ -4187,29 +2595,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Find the connection details for the 'Salesforce_Prod' data source.",
-        "arguments": {
-          "connection_name": "Salesforce_Prod"
-        },
-        "notes": "This call retrieves the connection object for the Salesforce production environment. Use this to confirm the connection details or validate its existence."
-      },
-      {
-        "user_query": "What connection is configured for the 'GoogleAnalytics_Main' data source?",
-        "arguments": {
-          "connection_name": "GoogleAnalytics_Main"
-        },
-        "notes": "This call checks if a connection named 'GoogleAnalytics_Main' exists and retrieves its details. Useful for troubleshooting or auditing connections."
-      },
-      {
-        "user_query": "Get the connection information for 'Redshift_Cluster_A'.",
-        "arguments": {
-          "connection_name": "Redshift_Cluster_A"
-        },
-        "notes": "This call fetches the connection object for the specified Redshift cluster. Use this to verify the connection's configuration or status."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.get_connections_all",
@@ -4231,23 +2617,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I see all the connections available in my Sisense environment?",
-        "arguments": {},
-        "notes": "This call retrieves a list of all connections configured in the Sisense instance. Use it to review available data sources."
-      },
-      {
-        "user_query": "I need to check which data connections are currently set up in the system.",
-        "arguments": {},
-        "notes": "This call provides a complete list of data connections, useful for auditing or verifying existing configurations."
-      },
-      {
-        "user_query": "Can I get a list of all the data connections in Sisense?",
-        "arguments": {},
-        "notes": "This call returns all configured connections, helping users understand the data sources linked to their Sisense instance."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.get_data",
@@ -4285,33 +2655,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Fetch all rows from the 'sales_data' table in the 'ecommerce_model'.",
-        "arguments": {
-          "datamodel_name": "ecommerce_model",
-          "table_name": "sales_data"
-        },
-        "notes": "This call retrieves all rows from the 'sales_data' table without applying any filters. Use this when you need the complete dataset."
-      },
-      {
-        "user_query": "Get data from the 'customer_info' table in the 'crm_model' where the country is 'USA'.",
-        "arguments": {
-          "datamodel_name": "crm_model",
-          "table_name": "customer_info",
-          "query": "SELECT * FROM customer_info WHERE country = 'USA'"
-        },
-        "notes": "This call retrieves rows from the 'customer_info' table filtered by the SQL query to include only customers from the USA. Use this for targeted data extraction."
-      },
-      {
-        "user_query": "Retrieve all rows from the 'inventory' table in the 'warehouse_model'.",
-        "arguments": {
-          "datamodel_name": "warehouse_model",
-          "table_name": "inventory"
-        },
-        "notes": "This call fetches all rows from the 'inventory' table in the 'warehouse_model'. Useful for analyzing the entire inventory dataset."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.get_datamodel",
@@ -4340,29 +2684,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Can you fetch the schema for the 'Sales Dashboard' data model?",
-        "arguments": {
-          "datamodel_name": "Sales Dashboard"
-        },
-        "notes": "This retrieves the schema for the data model titled 'Sales Dashboard', which might be used to understand its structure or validate its configuration."
-      },
-      {
-        "user_query": "I need the schema for the 'Customer Insights' data model to debug an issue.",
-        "arguments": {
-          "datamodel_name": "Customer Insights"
-        },
-        "notes": "Use this to fetch the schema for the 'Customer Insights' data model, which can assist in debugging or verifying its setup."
-      },
-      {
-        "user_query": "What does the schema for the 'Marketing Analytics' data model look like?",
-        "arguments": {
-          "datamodel_name": "Marketing Analytics"
-        },
-        "notes": "This call retrieves the schema for the 'Marketing Analytics' data model, useful for reviewing its structure or dependencies."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.get_datamodel_permissions_extract",
@@ -4449,29 +2771,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Who has access to the 'Sales_Analytics' data model?",
-        "arguments": {
-          "datamodel_name": "Sales_Analytics"
-        },
-        "notes": "Retrieves all users and groups with access to the 'Sales_Analytics' data model, including their permission levels."
-      },
-      {
-        "user_query": "List all shares for the 'Marketing_Performance' data model.",
-        "arguments": {
-          "datamodel_name": "Marketing_Performance"
-        },
-        "notes": "Returns a detailed list of users and groups who can access the 'Marketing_Performance' data model, along with their permissions."
-      },
-      {
-        "user_query": "Can you show me the sharing details for the 'Customer_Segmentation' model?",
-        "arguments": {
-          "datamodel_name": "Customer_Segmentation"
-        },
-        "notes": "Provides a breakdown of all share entries for the 'Customer_Segmentation' data model, including resolved user/group names and permission levels."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.get_datasecurity",
@@ -4500,29 +2800,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What are the datasecurity rules for the 'SalesAnalytics' data model?",
-        "arguments": {
-          "datamodel_name": "SalesAnalytics"
-        },
-        "notes": "This retrieves all table and column-level datasecurity rules for the 'SalesAnalytics' data model."
-      },
-      {
-        "user_query": "Can you show me the datasecurity configuration for the 'CustomerInsights' data model?",
-        "arguments": {
-          "datamodel_name": "CustomerInsights"
-        },
-        "notes": "Use this to fetch the datasecurity rules applied to the 'CustomerInsights' data model, including table and column restrictions."
-      },
-      {
-        "user_query": "I need to review the datasecurity setup for the 'FinanceDashboard' data model.",
-        "arguments": {
-          "datamodel_name": "FinanceDashboard"
-        },
-        "notes": "This call retrieves the datasecurity rules for the 'FinanceDashboard' data model, useful for auditing or troubleshooting access issues."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.get_datasecurity_detail",
@@ -4551,29 +2829,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What are the datasecurity rules for the 'SalesAnalytics' data model?",
-        "arguments": {
-          "datamodel_name": "SalesAnalytics"
-        },
-        "notes": "This retrieves all datasecurity rules for the 'SalesAnalytics' data model, including share-level visibility and column-level restrictions."
-      },
-      {
-        "user_query": "Can you show me the datasecurity details for the 'CustomerInsights' data model?",
-        "arguments": {
-          "datamodel_name": "CustomerInsights"
-        },
-        "notes": "Use this to get detailed visibility and restrictions applied to the 'CustomerInsights' data model."
-      },
-      {
-        "user_query": "I need to review the datasecurity rules for the 'FinanceDashboard' model to ensure proper access control.",
-        "arguments": {
-          "datamodel_name": "FinanceDashboard"
-        },
-        "notes": "This call is helpful for auditing or reviewing the datasecurity rules applied to the 'FinanceDashboard' data model."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.get_datasecurity_raw",
@@ -4628,23 +2884,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Show me a list of all ElastiCubes available on the server.",
-        "arguments": {},
-        "notes": "This call retrieves a lightweight list of all ElastiCubes, including their titles, addresses, and full names. Ideal for Windows environments or when detailed metadata is not required."
-      },
-      {
-        "user_query": "I need to check the available ElastiCubes on our Windows Sisense deployment.",
-        "arguments": {},
-        "notes": "Use this to fetch basic metadata about all ElastiCubes in a Windows deployment. This is a quick way to get an overview of available cubes."
-      },
-      {
-        "user_query": "What ElastiCubes are currently configured on the system?",
-        "arguments": {},
-        "notes": "This request lists all ElastiCubes using the legacy v1 endpoint. It is suitable for scenarios where a lightweight response is sufficient."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.get_model_schema",
@@ -4673,29 +2913,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What is the schema of the Sales Analytics data model?",
-        "arguments": {
-          "datamodel_name": "Sales Analytics"
-        },
-        "notes": "This retrieves the schema for the 'Sales Analytics' data model, including its tables and columns. Useful for understanding the structure of the data model."
-      },
-      {
-        "user_query": "Can you show me the schema for the Customer Insights data model?",
-        "arguments": {
-          "datamodel_name": "Customer Insights"
-        },
-        "notes": "This call fetches the schema for the 'Customer Insights' data model, providing details about its tables and columns. Ideal for verifying the data model's structure before building dashboards."
-      },
-      {
-        "user_query": "I need the schema details for the Marketing Performance data model.",
-        "arguments": {
-          "datamodel_name": "Marketing Performance"
-        },
-        "notes": "This retrieves the schema of the 'Marketing Performance' data model, helping to identify the available tables and columns for analysis."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.get_row_count",
@@ -4724,29 +2942,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How many rows are in each table of the SalesData model?",
-        "arguments": {
-          "datamodel_name": "SalesData"
-        },
-        "notes": "This retrieves the row count for all tables in the 'SalesData' data model, useful for understanding the size of the dataset."
-      },
-      {
-        "user_query": "Can you give me the row counts for all tables in the CustomerAnalytics model?",
-        "arguments": {
-          "datamodel_name": "CustomerAnalytics"
-        },
-        "notes": "This call provides a breakdown of row counts for each table in the 'CustomerAnalytics' data model, helping to analyze its structure."
-      },
-      {
-        "user_query": "I need to check the row counts for the tables in the InventoryTracking data model.",
-        "arguments": {
-          "datamodel_name": "InventoryTracking"
-        },
-        "notes": "This is used to fetch the row counts for each table in the 'InventoryTracking' data model, which can assist in monitoring data growth."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.get_table_schema",
@@ -4790,38 +2986,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What is the schema of the 'sales_data' table in the 'analytics_db' database?",
-        "arguments": {
-          "connection_name": "primary_data_source",
-          "database_name": "analytics_db",
-          "schema_name": "public",
-          "table_name": "sales_data"
-        },
-        "notes": "This call retrieves the schema details for the 'sales_data' table in the 'analytics_db' database using the 'primary_data_source' connection."
-      },
-      {
-        "user_query": "Can you show me the schema for the 'customer_info' table in the 'crm_db' database?",
-        "arguments": {
-          "connection_name": "crm_connection",
-          "database_name": "crm_db",
-          "schema_name": "customer_data",
-          "table_name": "customer_info"
-        },
-        "notes": "This call fetches the schema for the 'customer_info' table located in the 'customer_data' schema of the 'crm_db' database using the 'crm_connection' connection."
-      },
-      {
-        "user_query": "I need the schema for the 'inventory' table in the 'warehouse_db' database.",
-        "arguments": {
-          "connection_name": "warehouse_connection",
-          "database_name": "warehouse_db",
-          "schema_name": "inventory_schema",
-          "table_name": "inventory"
-        },
-        "notes": "This call retrieves the schema details for the 'inventory' table in the 'inventory_schema' schema of the 'warehouse_db' database using the 'warehouse_connection' connection."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.import_datamodel_schema",
@@ -4895,32 +3060,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What is the OID for the data model titled 'Sales Dashboard'?",
-        "arguments": {
-          "title": "Sales Dashboard",
-          "server": "LocalHost"
-        },
-        "notes": "This call retrieves the OID for the 'Sales Dashboard' data model hosted on the default server 'LocalHost'."
-      },
-      {
-        "user_query": "I need the OID for the 'Marketing Analytics' data model on the 'AnalyticsServer'.",
-        "arguments": {
-          "title": "Marketing Analytics",
-          "server": "AnalyticsServer"
-        },
-        "notes": "This call resolves the OID for the 'Marketing Analytics' data model hosted on the 'AnalyticsServer'."
-      },
-      {
-        "user_query": "Find the OID for the 'Customer Insights' data model.",
-        "arguments": {
-          "title": "Customer Insights",
-          "server": "LocalHost"
-        },
-        "notes": "This call looks up the OID for the 'Customer Insights' data model on the default 'LocalHost' server."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.resolve_datamodel_reference",
@@ -4949,29 +3089,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What is the ID and title of the data model named 'Sales Analytics'?",
-        "arguments": {
-          "datamodel_ref": "Sales Analytics"
-        },
-        "notes": "This resolves the data model reference 'Sales Analytics' to its concrete ID and title. Use this when you know the title of the data model but need its ID."
-      },
-      {
-        "user_query": "Can you find the details for the data model with ID '63f9c1d2e4b0a123456789ab'?",
-        "arguments": {
-          "datamodel_ref": "63f9c1d2e4b0a123456789ab"
-        },
-        "notes": "This resolves the data model reference '63f9c1d2e4b0a123456789ab' to its concrete ID and title. Use this when you already have the ID of the data model."
-      },
-      {
-        "user_query": "I need the ID and title for the data model called 'Marketing Dashboard'.",
-        "arguments": {
-          "datamodel_ref": "Marketing Dashboard"
-        },
-        "notes": "This resolves the data model reference 'Marketing Dashboard' to its concrete ID and title. Use this when you know the title of the data model but need its ID for further operations."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.set_live_datasecurity_add_many",
@@ -5008,96 +3126,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I add multiple data security rules to the 'Sales_Live' datamodel?",
-        "arguments": {
-          "datamodel_name": "Sales_Live",
-          "rules": [
-            {
-              "table": "Orders",
-              "column": "Region",
-              "datatype": "string",
-              "members": [
-                "North",
-                "South"
-              ],
-              "exclusionary": false,
-              "shares": []
-            },
-            {
-              "table": "Customers",
-              "column": "CustomerType",
-              "datatype": "string",
-              "members": [
-                "Premium"
-              ],
-              "exclusionary": true,
-              "shares": []
-            }
-          ]
-        },
-        "notes": "This call adds two data security rules to the 'Sales_Live' datamodel, restricting access to specific regions and customer types."
-      },
-      {
-        "user_query": "I need to restrict access to sensitive columns in the 'HR_Live' datamodel. How can I do that?",
-        "arguments": {
-          "datamodel_name": "HR_Live",
-          "rules": [
-            {
-              "table": "Employees",
-              "column": "Salary",
-              "datatype": "number",
-              "members": [
-                "10000",
-                "20000"
-              ],
-              "exclusionary": false,
-              "shares": []
-            },
-            {
-              "table": "Employees",
-              "column": "SSN",
-              "datatype": "string",
-              "members": [],
-              "exclusionary": true,
-              "shares": []
-            }
-          ]
-        },
-        "notes": "This call adds rules to the 'HR_Live' datamodel to restrict access to salary and SSN data."
-      },
-      {
-        "user_query": "On the 'Finance_Live' datamodel, add rules on the Transactions table: allow only Accounting and Audit in the Department column, and an exclusionary rule on the Confidential column for member 'false'.",
-        "arguments": {
-          "datamodel_name": "Finance_Live",
-          "rules": [
-            {
-              "table": "Transactions",
-              "column": "Department",
-              "datatype": "string",
-              "members": [
-                "Accounting",
-                "Audit"
-              ],
-              "exclusionary": false,
-              "shares": []
-            },
-            {
-              "table": "Transactions",
-              "column": "Confidential",
-              "datatype": "boolean",
-              "members": [
-                "false"
-              ],
-              "exclusionary": true,
-              "shares": []
-            }
-          ]
-        },
-        "notes": "This call adds rules to the 'Finance_Live' datamodel to limit access to specific departments and exclude confidential transactions."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.setup_datamodel",
@@ -5229,106 +3258,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Create a new live data model for our sales data using the 'SalesDB' connection.",
-        "arguments": {
-          "datamodel_name": "Sales_Live_Model",
-          "datamodel_type": "live",
-          "connection_name": "SalesDB",
-          "database_name": "SalesDatabase",
-          "schema_name": "public",
-          "tables": [
-            {
-              "table_name": "customers",
-              "description": "Customer details including demographics and contact information.",
-              "tags": [
-                "sales",
-                "customers"
-              ]
-            },
-            {
-              "table_name": "orders",
-              "description": "Order details including products, quantities, and prices.",
-              "tags": [
-                "sales",
-                "orders"
-              ]
-            }
-          ],
-          "dataset_name": "Sales_Live_Dataset"
-        },
-        "notes": "This call sets up a live data model for sales data, pulling from the 'SalesDB' connection and including the 'customers' and 'orders' tables."
-      },
-      {
-        "user_query": "Set up an Elasticube for our marketing data with incremental builds for the 'campaigns' table.",
-        "arguments": {
-          "datamodel_name": "Marketing_Elasticube",
-          "datamodel_type": "extract",
-          "connection_name": "MarketingDB",
-          "database_name": "MarketingDatabase",
-          "schema_name": "analytics",
-          "tables": [
-            {
-              "table_name": "campaigns",
-              "description": "Marketing campaign performance data.",
-              "tags": [
-                "marketing",
-                "campaigns"
-              ],
-              "build_behavior_config": {
-                "mode": "increment",
-                "column_name": "updated_at"
-              }
-            },
-            {
-              "table_name": "leads",
-              "description": "Lead generation data from various campaigns.",
-              "tags": [
-                "marketing",
-                "leads"
-              ],
-              "build_behavior_config": {
-                "mode": "replace"
-              }
-            }
-          ],
-          "dataset_name": "Marketing_Dataset"
-        },
-        "notes": "This call creates an Elasticube for marketing data with incremental builds for the 'campaigns' table based on the 'updated_at' column."
-      },
-      {
-        "user_query": "Create a live data model for the finance team using the 'FinanceDB' connection and include custom SQL for the 'transactions' table.",
-        "arguments": {
-          "datamodel_name": "Finance_Live_Model",
-          "datamodel_type": "live",
-          "connection_name": "FinanceDB",
-          "database_name": "FinanceDatabase",
-          "schema_name": "financials",
-          "tables": [
-            {
-              "table_name": "accounts",
-              "description": "Account details including balances and account types.",
-              "tags": [
-                "finance",
-                "accounts"
-              ]
-            },
-            {
-              "table_name": "transactions",
-              "import_query": "SELECT account_id, amount, transaction_date FROM financials.transactions WHERE amount > 0",
-              "description": "Filtered transactions with positive amounts.",
-              "tags": [
-                "finance",
-                "transactions"
-              ]
-            }
-          ],
-          "dataset_name": "Finance_Live_Dataset"
-        },
-        "notes": "This call sets up a live data model for financial data, including a custom SQL query for the 'transactions' table to filter only positive amounts."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.update_connection",
@@ -5381,47 +3311,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I update the name and parameters of an existing connection?",
-        "arguments": {
-          "connection_id": "conn_12345",
-          "connection_data": {
-            "name": "Updated Connection Name",
-            "parameters": {
-              "host": "new-database-host.example.com",
-              "port": 5432
-            }
-          }
-        },
-        "notes": "This call updates the name and connection parameters for the specified connection. Use this when migrating to a new database host."
-      },
-      {
-        "user_query": "I need to change the provider of a connection. How do I do that?",
-        "arguments": {
-          "connection_id": "conn_67890",
-          "connection_data": {
-            "provider": "new_provider"
-          }
-        },
-        "notes": "This call updates the provider for the specified connection. Use this when switching to a different connection provider."
-      },
-      {
-        "user_query": "Can I update multiple fields of a connection at once?",
-        "arguments": {
-          "connection_id": "conn_54321",
-          "connection_data": {
-            "name": "New Connection Name",
-            "parameters": {
-              "host": "updated-host.example.com",
-              "port": 3306
-            },
-            "provider": "mysql"
-          }
-        },
-        "notes": "This call updates multiple fields (name, parameters, and provider) for the specified connection. Use this for comprehensive updates during a migration or reconfiguration."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "datamodel.update_datamodel_permissions_extract",
@@ -5532,83 +3422,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I update the datasecurity rules for the 'Sales_Elasticube' datamodel?",
-        "arguments": {
-          "datamodel_name": "Sales_Elasticube",
-          "datasecurity": [
-            {
-              "table": "Orders",
-              "column": "Region",
-              "datatype": "string",
-              "members": [
-                "North America",
-                "Europe"
-              ],
-              "exclusionary": false,
-              "shares": []
-            },
-            {
-              "table": "Customers",
-              "column": "CustomerType",
-              "datatype": "string",
-              "members": [
-                "Enterprise"
-              ],
-              "exclusionary": true,
-              "shares": []
-            }
-          ]
-        },
-        "notes": "This call replaces all existing datasecurity rules on the 'Sales_Elasticube' datamodel with the provided rules."
-      },
-      {
-        "user_query": "I need to restrict access to sensitive columns in the 'HR_Analytics' datamodel. How do I do that?",
-        "arguments": {
-          "datamodel_name": "HR_Analytics",
-          "datasecurity": [
-            {
-              "table": "EmployeeData",
-              "column": "Salary",
-              "datatype": "number",
-              "members": [],
-              "exclusionary": true,
-              "shares": []
-            },
-            {
-              "table": "EmployeeData",
-              "column": "SSN",
-              "datatype": "string",
-              "members": [],
-              "exclusionary": true,
-              "shares": []
-            }
-          ]
-        },
-        "notes": "This call applies new datasecurity rules to the 'HR_Analytics' datamodel, ensuring sensitive columns like 'Salary' and 'SSN' are restricted."
-      },
-      {
-        "user_query": "Replace datasecurity on the 'Marketing_Campaigns' datamodel so the Campaigns table's Region column allows only APAC and EMEA.",
-        "arguments": {
-          "datamodel_name": "Marketing_Campaigns",
-          "datasecurity": [
-            {
-              "table": "Campaigns",
-              "column": "Region",
-              "datatype": "string",
-              "members": [
-                "APAC",
-                "EMEA"
-              ],
-              "exclusionary": false,
-              "shares": []
-            }
-          ]
-        },
-        "notes": "This call updates the 'Marketing_Campaigns' datamodel to allow access to campaign data only for the specified regions: APAC and EMEA."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "encryption.decrypt",
@@ -5637,35 +3451,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Decrypt the value 'ENCRYPTED_PASSWORD_12345'.",
-        "arguments": {
-          "payload": {
-            "value": "ENCRYPTED_PASSWORD_12345"
-          }
-        },
-        "notes": "This call decrypts the encrypted database password stored in the datamodel, allowing the user to retrieve the plaintext password for further use."
-      },
-      {
-        "user_query": "I need to decrypt an API key that was encrypted before saving it to the system. How can I do that?",
-        "arguments": {
-          "payload": {
-            "value": "ENCRYPTED_API_KEY_67890"
-          }
-        },
-        "notes": "This call decrypts an encrypted API key, enabling the user to retrieve the original API key for integration purposes."
-      },
-      {
-        "user_query": "How do I decrypt a token stored in the configuration file for my Sisense plugin?",
-        "arguments": {
-          "payload": {
-            "value": "ENCRYPTED_TOKEN_ABCDE"
-          }
-        },
-        "notes": "This call decrypts an encrypted token from a configuration file, allowing the user to access the original token for plugin authentication."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "encryption.encrypt",
@@ -5694,35 +3480,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Encrypt the value 'my_secure_password_123' before saving it in Sisense.",
-        "arguments": {
-          "payload": {
-            "value": "my_secure_password_123"
-          }
-        },
-        "notes": "This call encrypts the provided database password so it can be securely stored in Sisense configuration."
-      },
-      {
-        "user_query": "I need to encrypt an API key for use in a cross-server data model import. How do I do that?",
-        "arguments": {
-          "payload": {
-            "value": "api_key_abc123xyz"
-          }
-        },
-        "notes": "This call encrypts the API key, ensuring it is safe to use during cross-server data model imports."
-      },
-      {
-        "user_query": "What is the process to encrypt sensitive connection parameters for a new data source?",
-        "arguments": {
-          "payload": {
-            "value": "connection_string=Server=myServerAddress;Database=myDataBase;User Id=myUsername;Password=myPassword;"
-          }
-        },
-        "notes": "This call encrypts a sensitive connection string, preparing it for secure storage or transmission."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "folder.create_folder",
@@ -5755,31 +3513,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Create a folder named 'Sales Reports' under the '2023 Reports' folder.",
-        "arguments": {
-          "name": "Sales Reports",
-          "parent_id": "63f2b8c9e4b0a3d2f8e4a123"
-        },
-        "notes": "This creates a new folder called 'Sales Reports' as a subfolder of the folder with OID '63f2b8c9e4b0a3d2f8e4a123'."
-      },
-      {
-        "user_query": "Add a new root-level folder called 'Marketing Materials'.",
-        "arguments": {
-          "name": "Marketing Materials"
-        },
-        "notes": "This creates a new folder named 'Marketing Materials' at the root level since no parent_id is provided."
-      },
-      {
-        "user_query": "Create a folder named 'Q4 Analysis' inside the folder with ID '64a1c7e1e4b0b9f3d9f5b456'.",
-        "arguments": {
-          "name": "Q4 Analysis",
-          "parent_id": "64a1c7e1e4b0b9f3d9f5b456"
-        },
-        "notes": "This creates a new folder named 'Q4 Analysis' under the folder with OID '64a1c7e1e4b0b9f3d9f5b456'."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "folder.delete_folder",
@@ -5808,29 +3542,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I delete the folder with ID '12345abcde'?",
-        "arguments": {
-          "folder_id": "12345abcde"
-        },
-        "notes": "This call deletes the folder with the specified OID. Ensure the folder is empty or meets the Sisense server's deletion criteria."
-      },
-      {
-        "user_query": "I need to remove an old folder with the ID '67890fghij'. How do I do that?",
-        "arguments": {
-          "folder_id": "67890fghij"
-        },
-        "notes": "Use this to delete the folder identified by the given OID. Verify that the folder is deletable before making this call."
-      },
-      {
-        "user_query": "Can you help me delete the folder with OID 'abc123xyz'?",
-        "arguments": {
-          "folder_id": "abc123xyz"
-        },
-        "notes": "This operation deletes the specified folder. Make sure the folder is empty or satisfies the deletion rules enforced by Sisense."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "folder.get_all_folders",
@@ -5852,23 +3564,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Show me the entire folder structure for organizing dashboards.",
-        "arguments": {},
-        "notes": "This retrieves the full folder hierarchy, including nested folders and dashboards, to help visualize the organization of content in Sisense."
-      },
-      {
-        "user_query": "I need to fetch all folders to check where a specific dashboard is located.",
-        "arguments": {},
-        "notes": "Use this to get a complete list of folders and their nested contents, which can help locate dashboards within the folder structure."
-      },
-      {
-        "user_query": "How can I get a list of all root-level folders and their subfolders?",
-        "arguments": {},
-        "notes": "This call provides a detailed tree of all folders, starting from the root level, and includes any nested folders and dashboards."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "folder.get_folder_ancestors",
@@ -5897,29 +3593,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What are the ancestor folders for the 'SalesData' structure?",
-        "arguments": {
-          "structure": "SalesData"
-        },
-        "notes": "This call retrieves all ancestor folders for the 'SalesData' structure, which can be useful for understanding the folder hierarchy."
-      },
-      {
-        "user_query": "Can you show me the parent folders for the 'MarketingReports' structure?",
-        "arguments": {
-          "structure": "MarketingReports"
-        },
-        "notes": "Use this call to fetch the hierarchy of folders leading up to the 'MarketingReports' structure, helping to locate related folders."
-      },
-      {
-        "user_query": "I need to find the folder hierarchy for the 'FinanceDocs' structure.",
-        "arguments": {
-          "structure": "FinanceDocs"
-        },
-        "notes": "This call is helpful for identifying the ancestor folders associated with the 'FinanceDocs' structure, aiding in navigation or organization."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "folder.get_folder_id",
@@ -5948,29 +3622,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I retrieve the details of the folder with ID '12345abcde'?",
-        "arguments": {
-          "folder_id": "12345abcde"
-        },
-        "notes": "This call retrieves metadata for the folder with the specified OID. Use it to fetch details like folder name, permissions, and contents."
-      },
-      {
-        "user_query": "I need to check the metadata of the folder with ID '67890fghij'. How do I do that?",
-        "arguments": {
-          "folder_id": "67890fghij"
-        },
-        "notes": "This call is useful for verifying folder properties or ensuring the folder exists before performing other operations."
-      },
-      {
-        "user_query": "Can you get the folder information for the folder ID 'abcdef12345'?",
-        "arguments": {
-          "folder_id": "abcdef12345"
-        },
-        "notes": "This retrieves the folder's metadata, which can include details like its creation date, owner, and associated dashboards."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "folder.get_folders",
@@ -5997,27 +3649,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Show me all folders in a flat structure.",
-        "arguments": {
-          "structure": "flat"
-        },
-        "notes": "This retrieves all folders in a flat list format, which is useful for simpler workflows or pre-migration scenarios."
-      },
-      {
-        "user_query": "Can I see the folder hierarchy as a tree?",
-        "arguments": {
-          "structure": "tree"
-        },
-        "notes": "This retrieves folders in a hierarchical tree structure, which is helpful for visualizing nested relationships between folders."
-      },
-      {
-        "user_query": "What folders exist in the default structure?",
-        "arguments": {},
-        "notes": "This retrieves folders using the default 'flat' structure since no specific structure parameter is provided."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "folder.get_navver",
@@ -6039,23 +3671,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Can you show me the navigation tree for our Sisense folders?",
-        "arguments": {},
-        "notes": "This call retrieves the entire navigation tree structure (navver payload) for the Sisense folders. Useful for understanding the folder hierarchy."
-      },
-      {
-        "user_query": "I need to check the folder structure in Sisense for troubleshooting purposes.",
-        "arguments": {},
-        "notes": "Use this call to fetch the navigation tree, which can help identify issues or confirm the folder hierarchy during troubleshooting."
-      },
-      {
-        "user_query": "How can I get the folder hierarchy from Sisense?",
-        "arguments": {},
-        "notes": "This call provides the folder hierarchy in Sisense, allowing users to analyze or document the structure of their navigation tree."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "folder.update_folder",
@@ -6096,32 +3712,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I rename the folder with ID '12345abcde' to 'Sales Reports'?",
-        "arguments": {
-          "folder_id": "12345abcde",
-          "name": "Sales Reports"
-        },
-        "notes": "This call updates the folder's display name to 'Sales Reports' while leaving its parent folder and owner unchanged."
-      },
-      {
-        "user_query": "I need to move the folder '67890fghij' under a new parent folder with ID '11223klmno'. How can I do that?",
-        "arguments": {
-          "folder_id": "67890fghij",
-          "parent_id": "11223klmno"
-        },
-        "notes": "This call moves the folder to a new parent folder without changing its name or owner."
-      },
-      {
-        "user_query": "How do I transfer ownership of the folder 'abcdef12345' to the user with ID 'user67890xyz'?",
-        "arguments": {
-          "folder_id": "abcdef12345",
-          "owner": "user67890xyz"
-        },
-        "notes": "This call assigns a new owner to the folder while keeping its name and parent folder unchanged."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "mergetool.migrate_all_blox_actions",
@@ -7084,68 +4675,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Add a new measure to calculate total sales for the 'sales_data' table.",
-        "arguments": {
-          "measure": {
-            "datasource": {
-              "title": "sales_db",
-              "fullname": "LocalHost/sales_db"
-            },
-            "table": "sales_data",
-            "column": "total_sales",
-            "expression": "SUM(sales_amount)",
-            "fields": {
-              "aggregation": "sum",
-              "type": "measure"
-            },
-            "title": "Total Sales"
-          }
-        },
-        "notes": "This call creates a measure that calculates the total sales by summing the 'sales_amount' column in the 'sales_data' table."
-      },
-      {
-        "user_query": "Create a measure to calculate average order value for the 'orders' table.",
-        "arguments": {
-          "measure": {
-            "datasource": {
-              "title": "ecommerce_db",
-              "fullname": "LocalHost/ecommerce_db"
-            },
-            "table": "orders",
-            "column": "avg_order_value",
-            "expression": "AVG(order_total)",
-            "fields": {
-              "aggregation": "average",
-              "type": "measure"
-            },
-            "title": "Average Order Value"
-          }
-        },
-        "notes": "This call adds a measure to calculate the average order value using the 'order_total' column in the 'orders' table."
-      },
-      {
-        "user_query": "Define a measure to count the number of customers in the 'customer_data' table.",
-        "arguments": {
-          "measure": {
-            "datasource": {
-              "title": "crm_db",
-              "fullname": "LocalHost/crm_db"
-            },
-            "table": "customer_data",
-            "column": "customer_count",
-            "expression": "COUNT(customer_id)",
-            "fields": {
-              "aggregation": "count",
-              "type": "measure"
-            },
-            "title": "Distinct Customers"
-          }
-        },
-        "notes": "This call creates a measure to count the total number of customers based on the 'customer_id' column in the 'customer_data' table."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "metadata.get_datasource_dimensions",
@@ -7176,30 +4706,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What dimensions are available for the 'SalesData' datasource?",
-        "arguments": {
-          "datasource": "SalesData"
-        },
-        "notes": "This call retrieves the saved filter dimensions for the 'SalesData' datasource. Use this when you need to understand the available dimensions for filtering or analysis."
-      },
-      {
-        "user_query": "I need the dimensions for the datasource hosted at 'localhost/FinanceModel'.",
-        "arguments": {
-          "ds_full_name": "localhost/FinanceModel"
-        },
-        "notes": "This call fetches dimensions for the datasource identified by its full name 'localhost/FinanceModel'. Use this when the full name is required to uniquely identify the datasource."
-      },
-      {
-        "user_query": "Can you provide dimensions for the 'MarketingAnalytics' datasource hosted at 'localhost/MarketingModel'?",
-        "arguments": {
-          "datasource": "MarketingAnalytics",
-          "ds_full_name": "localhost/MarketingModel"
-        },
-        "notes": "This call retrieves dimensions for the 'MarketingAnalytics' datasource while also specifying its full name 'localhost/MarketingModel'. Use this when both identifiers are available and needed for clarity."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "metadata.get_datasource_measures",
@@ -7230,30 +4737,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What measures are available in the Sales datasource?",
-        "arguments": {
-          "datasource": "Sales"
-        },
-        "notes": "This call retrieves all saved formula measures for the 'Sales' datasource using its identifier."
-      },
-      {
-        "user_query": "Can you show me the measures for the datasource hosted at localhost/MyModel?",
-        "arguments": {
-          "ds_full_name": "localhost/MyModel"
-        },
-        "notes": "This call fetches measures for the datasource using its full name 'localhost/MyModel'."
-      },
-      {
-        "user_query": "I need to check the measures for the Marketing datasource hosted at localhost/MarketingModel.",
-        "arguments": {
-          "datasource": "Marketing",
-          "ds_full_name": "localhost/MarketingModel"
-        },
-        "notes": "This call retrieves measures for the 'Marketing' datasource using both its identifier and full name."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "metadata.get_datasources",
@@ -7275,23 +4759,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What datasources can I access in my Sisense environment?",
-        "arguments": {},
-        "notes": "This call retrieves a list of all datasources visible to the authenticated user. Use it to get an overview of available data connections."
-      },
-      {
-        "user_query": "Show me all the datasources I can use to build dashboards.",
-        "arguments": {},
-        "notes": "This call is useful for identifying datasources you have permission to access, which can then be used for creating or updating dashboards."
-      },
-      {
-        "user_query": "List all available datasources for my account.",
-        "arguments": {},
-        "notes": "This call provides a complete list of datasources accessible to the current user, helping to ensure you are aware of all available data connections."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "metadata.post_metadata_query",
@@ -7320,38 +4788,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Retrieve metadata for the 'sales_dashboard' object.",
-        "arguments": {
-          "query_payload": {
-            "objectType": "dashboard",
-            "objectId": "sales_dashboard"
-          }
-        },
-        "notes": "This call retrieves metadata for the specified dashboard object, identified by its ID."
-      },
-      {
-        "user_query": "Fetch metadata for all widgets in the 'finance_dashboard'.",
-        "arguments": {
-          "query_payload": {
-            "objectType": "widget",
-            "parentObjectId": "finance_dashboard"
-          }
-        },
-        "notes": "This call retrieves metadata for all widgets associated with the specified dashboard."
-      },
-      {
-        "user_query": "Get metadata for the 'customer_data_model' data model.",
-        "arguments": {
-          "query_payload": {
-            "objectType": "data_model",
-            "objectId": "customer_data_model"
-          }
-        },
-        "notes": "This call retrieves metadata for the specified data model, useful for understanding its structure and properties."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "migration.migrate_all_dashboards",
@@ -7408,44 +4845,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I migrate all dashboards to the target environment but skip any dashboards that already exist there?",
-        "arguments": {
-          "action": "skip",
-          "republish": false,
-          "migrate_share": false,
-          "change_ownership": false,
-          "batch_size": 10,
-          "sleep_time": 10
-        },
-        "notes": "This call migrates all dashboards from the source to the target environment, skipping any dashboards that already exist in the target. Shares and ownership are not migrated."
-      },
-      {
-        "user_query": "I want to migrate all dashboards and overwrite the existing ones in the target environment. How can I do that?",
-        "arguments": {
-          "action": "overwrite",
-          "republish": true,
-          "migrate_share": false,
-          "change_ownership": false,
-          "batch_size": 20,
-          "sleep_time": 5
-        },
-        "notes": "This call migrates all dashboards from the source to the target environment, overwriting any existing dashboards in the target. Shares and ownership are not migrated, and the dashboards will be republished after migration."
-      },
-      {
-        "user_query": "Can I migrate dashboards and create duplicates of any that already exist in the target environment?",
-        "arguments": {
-          "action": "duplicate",
-          "republish": false,
-          "migrate_share": true,
-          "change_ownership": true,
-          "batch_size": 15,
-          "sleep_time": 10
-        },
-        "notes": "This call migrates all dashboards from the source to the target environment, creating duplicates for any dashboards that already exist in the target. Shares and ownership are migrated for the new dashboards."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "migration.migrate_all_datamodels",
@@ -7506,51 +4906,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I migrate all data models with data security and formulas included, overwriting existing models in the target environment?",
-        "arguments": {
-          "dependencies": [
-            "dataSecurity",
-            "formulas"
-          ],
-          "shares": false,
-          "batch_size": 10,
-          "sleep_time": 5,
-          "action": "overwrite"
-        },
-        "notes": "This call migrates all data models in batches of 10, including data security and formulas, and overwrites existing models in the target environment if they are found."
-      },
-      {
-        "user_query": "I want to migrate all data models, including shares, and duplicate any existing models in the target environment. How can I do this?",
-        "arguments": {
-          "shares": true,
-          "batch_size": 20,
-          "sleep_time": 10,
-          "action": "duplicate"
-        },
-        "notes": "This call migrates all data models in batches of 20, includes shares, and duplicates any existing models in the target environment by appending \" (Duplicate)\" to their names."
-      },
-      {
-        "user_query": "Can I migrate drill hierarchies and perspectives while monitoring progress with a callback?",
-        "arguments": {
-          "dependencies": [
-            "hierarchies",
-            "perspectives"
-          ],
-          "shares": false,
-          "batch_size": 5,
-          "sleep_time": 2,
-          "action": "overwrite",
-          "emit": {
-            "type": "progress",
-            "step": "migration_step",
-            "message": "Migration in progress"
-          }
-        },
-        "notes": "This call migrates drill hierarchies and perspectives in batches of 5, overwriting existing models in the target environment, and uses a callback to monitor progress."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "migration.migrate_all_groups",
@@ -7578,33 +4934,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I migrate all user groups from the old environment to the new one and track progress?",
-        "arguments": {
-          "emit": {
-            "type": "function",
-            "description": "Callback function to handle progress events."
-          }
-        },
-        "notes": "This call migrates all user groups from the source environment to the target environment and uses the 'emit' callback to provide real-time progress updates."
-      },
-      {
-        "user_query": "I need to migrate groups between environments but don't need progress updates. How can I do that?",
-        "arguments": {},
-        "notes": "This call migrates all user groups without providing progress updates. Use this when synchronous execution is sufficient."
-      },
-      {
-        "user_query": "Can I migrate groups and log progress events for debugging purposes?",
-        "arguments": {
-          "emit": {
-            "type": "function",
-            "description": "Callback function that logs progress events to a file."
-          }
-        },
-        "notes": "This call migrates all user groups and logs progress events for debugging or auditing purposes."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "migration.migrate_all_users",
@@ -7632,35 +4962,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I migrate all users from the source environment to the target environment and track progress?",
-        "arguments": {
-          "emit": {
-            "type": "progress",
-            "step": "fetch_users",
-            "message": "Fetching users from the source environment"
-          }
-        },
-        "notes": "This call migrates all eligible users from the source to the target environment and uses the emit callback to track progress at each step."
-      },
-      {
-        "user_query": "I want to migrate users but don't need progress updates. How can I do that?",
-        "arguments": {},
-        "notes": "This call migrates all eligible users without emitting progress events. Use this when you only need the final migration result."
-      },
-      {
-        "user_query": "Can I monitor detailed progress while migrating users to ensure everything is working correctly?",
-        "arguments": {
-          "emit": {
-            "type": "progress",
-            "step": "submit_payload",
-            "message": "Submitting bulk payload to the target environment"
-          }
-        },
-        "notes": "This call migrates users and provides detailed progress updates, including when the bulk payload is submitted to the target environment."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "migration.migrate_dashboard_shares",
@@ -7705,55 +5007,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I migrate shares from dashboards in the source environment to their equivalents in the target environment?",
-        "arguments": {
-          "source_dashboard_ids": [
-            "dash123",
-            "dash456",
-            "dash789"
-          ],
-          "target_dashboard_ids": [
-            "dashABC",
-            "dashDEF",
-            "dashGHI"
-          ],
-          "change_ownership": false
-        },
-        "notes": "This call migrates shares from three dashboards in the source environment to their corresponding dashboards in the target environment without changing ownership."
-      },
-      {
-        "user_query": "I need to migrate shares and transfer ownership for a single dashboard from the source to the target environment. How can I do that?",
-        "arguments": {
-          "source_dashboard_ids": [
-            "dash001"
-          ],
-          "target_dashboard_ids": [
-            "dash002"
-          ],
-          "change_ownership": true
-        },
-        "notes": "This call migrates shares for a single dashboard and transfers ownership to the target environment."
-      },
-      {
-        "user_query": "Can I migrate shares for multiple dashboards while keeping the existing ownership in the target environment?",
-        "arguments": {
-          "source_dashboard_ids": [
-            "dashA1",
-            "dashB2",
-            "dashC3"
-          ],
-          "target_dashboard_ids": [
-            "dashX1",
-            "dashY2",
-            "dashZ3"
-          ],
-          "change_ownership": false
-        },
-        "notes": "This call migrates shares for three dashboards from the source to the target environment while retaining the original ownership in the target environment."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "migration.migrate_dashboards",
@@ -7816,50 +5070,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I migrate dashboards with IDs 'dash123' and 'dash456' to the target environment, skipping any that already exist?",
-        "arguments": {
-          "dashboard_ids": [
-            "dash123",
-            "dash456"
-          ],
-          "action": "skip",
-          "republish": false,
-          "migrate_share": false,
-          "change_ownership": false
-        },
-        "notes": "This call migrates the specified dashboards by their IDs, skipping any that already exist in the target environment. It does not republish dashboards or migrate shares."
-      },
-      {
-        "user_query": "I want to migrate dashboards named 'Sales Overview' and 'Marketing Insights' and overwrite any existing ones in the target environment. Can you help?",
-        "arguments": {
-          "dashboard_names": [
-            "Sales Overview",
-            "Marketing Insights"
-          ],
-          "action": "overwrite",
-          "republish": true,
-          "migrate_share": true,
-          "change_ownership": false
-        },
-        "notes": "This call migrates the specified dashboards by their names, overwriting any existing dashboards in the target environment. It republishes the dashboards after import and migrates shares but does not change ownership."
-      },
-      {
-        "user_query": "Can I duplicate dashboards with IDs 'dash789' and 'dash101' in the target environment and also migrate their shares and ownership?",
-        "arguments": {
-          "dashboard_ids": [
-            "dash789",
-            "dash101"
-          ],
-          "action": "duplicate",
-          "republish": false,
-          "migrate_share": true,
-          "change_ownership": true
-        },
-        "notes": "This call duplicates the specified dashboards in the target environment, migrates their shares, and attempts to change ownership. It does not republish the dashboards after import."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "migration.migrate_datamodels",
@@ -7934,57 +5145,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Migrate the data models 'SalesData' and 'CustomerAnalytics' to the target environment, ensuring all dependencies are included and overwriting any existing models.",
-        "arguments": {
-          "datamodel_names": [
-            "SalesData",
-            "CustomerAnalytics"
-          ],
-          "dependencies": [
-            "dataSecurity",
-            "formulas",
-            "hierarchies",
-            "perspectives"
-          ],
-          "action": "overwrite",
-          "shares": true
-        },
-        "notes": "This call migrates two specific data models by name, includes all dependencies, and overwrites any existing models in the target environment."
-      },
-      {
-        "user_query": "Migrate data models with IDs 'dm_12345' and 'dm_67890' to the target environment, using specific provider connections and duplicating the models with new titles.",
-        "arguments": {
-          "datamodel_ids": [
-            "dm_12345",
-            "dm_67890"
-          ],
-          "provider_connection_map": {
-            "Databricks": "conn_abc123",
-            "GoogleBigQuery": "conn_xyz789"
-          },
-          "action": "duplicate",
-          "new_title": "Migrated Data Model"
-        },
-        "notes": "This call migrates two data models by ID, specifies provider connections for Databricks and Google BigQuery, and duplicates the models with a new title in the target environment."
-      },
-      {
-        "user_query": "Migrate all data models related to 'Finance' and include only formulas and hierarchies as dependencies. Do not migrate shares.",
-        "arguments": {
-          "datamodel_names": [
-            "Finance"
-          ],
-          "dependencies": [
-            "formulas",
-            "hierarchies"
-          ],
-          "shares": false,
-          "action": "overwrite"
-        },
-        "notes": "This call migrates the 'Finance' data model, includes only formulas and hierarchies as dependencies, and avoids migrating shares. Existing models in the target environment will be overwritten."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "migration.migrate_groups",
@@ -8017,37 +5178,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I migrate the 'Sales Team' and 'Marketing Team' groups to the new environment?",
-        "arguments": {
-          "group_name_list": [
-            "Sales Team",
-            "Marketing Team"
-          ]
-        },
-        "notes": "This call migrates the 'Sales Team' and 'Marketing Team' groups from the source environment to the target environment. Use this when you need to move specific groups to a new Sisense instance."
-      },
-      {
-        "user_query": "I need to transfer the 'Admin' and 'Data Analysts' groups to our updated Sisense server. How do I do that?",
-        "arguments": {
-          "group_name_list": [
-            "Admin",
-            "Data Analysts"
-          ]
-        },
-        "notes": "This call migrates the 'Admin' and 'Data Analysts' groups to the target environment. Useful for ensuring key user groups are available in the new setup."
-      },
-      {
-        "user_query": "Can I move the 'Support Team' group to the new Sisense environment?",
-        "arguments": {
-          "group_name_list": [
-            "Support Team"
-          ]
-        },
-        "notes": "This call migrates the 'Support Team' group to the target environment. Ideal for transferring a single group when preparing the new environment."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "migration.migrate_users",
@@ -8081,39 +5212,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Migrate the users john.doe@example.com and jane.smith@example.com to the target environment.",
-        "arguments": {
-          "user_name_list": [
-            "john.doe@example.com",
-            "jane.smith@example.com"
-          ]
-        },
-        "notes": "This call migrates the specified users from the source environment to the target environment, ensuring their roles and group memberships are mapped correctly."
-      },
-      {
-        "user_query": "Transfer the users admin@example.com and support@example.com to the new Sisense instance.",
-        "arguments": {
-          "user_name_list": [
-            "admin@example.com",
-            "support@example.com"
-          ]
-        },
-        "notes": "Use this call when moving administrative and support users to a new Sisense environment while preserving their configurations."
-      },
-      {
-        "user_query": "Migrate the users sales.team@example.com, marketing.lead@example.com, and hr.manager@example.com to the target environment.",
-        "arguments": {
-          "user_name_list": [
-            "sales.team@example.com",
-            "marketing.lead@example.com",
-            "hr.manager@example.com"
-          ]
-        },
-        "notes": "This operation is ideal for migrating multiple department leads to the target environment in one batch."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "plugins.disable_plugin",
@@ -8142,29 +5241,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I disable the 'plugin-advanced-analytics' plugin?",
-        "arguments": {
-          "plugin": "plugin-advanced-analytics"
-        },
-        "notes": "This call disables the 'advanced-analytics' plugin, preventing it from being used in Sisense. Use this when the plugin is no longer needed or causing issues."
-      },
-      {
-        "user_query": "I need to turn off the 'custom-dashboard' plugin. How do I do that?",
-        "arguments": {
-          "plugin": "custom-dashboard"
-        },
-        "notes": "This call disables the 'custom-dashboard' plugin by its folder name. Use this when you want to temporarily or permanently deactivate the plugin."
-      },
-      {
-        "user_query": "Can I disable the 'plugin-data-export' plugin?",
-        "arguments": {
-          "plugin": "plugin-data-export"
-        },
-        "notes": "This call disables the 'data-export' plugin. Use this if the plugin is causing conflicts or is no longer required for your workflows."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "plugins.disable_plugins",
@@ -8200,40 +5277,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I disable the 'plugin-advanced-viz' and 'plugin-data-export' plugins?",
-        "arguments": {
-          "plugins": [
-            "plugin-advanced-viz",
-            "plugin-data-export"
-          ],
-          "bulk": true
-        },
-        "notes": "This call disables the 'plugin-advanced-viz' and 'plugin-data-export' plugins in a single PATCH request. Use this when you want to disable multiple plugins efficiently."
-      },
-      {
-        "user_query": "I want to disable the 'plugin-custom-theme' plugin but ensure each plugin update is handled individually. How can I do that?",
-        "arguments": {
-          "plugins": [
-            "plugin-custom-theme"
-          ],
-          "bulk": false
-        },
-        "notes": "This call disables the 'plugin-custom-theme' plugin, sending one PATCH request for this plugin. Use this when you want granular control over each plugin update."
-      },
-      {
-        "user_query": "Can I disable multiple plugins like 'plugin-user-audit' and 'plugin-dashboard-tools' without using the 'plugin-' prefix?",
-        "arguments": {
-          "plugins": [
-            "user-audit",
-            "dashboard-tools"
-          ],
-          "bulk": true
-        },
-        "notes": "This call disables the 'plugin-user-audit' and 'plugin-dashboard-tools' plugins in a single PATCH request. The 'plugin-' prefix is optional and automatically stripped during matching."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "plugins.enable_plugin",
@@ -8262,29 +5306,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I enable the 'plugin-sample' plugin?",
-        "arguments": {
-          "plugin": "plugin-sample"
-        },
-        "notes": "This call enables the 'plugin-sample' plugin if it is currently disabled. Use this when you want to activate this specific plugin."
-      },
-      {
-        "user_query": "I need to enable a plugin called 'custom-visualization'. How do I do that?",
-        "arguments": {
-          "plugin": "custom-visualization"
-        },
-        "notes": "This call enables the 'custom-visualization' plugin by its folder name. Use this when you know the folder name of the plugin you want to activate."
-      },
-      {
-        "user_query": "Can I enable the 'plugin-advanced-filters' plugin?",
-        "arguments": {
-          "plugin": "plugin-advanced-filters"
-        },
-        "notes": "This call enables the 'plugin-advanced-filters' plugin. Use this when you need to activate this plugin for advanced filtering capabilities."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "plugins.enable_plugins",
@@ -8320,40 +5342,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I enable the 'plugin-advanced-charts' and 'plugin-data-export' plugins?",
-        "arguments": {
-          "plugins": [
-            "plugin-advanced-charts",
-            "plugin-data-export"
-          ],
-          "bulk": true
-        },
-        "notes": "This call enables the 'plugin-advanced-charts' and 'plugin-data-export' plugins in bulk mode, sending a single PATCH request."
-      },
-      {
-        "user_query": "I want to enable the 'plugin-custom-theme' plugin, but I need to ensure each plugin is updated individually. How can I do that?",
-        "arguments": {
-          "plugins": [
-            "plugin-custom-theme"
-          ],
-          "bulk": false
-        },
-        "notes": "This call enables the 'plugin-custom-theme' plugin in non-bulk mode, sending one PATCH request for this plugin."
-      },
-      {
-        "user_query": "Can I enable multiple plugins like 'plugin-user-management' and 'plugin-dashboard-enhancer' at once?",
-        "arguments": {
-          "plugins": [
-            "plugin-user-management",
-            "plugin-dashboard-enhancer"
-          ],
-          "bulk": true
-        },
-        "notes": "This call enables the 'plugin-user-management' and 'plugin-dashboard-enhancer' plugins in bulk mode, sending a single PATCH request for efficiency."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "plugins.get_all_plugins",
@@ -8375,23 +5364,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What plugins are currently installed on my Sisense instance?",
-        "arguments": {},
-        "notes": "This call retrieves a complete list of all plugins installed on the Sisense instance, including their names, folder paths, and activation status."
-      },
-      {
-        "user_query": "Can you show me all the plugins available on the server?",
-        "arguments": {},
-        "notes": "Use this to fetch details about all plugins, which can help in identifying active and inactive plugins or troubleshooting plugin-related issues."
-      },
-      {
-        "user_query": "I need to audit the plugins installed on our Sisense instance. How can I get a full list?",
-        "arguments": {},
-        "notes": "This call is useful for auditing purposes, providing a flat list of all plugins along with their metadata."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "plugins.get_plugin",
@@ -8420,29 +5393,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Find the plugin named 'plugin-custom-theme'.",
-        "arguments": {
-          "plugin": "plugin-custom-theme"
-        },
-        "notes": "This call retrieves the plugin object for a custom theme plugin. Use this when you need details about the plugin or to verify its existence."
-      },
-      {
-        "user_query": "Get the plugin using its folder name 'custom-theme'.",
-        "arguments": {
-          "plugin": "custom-theme"
-        },
-        "notes": "This call fetches the plugin object by its folder name. Useful when the folder name is known but the full plugin name is not."
-      },
-      {
-        "user_query": "Look up the plugin named 'plugin-data-connector'.",
-        "arguments": {
-          "plugin": "plugin-data-connector"
-        },
-        "notes": "This call retrieves the plugin object for a data connector plugin. Use this to confirm the plugin's availability or inspect its configuration."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "plugins.restore_snapshot",
@@ -8490,47 +5441,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Restore the plugin configuration to match the snapshot we saved earlier.",
-        "arguments": {
-          "snapshot": {
-            "plugins": [
-              "data_connector_v2",
-              "custom_theme_manager",
-              "audit_logger"
-            ]
-          },
-          "bulk": true
-        },
-        "notes": "This call restores the plugin state to match the provided snapshot, enabling 'data_connector_v2', 'custom_theme_manager', and 'audit_logger' while disabling all other plugins. Changes are sent in a single PATCH request for efficiency."
-      },
-      {
-        "user_query": "Apply a snapshot to enable only the 'geo_visualization' plugin and disable everything else, but send changes one at a time.",
-        "arguments": {
-          "snapshot": {
-            "plugins": [
-              "geo_visualization"
-            ]
-          },
-          "bulk": false
-        },
-        "notes": "This call enables the 'geo_visualization' plugin and disables all others, sending one PATCH request per plugin change. Use this mode if you need granular control or error handling for each change."
-      },
-      {
-        "user_query": "Revert the plugins to a snapshot that includes 'data_exporter' and 'advanced_charts', ensuring all other plugins are turned off.",
-        "arguments": {
-          "snapshot": {
-            "plugins": [
-              "data_exporter",
-              "advanced_charts"
-            ]
-          },
-          "bulk": true
-        },
-        "notes": "This call restores the plugin state to enable 'data_exporter' and 'advanced_charts' while disabling all other plugins. Changes are sent in a single PATCH request for faster execution."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "plugins.save_snapshot",
@@ -8552,23 +5463,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How can I save the current state of enabled plugins so I can restore it later?",
-        "arguments": {},
-        "notes": "This call captures the current enable/disable state of all plugins as a snapshot. Use this when you want to save the current plugin configuration for future restoration."
-      },
-      {
-        "user_query": "I need to back up the current plugin configuration before making changes. How do I do that?",
-        "arguments": {},
-        "notes": "This call creates a snapshot of the current plugin state. It's useful for creating a backup before enabling or disabling plugins."
-      },
-      {
-        "user_query": "Can I save the current plugin setup to ensure I can revert to it later if needed?",
-        "arguments": {},
-        "notes": "This call saves the current state of enabled plugins. Use it to ensure you can revert to the same configuration after making changes."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "queries.elasticube_run_jaql_query",
@@ -8602,110 +5497,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Fetch total sales by region for the current year.",
-        "arguments": {
-          "datasource_name": "SalesElasticube",
-          "jaql_payload": {
-            "metadata": [
-              {
-                "field": "[Region]",
-                "type": "dim",
-                "title": "Region"
-              },
-              {
-                "field": "[Sales]",
-                "type": "measure",
-                "title": "Total Sales",
-                "aggregation": "sum"
-              }
-            ],
-            "datasource": "SalesElasticube",
-            "filters": [
-              {
-                "field": "[Year]",
-                "type": "filter",
-                "operator": "equals",
-                "value": "2023"
-              }
-            ]
-          }
-        },
-        "notes": "This query retrieves the total sales aggregated by region for the year 2023 from the 'SalesElasticube' datasource."
-      },
-      {
-        "user_query": "Get the top 5 products by revenue for Q1 2023.",
-        "arguments": {
-          "datasource_name": "ProductAnalytics",
-          "jaql_payload": {
-            "metadata": [
-              {
-                "field": "[Product]",
-                "type": "dim",
-                "title": "Product"
-              },
-              {
-                "field": "[Revenue]",
-                "type": "measure",
-                "title": "Revenue",
-                "aggregation": "sum"
-              }
-            ],
-            "datasource": "ProductAnalytics",
-            "filters": [
-              {
-                "field": "[Quarter]",
-                "type": "filter",
-                "operator": "equals",
-                "value": "Q1 2023"
-              }
-            ],
-            "options": {
-              "limit": 5,
-              "sort": [
-                {
-                  "field": "[Revenue]",
-                  "order": "desc"
-                }
-              ]
-            }
-          }
-        },
-        "notes": "This query retrieves the top 5 products by revenue for the first quarter of 2023 from the 'ProductAnalytics' datasource."
-      },
-      {
-        "user_query": "From the 'WebTrafficElasticube' elasticube, get the sum of Visits by Month for the last 12 months.",
-        "arguments": {
-          "datasource_name": "WebTrafficElasticube",
-          "jaql_payload": {
-            "metadata": [
-              {
-                "field": "[Month]",
-                "type": "dim",
-                "title": "Month"
-              },
-              {
-                "field": "[Visits]",
-                "type": "measure",
-                "title": "Website Visits",
-                "aggregation": "sum"
-              }
-            ],
-            "datasource": "WebTrafficElasticube",
-            "filters": [
-              {
-                "field": "[Date]",
-                "type": "filter",
-                "operator": "last",
-                "value": "12 months"
-              }
-            ]
-          }
-        },
-        "notes": "This query retrieves the total website visits grouped by month for the last 12 months from the 'WebTrafficElasticube' datasource."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "queries.elasticubes_run_jaql_csv",
@@ -8739,74 +5531,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Export from 'sales_elasticube' the sum of sales.amount by sales.date for 2023-Q3 as a CSV file.",
-        "arguments": {
-          "datasource_name": "sales_elasticube",
-          "jaql_payload": {
-            "fields": [
-              {
-                "dimension": "sales.date",
-                "filter": {
-                  "members": [
-                    "2023-Q3"
-                  ]
-                }
-              },
-              {
-                "dimension": "sales.amount",
-                "aggregation": "sum"
-              }
-            ]
-          }
-        },
-        "notes": "This call retrieves aggregated sales data for Q3 2023 from the 'sales_elasticube' datasource and exports it as a CSV file."
-      },
-      {
-        "user_query": "Generate a CSV report of customer demographics segmented by age group.",
-        "arguments": {
-          "datasource_name": "customer_insights",
-          "jaql_payload": {
-            "fields": [
-              {
-                "dimension": "customers.age_group"
-              },
-              {
-                "dimension": "customers.count",
-                "aggregation": "count"
-              }
-            ]
-          }
-        },
-        "notes": "This call extracts customer demographic data segmented by age group from the 'customer_insights' datasource and returns it as a CSV file."
-      },
-      {
-        "user_query": "Extract product performance metrics for the last 6 months.",
-        "arguments": {
-          "datasource_name": "product_performance",
-          "jaql_payload": {
-            "fields": [
-              {
-                "dimension": "products.name"
-              },
-              {
-                "dimension": "products.sales",
-                "aggregation": "sum"
-              },
-              {
-                "dimension": "products.date",
-                "filter": {
-                  "from": "2023-04-01",
-                  "to": "2023-09-30"
-                }
-              }
-            ]
-          }
-        },
-        "notes": "This call retrieves product performance metrics, including sales data for the last 6 months, from the 'product_performance' datasource and exports it as a CSV file."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "report_manager.create_report",
@@ -9071,36 +5796,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Analyze the structure of the dashboard titled 'Sales Overview'.",
-        "arguments": {
-          "dashboards": [
-            "Sales Overview"
-          ]
-        },
-        "notes": "This call analyzes the structure of the 'Sales Overview' dashboard, counting widget types and identifying child dashboards."
-      },
-      {
-        "user_query": "Check the structure of dashboards with IDs 'dashboard123' and 'dashboard456'.",
-        "arguments": {
-          "dashboards": [
-            "dashboard123",
-            "dashboard456"
-          ]
-        },
-        "notes": "This call processes two dashboards by their IDs, providing insights into widget counts and jump-to-dashboard relationships."
-      },
-      {
-        "user_query": "Analyze the complexity of the dashboard named 'Marketing Performance'.",
-        "arguments": {
-          "dashboards": [
-            "Marketing Performance"
-          ]
-        },
-        "notes": "This call evaluates the 'Marketing Performance' dashboard for widget counts and child dashboard references, useful for understanding its structure."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "wellcheck.check_dashboard_widget_counts",
@@ -9131,37 +5827,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "How many widgets are on the dashboards 'Sales Overview' and 'Marketing Performance'?",
-        "arguments": {
-          "dashboards": [
-            "Sales Overview",
-            "Marketing Performance"
-          ]
-        },
-        "notes": "This call analyzes the widget counts for the dashboards titled 'Sales Overview' and 'Marketing Performance'. Use this when you need a quick summary of widget counts for specific dashboards by title."
-      },
-      {
-        "user_query": "Can you check the widget count for the dashboard with ID 'dashboard_12345'?",
-        "arguments": {
-          "dashboards": [
-            "dashboard_12345"
-          ]
-        },
-        "notes": "This call retrieves the widget count for the dashboard identified by the Sisense dashboard ID 'dashboard_12345'. Use this when you know the dashboard ID and want to analyze its widget count."
-      },
-      {
-        "user_query": "I need to know the widget counts for dashboards 'dashboard_67890' and 'Executive Summary'.",
-        "arguments": {
-          "dashboards": [
-            "dashboard_67890",
-            "Executive Summary"
-          ]
-        },
-        "notes": "This call computes widget counts for a mix of dashboard references: one by ID ('dashboard_67890') and one by title ('Executive Summary'). Use this when you have a combination of IDs and titles to analyze."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "wellcheck.check_datamodel_custom_tables",
@@ -9192,36 +5858,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Check if any custom tables in the 'Sales Analytics' data model use UNION.",
-        "arguments": {
-          "datamodels": [
-            "Sales Analytics"
-          ]
-        },
-        "notes": "This call analyzes the 'Sales Analytics' data model by title and flags any custom tables that use UNION in their SQL expressions."
-      },
-      {
-        "user_query": "Inspect the custom tables in multiple data models, including 'Marketing Insights' and '12345'.",
-        "arguments": {
-          "datamodels": [
-            "Marketing Insights",
-            "12345"
-          ]
-        },
-        "notes": "This call checks both a data model by title ('Marketing Insights') and another by ID ('12345') for UNION usage in their custom tables."
-      },
-      {
-        "user_query": "Analyze the custom tables in the data model with ID '67890' to ensure no UNION is used.",
-        "arguments": {
-          "datamodels": [
-            "67890"
-          ]
-        },
-        "notes": "This call inspects the data model identified by ID '67890' and flags any custom tables containing UNION in their SQL expressions."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "wellcheck.check_datamodel_import_queries",
@@ -9252,36 +5889,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Check if the tables in the 'Sales Analytics' data model have import queries configured.",
-        "arguments": {
-          "datamodels": [
-            "Sales Analytics"
-          ]
-        },
-        "notes": "This call inspects all tables in the 'Sales Analytics' data model by its title to determine if import queries are configured."
-      },
-      {
-        "user_query": "Analyze the data models with IDs 'dm_12345' and 'dm_67890' for import query configurations.",
-        "arguments": {
-          "datamodels": [
-            "dm_12345",
-            "dm_67890"
-          ]
-        },
-        "notes": "This call checks the tables in two data models identified by their IDs to see if import queries are present."
-      },
-      {
-        "user_query": "Inspect the 'Marketing Dashboard' data model for import queries in its tables.",
-        "arguments": {
-          "datamodels": [
-            "Marketing Dashboard"
-          ]
-        },
-        "notes": "This call evaluates the tables in the 'Marketing Dashboard' data model, identified by its title, to verify the presence of import queries."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "wellcheck.check_datamodel_island_tables",
@@ -9312,36 +5920,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Find all island tables in the 'Sales Analytics' data model.",
-        "arguments": {
-          "datamodels": [
-            "Sales Analytics"
-          ]
-        },
-        "notes": "This call analyzes the 'Sales Analytics' data model to identify any tables that do not have relationships with other tables."
-      },
-      {
-        "user_query": "Check for island tables in multiple data models: 'Marketing Dashboard' and 'Finance Data'.",
-        "arguments": {
-          "datamodels": [
-            "Marketing Dashboard",
-            "Finance Data"
-          ]
-        },
-        "notes": "This call inspects the 'Marketing Dashboard' and 'Finance Data' data models to find tables that are not connected to any other tables."
-      },
-      {
-        "user_query": "Identify island tables in the data model with ID '12345'.",
-        "arguments": {
-          "datamodels": [
-            "12345"
-          ]
-        },
-        "notes": "This call targets the data model with ID '12345' to locate any tables that lack relationships with other tables."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "wellcheck.check_datamodel_m2m_relationships",
@@ -9372,36 +5951,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Check for many-to-many relationships in the 'Sales Data' data model.",
-        "arguments": {
-          "datamodels": [
-            "Sales Data"
-          ]
-        },
-        "notes": "This call analyzes the 'Sales Data' data model to identify potential many-to-many relationships between tables."
-      },
-      {
-        "user_query": "Analyze multiple data models, 'Marketing Analytics' and 'Customer Insights', for M2M relationships.",
-        "arguments": {
-          "datamodels": [
-            "Marketing Analytics",
-            "Customer Insights"
-          ]
-        },
-        "notes": "This call checks both the 'Marketing Analytics' and 'Customer Insights' data models for any many-to-many relationships between their tables."
-      },
-      {
-        "user_query": "Detect M2M relationships in the data model with ID 'dm_12345'.",
-        "arguments": {
-          "datamodels": [
-            "dm_12345"
-          ]
-        },
-        "notes": "This call inspects the data model identified by the ID 'dm_12345' for potential many-to-many relationships between its tables."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "wellcheck.check_datamodel_rls_datatypes",
@@ -9432,36 +5982,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "What are the datatypes of the columns used in RLS rules for the 'Sales Dashboard' data model?",
-        "arguments": {
-          "datamodels": [
-            "Sales Dashboard"
-          ]
-        },
-        "notes": "This call inspects the RLS rules for the 'Sales Dashboard' data model and returns the datatypes of the columns involved."
-      },
-      {
-        "user_query": "Check the RLS column datatypes for data models with IDs '12345' and '67890'.",
-        "arguments": {
-          "datamodels": [
-            "12345",
-            "67890"
-          ]
-        },
-        "notes": "This call analyzes the RLS rules for two data models identified by their IDs and returns details about the columns and their datatypes."
-      },
-      {
-        "user_query": "Analyze the RLS rules for the 'Marketing Analytics' data model and report the column datatypes.",
-        "arguments": {
-          "datamodels": [
-            "Marketing Analytics"
-          ]
-        },
-        "notes": "This call retrieves the RLS column datatype information for the 'Marketing Analytics' data model."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "wellcheck.check_pivot_widget_fields",
@@ -9495,41 +6016,7 @@
     ],
     "sdk_version": "2.0.1",
     "updated_at": "2026-09-01T17:29:06Z",
-    "examples": [
-      {
-        "user_query": "Find pivot widgets with too many fields on the Sales and Marketing dashboards.",
-        "arguments": {
-          "dashboards": [
-            "Sales Dashboard",
-            "Marketing Dashboard"
-          ],
-          "max_fields": 25
-        },
-        "notes": "This call analyzes the 'Sales Dashboard' and 'Marketing Dashboard' to identify pivot widgets with more than 25 fields. Use this to ensure widgets remain manageable and performant."
-      },
-      {
-        "user_query": "Check all pivot widgets on dashboard ID '12345' for excessive fields.",
-        "arguments": {
-          "dashboards": [
-            "12345"
-          ],
-          "max_fields": 20
-        },
-        "notes": "This call checks the dashboard with ID '12345' for pivot widgets that exceed the default threshold of 20 fields. Useful for auditing a specific dashboard by its ID."
-      },
-      {
-        "user_query": "Audit pivot widgets on multiple dashboards for field counts above 30.",
-        "arguments": {
-          "dashboards": [
-            "Finance Dashboard",
-            "Operations Dashboard",
-            "HR Dashboard"
-          ],
-          "max_fields": 30
-        },
-        "notes": "This call reviews the 'Finance Dashboard', 'Operations Dashboard', and 'HR Dashboard' for pivot widgets with more than 30 fields. Ideal for a broader audit across multiple dashboards."
-      }
-    ]
+    "examples": []
   },
   {
     "tool_id": "wellcheck.run_full_wellcheck",

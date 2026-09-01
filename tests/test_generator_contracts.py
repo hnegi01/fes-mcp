@@ -163,3 +163,19 @@ def test_list_wrapped_contract_error_detected():
 def test_legit_payload_with_error_field_not_flagged():
     assert _sdk_error_message({"error": "x", "data": [1]}) is None
     assert _sdk_error_message([{"error": "x"}, {"error": "y"}]) is None
+
+
+def test_ok_marker_detects_failure_regardless_of_shape():
+    # pysisense >= 2.0: every failure dict carries ok: False, whatever else
+    # it carries — exact-key-set matching is what turned 401s into successes.
+    msg = _sdk_error_message({"ok": False, "error": "Forbidden", "status_code": 403,
+                              "raw_body": "det", "extra_future_key": 1})
+    assert msg == "Forbidden (HTTP 403) — det"
+    assert _sdk_error_message([{"ok": False, "error": "nope"}]) == "nope"
+
+
+def test_success_payloads_never_flagged():
+    assert _sdk_error_message({"oid": "d1", "ok_count": 3}) is None
+    assert _sdk_error_message({"results": [], "errors": []}) is None  # bulk shape
+    # partial-success shape: skipped shares are data, not an error
+    assert _sdk_error_message({"shares": 2, "skipped": [{"name": "x"}]}) is None

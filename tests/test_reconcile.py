@@ -122,3 +122,18 @@ def test_idempotent():
     twice, report = rec.reconcile_allowlist(once, REGISTRY, "9.9.9")
     assert twice == once
     assert report["deprecated"] == [] and report["staged"] == []
+
+
+def test_excluded_annotation_moves_with_its_dead_tool():
+    text = """# ===== m =====
+m.alive_tool     # Alive.
+# [excluded: dup group 9 — reason]
+# m.dead_hidden    # Was hidden, SDK removed it.
+"""
+    out, report = rec.reconcile_allowlist(text, REGISTRY, "2.0.1")
+    assert report["deprecated"] == ["m.dead_hidden"]
+    live = out.split(rec.DEPRECATED_HEADER)[0]
+    dep = out.split(rec.DEPRECATED_HEADER)[1]
+    assert "[excluded:" not in live      # no orphaned annotation left behind
+    assert "[excluded:" in dep           # it traveled with its tool
+    assert "# m.dead_hidden" in dep

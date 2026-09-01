@@ -23,27 +23,21 @@
 # refresh_registry.sh) maintains two sections at the END of this file:
 # DEPRECATED (ids the SDK removed — history, never uncomment) and STAGED
 # (ids new in the registry, commented — delete one '#' to expose). It never
-# touches listed/hidden/staged ids, so hand edits are safe. SDK 1.1.0's ~50
-# new tools (report_manager, mergetool, get_groups, run_full_wellcheck, …)
-# are in STAGED awaiting curation; `get_connections` was renamed by the SDK
-# to `get_connections_all` (updated in place below).
+# touches listed/hidden/staged ids, so hand edits are safe.
+# STAGED currently holds 1.1.0's new surface (report_manager, mergetool,
+# get_groups, run_full_wellcheck, …) awaiting curation. SDK 2.0 collapsed the
+# user/group family into canonical methods (get_users_all / get_groups /
+# users_per_group(group_name=None)) — the retired variants are in DEPRECATED.
 
 # ===== access_management (13 read / 6 write) =====
 
 access_management.get_all_dashboard_shares                   # Retrieve all dashboard shares, including user and group details for e...
 access_management.get_datamodel_columns                      # Retrieve columns from a DataModel by collecting them from its dataset...
-access_management.get_group                                  # Retrieve group details by name.
 access_management.get_my_user                                # Retrieve the currently logged-in user for the API token.
 access_management.get_roles                                  # Retrieve all Sisense roles.
-access_management.get_unused_columns                         # Identify unused columns in a DataModel by comparing all columns again...
 access_management.get_user                                   # Retrieve a user's details by email address, expanding group and role ...
-# [excluded: dup group 4 — same GET /users?expand=groups,role as get_user]
-# access_management.get_user_with_role_and_group_names         # Retrieve a single user by email/username with role and group details.
 access_management.get_users_all                              # Retrieve all users with group and role information.
-access_management.get_users_with_role_names_and_group_names  # Retrieve all users enriched with role names and group names.
 access_management.users_per_group                            # Retrieve all users within a specific group by name.
-# [excluded: dup group 6 — renames keys, drops Everyone, injects synthetic Admins bucket]
-# access_management.users_per_group_all                        # Retrieve all groups mapped to the users belonging to them.
 access_management.change_folder_and_dashboard_ownership      # [write] Change the ownership of folders and optionally dashboards.
 access_management.change_user_password                       # [write] Change a user's password.
 access_management.create_schedule_build                      # [write] Create a schedule build for a DataModel.
@@ -181,6 +175,16 @@ wellcheck.check_datamodel_m2m_relationships  # Check for potential many-to-many 
 wellcheck.check_datamodel_rls_datatypes      # Inspect row-level security (RLS) rules for one or more data models and
 wellcheck.check_pivot_widget_fields          # Analyze pivot widgets on one or more dashboards and report those with...
 
+# ===== DEPRECATED: removed from the SDK — history only, never uncomment =====
+# --- removed in pysisense 2.0.1 ---
+# access_management.get_group                                  # Retrieve group details by name.
+# access_management.get_unused_columns                         # Identify unused columns in a DataModel by comparing all columns again...
+# access_management.get_user_with_role_and_group_names         # Retrieve a single user by email/username with role and group details.
+# access_management.get_users_with_role_names_and_group_names  # Retrieve all users enriched with role names and group names.
+# access_management.users_per_group_all                        # Retrieve all groups mapped to the users belonging to them.
+# access_management.get_user_email_and_group_name_maps    # Fetch all users and groups and build ID-to-name lookup maps.
+# access_management.get_users_expanded    # Retrieve all users with raw, unmodified role and group objects.
+
 # ===== STAGED: new in the registry — uncomment a line to expose the tool =====
 # --- new in pysisense 1.1.0 ---
 # access_management.create_groups_bulk    # [write] Create multiple groups in a single bulk request.
@@ -189,8 +193,6 @@ wellcheck.check_pivot_widget_fields          # Analyze pivot widgets on one or m
 # access_management.get_groups    # Retrieve all groups.
 # access_management.get_tenants    # Retrieve all tenants.
 # access_management.get_unused_columns_bulk    # Run unused-column analysis for one or more data models and return a
-# access_management.get_user_email_and_group_name_maps    # Fetch all users and groups and build ID-to-name lookup maps.
-# access_management.get_users_expanded    # Retrieve all users with raw, unmodified role and group objects.
 # blox.get_blox_widget_style    # Retrieve the style objects of a BloX widget.
 # blox.update_blox_widget_style    # [write] Update the style objects of a BloX widget.
 # dashboard.change_dashboard_owner    # [write] Transfer ownership of a dashboard to a different user.

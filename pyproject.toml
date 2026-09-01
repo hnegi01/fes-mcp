@@ -9,7 +9,7 @@ dependencies = [
     "fastmcp>=2.10,<3",
     "httpx>=0.28",
     "jsonschema>=4.21",
-    "pysisense==1.1.0",
+    "pysisense==2.0.1",
     "python-dotenv>=1.0",
 ]
 
