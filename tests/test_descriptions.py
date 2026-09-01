@@ -82,3 +82,16 @@ def test_overlay_keys_exist_in_registry(registry):
         assert tid in registry, f"USAGE_NOTES key {tid} vanished from the registry"
     for tid in EXAMPLE_TOOLS:
         assert tid in registry, f"EXAMPLE_TOOLS key {tid} vanished from the registry"
+
+
+def test_battery_cases_reference_live_tools(registry):
+    """The eval battery must not rot: every expected tool_id has to exist in
+    the registry (an SDK removal silently invalidated a case once)."""
+    import json
+    from pathlib import Path
+
+    cases = json.loads(
+        (Path(__file__).resolve().parents[1] / "evals" / "tool_selection_cases.json").read_text()
+    )["cases"]
+    unknown = [t for c in cases for t in c["expect"] if t not in registry]
+    assert not unknown, f"battery references tools not in the registry: {unknown}"
