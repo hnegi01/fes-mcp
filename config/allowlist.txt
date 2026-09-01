@@ -17,7 +17,14 @@
 # tool is exposed EXCEPT near-duplicates — where two methods hit the same
 # endpoint or wrap each other, only the better one is uncommented, so an
 # agent never chooses between near-identical tools. Each commented duplicate
-# carries an [excluded: dup group N — reason] note; uncomment to re-expose.
+# carries an [excluded: ... reason] note; uncomment to re-expose.
+#
+# RE-AUDITED against pysisense 2.0.1 source (2026-09-01): every exclusion was
+# re-checked by reading the actual endpoints and delegation. Claims that did
+# not hold up are now advertised and carry a [verified ...] note — an
+# "excluded as duplicate" line that hits a different endpoint was a bug in
+# the review, not a curation choice. Exclusions that survived the audit are
+# genuine wrappers (one method calls the other) or same-fetch reformatters.
 #
 # SDK-upgrade automation (scripts/03_reconcile.py, part of
 # refresh_registry.sh) maintains two sections at the END of this file:
@@ -29,7 +36,7 @@
 # user/group family into canonical methods (get_users_all / get_groups /
 # users_per_group(group_name=None)) — the retired variants are in DEPRECATED.
 
-# ===== access_management (13 read / 6 write) =====
+# ===== access_management — advertising 13 of 19 (7 read / 6 write) =====
 
 access_management.get_all_dashboard_shares                   # Retrieve all dashboard shares, including user and group details for e...
 access_management.get_datamodel_columns                      # Retrieve columns from a DataModel by collecting them from its dataset...
@@ -45,12 +52,12 @@ access_management.create_user                                # [write] Create a 
 access_management.delete_user                                # [write] Delete a user by their email (username).
 access_management.update_user                                # [write] Update an existing Sisense user identified by their email address.
 
-# ===== blox (1 read / 2 write) =====
+# ===== blox — advertising 3 of 5 (1 read / 2 write) =====
 blox.get_blox_actions    # Retrieve all custom Blox actions from the Sisense instance.
 blox.delete_blox_action  # [write] Delete a custom Blox action from the Sisense instance.
 blox.save_blox_action    # [write] Save a custom Blox action on the Sisense instance.
 
-# ===== custom_code (3 read / 5 write) =====
+# ===== custom_code — advertising 8 of 8 (3 read / 5 write) =====
 custom_code.export_notebook                # Export a notebook definition.
 custom_code.get_notebooks                  # Retrieve notebooks from Sisense.
 custom_code.list_notebook_folder_contents  # List contents of a custom-code notebook folder.
@@ -60,20 +67,21 @@ custom_code.rename_notebook_file           # [write] Rename or update a notebook
 custom_code.rename_notebook_folder         # [write] Rename a custom-code notebook folder.
 custom_code.update_notebook                # [write] Update an existing notebook.
 
-# ===== dashboard (13 read / 6 write) =====
+# ===== dashboard — advertising 15 of 24 (9 read / 6 write) =====
 dashboard.can_be_owned                 # Check whether a dashboard can be owned by the current user.
 dashboard.export_dashboard             # Export a dashboard definition using the Sisense admin export endpoint.
-# [excluded: dup group 1 — get_dashboards covers it (adds fields= projection)]
-# dashboard.get_all_dashboards           # Retrieve all dashboards from the Sisense server.
-# [excluded: dup group 1 — same endpoint as get_dashboards with one query param]
-# dashboard.get_dashboard_by_id          # Retrieve a specific dashboard by its ID.
-# [excluded: dup group 1 — agent can filter get_dashboards itself]
+# [verified 2026-09-01: NOT a duplicate — /api/v1/dashboards/admin returns every dashboard on the instance; get_dashboards only returns the caller's own+shared]
+dashboard.get_all_dashboards           # Retrieve all dashboards from the Sisense server.
+# [verified 2026-09-01: NOT a duplicate — admin-scope single fetch; the dispatcher resolves titles, so this also accepts a dashboard title]
+dashboard.get_dashboard_by_id          # Retrieve a specific dashboard by its ID.
+# [excluded: get_dashboard_by_id covers it — the dispatcher resolves a title to its OID before dispatch]
 # dashboard.get_dashboard_by_name        # Retrieve a specific dashboard by its name.
 dashboard.get_dashboard_columns        # Retrieve columns referenced by a dashboard, including widget and filt...
 dashboard.get_dashboard_script         # Build a formatted dashboard script helper object.
-# [excluded: dup group 3 — get_dashboard_shares_v1 is one request and keeps the rule field]
-# dashboard.get_dashboard_share          # Retrieve share details (users and groups) for a dashboard by title.
-dashboard.get_dashboard_shares_v1      # Retrieve share details for a dashboard using the v1 shares endpoint.
+# [verified 2026-09-01: preferred over get_dashboard_shares_v1 — resolves user/group names; v1 returns raw partyIds (matches the fes-assistant call)]
+dashboard.get_dashboard_share          # Retrieve share details (users and groups) for a dashboard by title.
+# [excluded: raw payload keyed by OID with partyIds; get_dashboard_share resolves names]
+# dashboard.get_dashboard_shares_v1      # Retrieve share details for a dashboard using the v1 shares endpoint.
 # [excluded: dup group 2 — calls export_dashboard and returns its widgets key]
 # dashboard.get_dashboard_widgets        # Retrieve widget definitions from an admin export of the dashboard.
 dashboard.get_dashboards               # Retrieve dashboards visible to the authenticated user.
@@ -87,7 +95,7 @@ dashboard.move_dashboard_to_folder     # [write] Move a dashboard into a folder.
 dashboard.publish_dashboard            # [write] Publish (republish) a dashboard.
 dashboard.rename_dashboard             # [write] Rename a dashboard.
 
-# ===== datamodel (17 read / 11 write) =====
+# ===== datamodel — advertising 23 of 36 (12 read / 11 write) =====
 datamodel.describe_datamodel              # Retrieve data model structure in a flat, row-based format.
 # [excluded: dup group 7 — raw formatter over the same schema fetch]
 # datamodel.describe_datamodel_raw          # Retrieve detailed information about a specific data model.
@@ -101,8 +109,8 @@ datamodel.get_datamodel_shares            # Retrieve all share entries (users an
 # [excluded: dup group 9 — get_datasecurity_detail is a strict superset]
 # datamodel.get_datasecurity                # Retrieve datasecurity table and column entries for a given data model.
 datamodel.get_datasecurity_detail         # Retrieve detailed datasecurity rules for a data model, including shar...
-# [excluded: dup group 8 — get_all_datamodel returns cleaner rows (NOTE: that route is Linux-only; swap to this for Windows)]
-# datamodel.get_elasticubes                 # List all ElastiCubes using the legacy v1 endpoint.
+# [verified 2026-09-01: NOT a duplicate — v1 endpoint that works on Windows-based Sisense; get_all_datamodel's v2 ECM route is Linux-only]
+datamodel.get_elasticubes                 # List all ElastiCubes using the legacy v1 endpoint.
 datamodel.get_model_schema                # Retrieve the schema of a data model, including tables and columns.
 # [excluded: dup group 14 — get_data can express SELECT COUNT(*) itself]
 # datamodel.get_row_count                   # Retrieve the row count for each table in a specific data model.
@@ -122,32 +130,32 @@ datamodel.setup_datamodel                 # [write] Set up a data model end to e
 datamodel.update_connection               # [write] Update an existing connection.
 datamodel.update_datasecurity             # [write] Replace datasecurity rules on an EXTRACT (Elasticube) datamodel.
 
-# ===== encryption (0 read / 2 write) =====
+# ===== encryption — advertising 2 of 2 (0 read / 2 write) =====
 encryption.decrypt  # [write] Decrypt a value using the Sisense encryption service.
 encryption.encrypt  # [write] Encrypt a value using the Sisense encryption service.
 
-# ===== folder (5 read / 3 write) =====
+# ===== folder — advertising 5 of 8 (2 read / 3 write) =====
 # [excluded: dup group 12 — literally get_folders('tree')]
 # folder.get_all_folders       # Retrieve the full folder tree.
 # [excluded: dup group 12 — pure alias of get_folders]
 # folder.get_folder_ancestors  # Retrieve folders by a caller-supplied structure value.
 folder.get_folder_id         # Retrieve a single folder by OID.
 folder.get_folders           # Retrieve folders using a configurable ``structure`` query parameter.
-# [excluded: dup group 12 — redundant second hierarchy endpoint]
+# [excluded: separate /navver UI payload; get_folders(structure='tree') answers hierarchy questions]
 # folder.get_navver            # Retrieve the Sisense navigation tree (navver payload).
 folder.create_folder         # [write] Create a new Sisense folder.
 folder.delete_folder         # [write] Delete a folder by OID.
 folder.update_folder         # [write] Update an existing folder.
 
-# ===== metadata (3 read / 2 write) =====
+# ===== metadata — advertising 5 of 5 (3 read / 2 write) =====
 metadata.get_datasource_dimensions  # Retrieve saved filter dimensions for a datasource.
 metadata.get_datasource_measures    # Retrieve saved formula measures for a datasource.
-# [excluded: dup group 8 — third 'list the cubes' implementation]
-# metadata.get_datasources            # Retrieve all datasources visible to the authenticated user.
+# [verified 2026-09-01: NOT a duplicate — datasource vocabulary the JAQL/measures/dimensions tools take; get_all_datamodel lists datamodels]
+metadata.get_datasources            # Retrieve all datasources visible to the authenticated user.
 metadata.add_datasource_measure     # [write] Create a saved formula measure in Sisense metadata.
 metadata.post_metadata_query        # [write] Execute a metadata query against Sisense.
 
-# ===== plugins (3 read / 5 write) =====
+# ===== plugins — advertising 5 of 8 (2 read / 3 write) =====
 plugins.get_all_plugins   # Retrieve all plugins installed on the Sisense instance.
 # [excluded: dup group 15 — fetches the full list anyway and filters client-side]
 # plugins.get_plugin        # Get a single plugin by its name or folder name.
@@ -160,12 +168,12 @@ plugins.enable_plugins    # [write] Enable one or more plugins by name or folder
 plugins.restore_snapshot  # [write] Restore plugin states to exactly match a previously saved snapshot.
 plugins.save_snapshot     # [read, reclassified] Capture the current plugin enable/disable state as a snapshot.
 
-# ===== queries (2 read / 0 write) =====
+# ===== queries — advertising 1 of 2 (1 read / 0 write) =====
 queries.elasticube_run_jaql_query  # [read, reclassified] Run a JAQL query against a datasource (elasticube).
-# [excluded: dup group 13 — identical body with /csv suffix; JSON is agent-friendly]
+# [excluded: same query as elasticube_run_jaql_query via /jaql/csv; structured JSON is what an agent can reason over]
 # queries.elasticubes_run_jaql_csv   # [read, reclassified] Run a JAQL query and return CSV output.
 
-# ===== wellcheck (8 read / 0 write) =====
+# ===== wellcheck — advertising 8 of 9 (8 read / 0 write) =====
 wellcheck.check_dashboard_structure          # Analyze the structure of one or more dashboards.
 wellcheck.check_dashboard_widget_counts      # Compute widget counts for one or more dashboards.
 wellcheck.check_datamodel_custom_tables      # Inspect custom tables in one or more data models and flag the use of ...
