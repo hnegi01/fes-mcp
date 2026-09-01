@@ -4,7 +4,7 @@ import pytest
 from fastmcp import Client, FastMCP
 from fastmcp.client.elicitation import ElicitResult
 
-from conftest import make_settings
+from tests.conftest import make_settings
 from fes_mcp.dispatcher import SisenseDispatcher
 from fes_mcp.server import build_tool
 
