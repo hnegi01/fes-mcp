@@ -31,6 +31,9 @@ MUTATES_OVERRIDES: dict[str, bool] = {
     "datamodel.generate_connections_payload": False,
     "datamodel.load_datamodel": False,
     "plugins.save_snapshot": False,
+    # Pure fan-out over the eight check_* methods; issues no writes (the
+    # generator's heuristic misreads verbs in its docstring).
+    "wellcheck.run_full_wellcheck": False,
 }
 
 
