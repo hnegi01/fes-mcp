@@ -51,13 +51,13 @@ access_management.users_per_group           # Retrieve group memberships — one
 # blox.get_blox_widget_style  # Retrieve the style objects of a BloX widget.  — narrow BloX styling niche
 
 # ----- custom_code (3/3) -----
-custom_code.export_notebook                # Export a notebook definition.  [fes:off]
-custom_code.get_notebooks                  # Retrieve notebooks from Sisense.  [fes:off]
-custom_code.list_notebook_folder_contents  # List contents of a custom-code notebook folder.  [fes:off]
+# custom_code.export_notebook                # Export a notebook definition.  [fes:off]
+# custom_code.get_notebooks                  # Retrieve notebooks from Sisense.  [fes:off]
+# custom_code.list_notebook_folder_contents  # List contents of a custom-code notebook folder.  [fes:off]
 
 # ----- dashboard (11/15) -----
 dashboard.can_be_owned                   # Check whether a dashboard can be owned by the current…
-dashboard.export_dashboard               # Export a dashboard definition using the Sisense admin…  [fes:off]
+# dashboard.export_dashboard               # Export a dashboard definition using the Sisense admin…  [fes:off]
 dashboard.find_widgets_by_type           # Find all widgets matching a given type across one or more…
 dashboard.get_all_dashboards             # Retrieve all dashboards from the Sisense server.
 dashboard.get_dashboard_by_id            # Retrieve a specific dashboard by its ID.
@@ -91,7 +91,7 @@ datamodel.get_table_schema                     # Retrieve the schema of a table 
 # datamodel.get_datamodel_permissions_live     # Retrieve raw share entries for a LIVE data model.  — raw partyId shares; get_datamodel_shares resolves names
 # datamodel.get_datasecurity                   # Retrieve datasecurity table and column entries for a…  — dup group 9 — get_datasecurity_detail is a strict superset
 # datamodel.get_datasecurity_raw               # Retrieve the raw, unprocessed datasecurity rules for a…  — raw twin of get_datasecurity_detail
-# datamodel.get_row_count                      # Retrieve the row count for each table in a specific data…  — dup group 14 — get_data can express SELECT COUNT(*) itself  [fes:on]
+datamodel.get_row_count                      # Retrieve the row count for each table in a specific data…  — dup group 14 — get_data can express SELECT COUNT(*) itself  [fes:on]
 # datamodel.load_datamodel                     # Look up a data model's OID by title using the GraphQL ECM…  — OID-by-title lookup — the dispatcher already resolves references before dispatch (fes-assistant delisted it too)
 # datamodel.resolve_datamodel_reference        # Resolve a data model reference (ID or title) to a…
 

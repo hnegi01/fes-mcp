@@ -620,6 +620,22 @@ def infer_tags(module: str, method: str, mutates: bool) -> list:
 # ---------------------------------------------------------------------------
 
 SCHEMA_RULES: Dict[str, Dict[str, Any]] = {
+    # Folders → constrain `structure`. The SDK types it as a bare str, so
+    # nothing stopped a caller inventing a value; the two accepted values are
+    # what make this one tool cover both the flat list and the full tree
+    # (which is why the get_all_folders / get_folder_ancestors aliases are
+    # not advertised). Worth asking upstream for Literal["flat", "tree"].
+    "folder.get_folders": {
+        "patch": {
+            "parameters.properties.structure.enum": ["flat", "tree"],
+            "parameters.properties.structure.default": "flat",
+            "parameters.properties.structure.description": (
+                "'flat' for a flat folder list, 'tree' for the full folder "
+                "hierarchy. Use 'tree' for any question about folder "
+                "structure, nesting, or parent/child relationships."
+            ),
+        }
+    },
     # Create DataModel → constrain datamodel_type
     "datamodel.create_datamodel": {
         "patch": {
