@@ -5985,7 +5985,12 @@
       "properties": {
         "structure": {
           "type": "string",
-          "description": "Sisense folder structure type (for example ``\"flat\"`` or ``\"tree\"``). Default is ``\"flat\"``."
+          "description": "'flat' for a flat folder list, 'tree' for the full folder hierarchy. Use 'tree' for any question about folder structure, nesting, or parent/child relationships.",
+          "enum": [
+            "flat",
+            "tree"
+          ],
+          "default": "flat"
         }
       },
       "required": []
