@@ -33,3 +33,4 @@ sis_mcp.txt
 # Internal deployment specifics — never in the public repo
 docker-compose.prod.yml
 deploy/
+config/tools.registry.json
