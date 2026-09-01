@@ -90,8 +90,10 @@ def test_battery_cases_reference_live_tools(registry):
     import json
     from pathlib import Path
 
+    from fes_mcp.settings import REPO_ROOT
+
     cases = json.loads(
-        (Path(__file__).resolve().parents[1] / "evals" / "tool_selection_cases.json").read_text()
+        (REPO_ROOT / "evals" / "tool_selection_cases.json").read_text()
     )["cases"]
     unknown = [t for c in cases for t in c["expect"] if t not in registry]
     assert not unknown, f"battery references tools not in the registry: {unknown}"

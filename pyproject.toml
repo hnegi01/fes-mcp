@@ -31,5 +31,11 @@ build-backend = "hatchling.build"
 packages = ["src/fes_mcp"]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+# Default runs = unit only (fast, mocked, no credentials). Integration tests
+# need a real Sisense instance: `pytest tests/integration -m integration`
+# after configuring tests/integration/integration_config.yaml.
+testpaths = ["tests/unit"]
 asyncio_mode = "auto"
+markers = [
+    "integration: needs a real Sisense instance (tests/integration/README.md)",
+]

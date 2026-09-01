@@ -1,0 +1,15 @@
+# Integration test configuration — TEMPLATE
+#
+# Copy this file to `integration_config.yaml` (same folder) and fill in real
+# values. `integration_config.yaml` is gitignored — never commit credentials.
+# If the file is absent or still contains these placeholder values, the
+# integration tests are SKIPPED (not failed), so CI and unconfigured machines
+# stay green.
+#
+# The tests are READ-ONLY by policy: mutations stay disabled regardless of the
+# token's permissions, and no write tool is ever invoked.
+
+tenant:
+  domain: "https://your-sisense-instance.example.com"
+  token: "your-real-token"
+  verify_ssl: true
