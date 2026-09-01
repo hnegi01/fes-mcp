@@ -265,4 +265,4 @@ wellcheck.check_pivot_widget_fields          # Analyze pivot widgets on one or m
 # mergetool.migrate_saved_filters                 # [write] Migrate saved filter dimensions for specific data models from source to target.
 # mergetool.migrate_saved_formulas                # [write] Migrate saved formula measures for specific data models from source to target.
 # mergetool.migrate_users                         # [write] Migrate specific users from source to target.
-# wellcheck.run_full_wellcheck                    # [write] Run a composite "full" wellcheck across dashboards and data models.
+# wellcheck.run_full_wellcheck                    # Run a composite "full" wellcheck across dashboards and data models.
