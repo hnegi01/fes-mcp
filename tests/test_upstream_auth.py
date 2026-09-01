@@ -197,3 +197,14 @@ async def test_verification_is_cached_within_ttl(upstream_server):
         await client.call_tool("dashboard_get_all_dashboards", {})
     alice_verifies = [c for c in env["verify_calls"] if c[1] == "tok-alice"]
     assert len(alice_verifies) == 1  # verified once, cached for the TTL
+
+
+async def test_delisted_tool_unreachable_at_dispatch(upstream_server):
+    # Hiding a tool from tools/list is not enough — a direct call to a
+    # delisted tool must fail, not execute. (The allowlist for this server
+    # exposes only dashboard.get_all_dashboards.)
+    base, _ = upstream_server
+    async with _mcp_client(base, "tok-alice", TARGET_A) as client:
+        with pytest.raises(Exception) as exc:
+            await client.call_tool("access_management_delete_user", {"user_email": "x@y.z"})
+    assert "unknown" in str(exc.value).lower() or "not found" in str(exc.value).lower()

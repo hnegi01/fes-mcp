@@ -168,6 +168,10 @@ def reconcile_allowlist(
             continue
         # live section
         if tid and tid not in registry:
+            # An [excluded: ...] rationale directly above a dead tool line
+            # belongs to it — move both, or the annotation is orphaned.
+            if kept and kept[-1].strip().startswith("# [excluded:"):
+                dead_live.append(kept.pop())
             dead_live.append(line if line.strip().startswith("#") else f"# {line}")
             print(f"  deprecated: {tid} (removed from the SDK)")
             continue
@@ -179,7 +183,9 @@ def reconcile_allowlist(
         if not any(l.strip() for l in deprecated_block):
             deprecated_block = []
         deprecated_block += [f"# --- removed in pysisense {sdk_version} ---"] + dead_live
-        report["deprecated"] = [_tool_id_of_line(l) for l in dead_live]
+        report["deprecated"] = [
+            t for t in (_tool_id_of_line(l) for l in dead_live) if t
+        ]
 
     # Modules excluded in code (e.g. migration) are never staged — a staged
     # line would invite uncommenting a tool the runtime refuses to load.

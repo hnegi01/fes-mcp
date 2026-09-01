@@ -254,23 +254,36 @@ def _coerce_json_strings(arguments: dict[str, Any]) -> dict[str, Any]:
     return coerced
 
 
-# The SDK's documented failure contract (pysisense >= 1.1.0 "Stable Contracts
-# for Programmatic Consumers") is {"error": <msg>, "status_code": <int>};
-# older releases emit bare {"error": <msg>}. Both may arrive list-wrapped.
-_ERROR_KEY_SETS = ({"error"}, {"error", "status_code"})
-
-
 def _sdk_error_message(result: Any) -> str | None:
-    """PySisense methods report failures as error dicts (sometimes inside a
-    single-item list), and a few return bare 'Error: ...' strings, instead of
-    raising. Normalize them all to one error path."""
+    """Normalize the SDK's failure returns to one error path.
+
+    pysisense >= 2.0 marks every failure dict with "ok": False (success
+    returns never carry "ok"), so detection is marker-based, NEVER an
+    exact-key-set match — an exact-shape matcher is what silently turned
+    401s into successes when the contract gained a field. Legacy shapes
+    (bare {"error": ...} dicts, "Error: ..." strings, single-item list
+    wrapping) are kept for defense in depth.
+    """
     candidate = result
     if isinstance(result, list) and len(result) == 1:
         candidate = result[0]
-    if isinstance(candidate, dict) and set(candidate.keys()) in _ERROR_KEY_SETS:
-        message = str(candidate["error"])
-        status = candidate.get("status_code")
-        return f"{message} (HTTP {status})" if status is not None else message
+    if isinstance(candidate, dict):
+        # Primary: the 2.0 marker. Legacy backup: the exact pre-2.0 error
+        # shapes (exact, so a data payload that merely CONTAINS an "error"
+        # field is never misread as a failure).
+        is_failure = candidate.get("ok") is False or set(candidate.keys()) in (
+            {"error"},
+            {"error", "status_code"},
+        )
+        if is_failure:
+            message = str(candidate.get("error") or "SDK call failed")
+            status = candidate.get("status_code")
+            if status is not None:
+                message = f"{message} (HTTP {status})"
+            raw = candidate.get("raw_body")
+            if raw:
+                message = f"{message} — {raw}"
+            return message
     if isinstance(candidate, str) and candidate.startswith("Error:"):
         return candidate
     return None
