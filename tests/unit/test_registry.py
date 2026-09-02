@@ -62,3 +62,22 @@ def test_select_always_excludes_migration(real_registry):
 
 def test_empty_allowlist_selects_nothing(real_registry):
     assert select_tools(real_registry, (), True) == {}
+
+
+def test_every_curated_example_validates_against_its_schema():
+    """The examples ship to agents as guidance — a stale example that its own
+    tool schema rejects teaches the agent to make failing calls. (This is the
+    check that caught 18 stale examples when the 1.1.0 contracts landed.)"""
+    import json
+
+    import jsonschema
+
+    from fes_mcp.settings import DEFAULT_REGISTRY_PATH
+
+    registry = json.loads(DEFAULT_REGISTRY_PATH.read_text())
+    checked = 0
+    for tool in registry:
+        for example in tool.get("examples") or []:
+            jsonschema.validate(instance=example["arguments"], schema=tool["parameters"])
+            checked += 1
+    assert checked > 100  # guard against silently validating nothing

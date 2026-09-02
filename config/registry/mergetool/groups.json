@@ -1,0 +1,57 @@
+[
+  {
+    "tool_id": "mergetool.migrate_all_groups",
+    "description": "Migrate all eligible groups from source to target.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "skip",
+            "overwrite",
+            "duplicate"
+          ],
+          "description": "Conflict strategy applied to every group."
+        },
+        "emit": {
+          "type": "object",
+          "description": "Optional progress callback."
+        }
+      },
+      "required": []
+    },
+    "mutates": true
+  },
+  {
+    "tool_id": "mergetool.migrate_groups",
+    "description": "Migrate specific groups from source to target.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "group_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Group names to migrate. If ``None``, every group on the source is migrated."
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "skip",
+            "overwrite",
+            "duplicate"
+          ],
+          "description": "Conflict strategy when a group with the same ``name`` already exists on the target. - ``\"skip\"`` — leave the existing group unchanged. - ``\"overwrite\"`` — delete the existing group then recreate from source. **Warning:** this can disrupt user/group associations still referencing the deleted group on the target. - ``\"duplicate\"`` — always create, regardless of conflicts."
+        },
+        "emit": {
+          "type": "object",
+          "description": "Optional progress callback. Each invocation receives a dict with at least ``type``, ``step``, and ``message`` keys."
+        }
+      },
+      "required": []
+    },
+    "mutates": true
+  }
+]

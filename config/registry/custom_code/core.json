@@ -7,7 +7,23 @@
       "properties": {
         "notebook_data": {
           "type": "object",
-          "description": "Notebook creation payload (for example ``notebookType``, ``displayName``, manifest fields)."
+          "properties": {
+            "notebookType": {
+              "type": "string"
+            },
+            "displayName": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "displayName",
+            "notebookType"
+          ],
+          "additionalProperties": true,
+          "description": "Notebook creation payload. ``notebookType`` and ``displayName`` are required; additional Sisense notebook manifest fields may be included and are passed through unchanged."
         },
         "use_internal_header": {
           "type": "boolean",
@@ -358,11 +374,25 @@
       "properties": {
         "notebook_id": {
           "type": "string",
-          "description": "Notebook UUID or identifier."
+          "description": "Notebook UUID or identifier.",
+          "format": "uuid"
         },
         "notebook_data": {
           "type": "object",
-          "description": "Fields to update."
+          "properties": {
+            "notebookType": {
+              "type": "string"
+            },
+            "displayName": {
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            }
+          },
+          "required": [],
+          "additionalProperties": true,
+          "description": "Fields to update — only include fields you want to change."
         },
         "use_internal_header": {
           "type": "boolean",

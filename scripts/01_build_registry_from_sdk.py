@@ -1,10 +1,20 @@
 import inspect
 import re
+import types
+import typing
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
 import pysisense
+
+try:
+    # The SDK's payload contracts subclass typing_extensions.TypedDict; on
+    # some Python/typing_extensions combinations typing.is_typeddict does not
+    # recognize those, so prefer the typing_extensions checker.
+    from typing_extensions import is_typeddict as _is_typeddict
+except ImportError:  # pragma: no cover
+    from typing import is_typeddict as _is_typeddict
 
 from .registry_core import (
     MODULES,
@@ -221,6 +231,105 @@ def _parse_param_doc_meta(doc: str) -> Dict[str, Dict[str, str]]:
 # ---------------------------------------------------------------------------
 # Type inference helpers
 # ---------------------------------------------------------------------------
+#
+# Annotation-first: pysisense >= 1.1.0 ships machine-readable contracts —
+# TypedDict payloads (pysisense/payloads.py) and Literal enums — added
+# specifically so downstream schema generators stop hand-maintaining field
+# knowledge. When an annotation is recognized, it wins; when it is not
+# (plain dict[str, Any], Any, or an unknown class), we return None and fall
+# back to the default/docstring inference below, so an unrecognized contract
+# NEVER degrades a schema (the classic failure: an unknown payload class
+# falling through to {"type": "string"}).
+
+
+def _schema_from_annotation(annotation: Any, _depth: int = 0) -> Dict[str, Any] | None:
+    """JSON Schema fragment from a typing annotation, or None for "no knowledge"."""
+    if _depth > 6 or annotation is inspect.Parameter.empty or annotation is None:
+        return None
+    if annotation is type(None) or annotation is Any:
+        return None
+
+    origin = typing.get_origin(annotation)
+    args = typing.get_args(annotation)
+
+    # Optional[X] / X | None → schema of X (required-ness comes from defaults)
+    if origin is typing.Union or origin is types.UnionType:
+        non_none = [a for a in args if a is not type(None)]
+        if len(non_none) == 1:
+            return _schema_from_annotation(non_none[0], _depth + 1)
+        # Union of TypedDict contracts (e.g. Athena | RedShift | BigQuery
+        # params): merge branches into one object — union of properties,
+        # intersection of required keys (only what EVERY branch demands).
+        if non_none and all(_is_typeddict(a) for a in non_none):
+            branches = [_schema_from_annotation(a, _depth + 1) for a in non_none]
+            props: Dict[str, Any] = {}
+            for b in branches:
+                for field, sub in b["properties"].items():
+                    props.setdefault(field, sub)
+            required = set(branches[0]["required"])
+            for b in branches[1:]:
+                required &= set(b["required"])
+            return {
+                "type": "object",
+                "properties": props,
+                "required": sorted(required),
+                "additionalProperties": True,
+            }
+        return None
+
+    # Literal["a", "b"] → enum
+    if origin is typing.Literal:
+        values = list(args)
+        if all(isinstance(v, bool) for v in values):
+            js_type = "boolean"
+        elif all(isinstance(v, int) for v in values):
+            js_type = "integer"
+        else:
+            js_type = "string"
+        return {"type": js_type, "enum": values}
+
+    # TypedDict payload contract → nested object schema
+    if _is_typeddict(annotation):
+        try:
+            hints = typing.get_type_hints(annotation)
+        except Exception:
+            hints = getattr(annotation, "__annotations__", {}) or {}
+        required = getattr(annotation, "__required_keys__", frozenset())
+        props = {
+            field: (_schema_from_annotation(sub, _depth + 1) or {"type": "string"})
+            for field, sub in hints.items()
+        }
+        return {
+            "type": "object",
+            "properties": props,
+            "required": sorted(k for k in required if k in hints),
+            "additionalProperties": True,
+        }
+
+    if origin in (list, tuple, set, frozenset) or annotation in (list, tuple, set):
+        item = _schema_from_annotation(args[0], _depth + 1) if args else None
+        return {"type": "array", "items": item or {"type": "string"}}
+
+    if origin is dict or annotation is dict:
+        return {"type": "object"}
+
+    if origin is not None:  # some other generic we don't model
+        return None
+
+    scalars = {str: "string", bool: "boolean", int: "integer", float: "number"}
+    if annotation in scalars:
+        return {"type": scalars[annotation]}
+
+    # Unknown class: no knowledge — never guess.
+    return None
+
+
+def _is_deprecated_alias(func: Any) -> bool:
+    """PEP 702: pysisense keeps renamed methods as working wrappers decorated
+    with @deprecated("use <new name>") for one minor version. Both old and new
+    appear to inspect.getmembers as separate functions — expose only the live
+    one, or clients get two tools for one operation."""
+    return getattr(func, "__deprecated__", None) is not None
 
 
 def _schema_type_from_default(default: Any) -> Dict[str, Any]:
@@ -348,15 +457,19 @@ def _split_format_marker(description: str) -> tuple:
 def json_schema_from_signature(
     sig: inspect.Signature,
     doc: str,
+    hints: Dict[str, Any] | None = None,
 ) -> dict:
     """
-    Build a JSON schema for a method based on:
+    Build a JSON schema for a method based on (in priority order):
+    - Recognized type annotations (TypedDict payload contracts, Literal enums,
+      containers/scalars) resolved via typing.get_type_hints
     - Python signature defaults (bool/int/list/dict → type inference)
     - Docstring param type hints + multi-line param descriptions
     - Generic name-based heuristics (e.g. *_ids → array)
     """
     properties: Dict[str, Dict[str, Any]] = {}
     required: List[str] = []
+    hints = hints or {}
 
     doc_meta = _parse_param_doc_meta(doc)
 
@@ -364,23 +477,25 @@ def json_schema_from_signature(
         if name == "self":
             continue
 
-        # Start with type from default
-        schema_piece = _schema_type_from_default(p.default)
-
-        # Refine from docstring if default did not give us anything useful
         meta = doc_meta.get(name)
-        if meta:
-            doc_type = meta.get("type")
-            if (p.default is inspect._empty or p.default is None) and doc_type:
-                hint_piece = _schema_type_from_doc_hint(doc_type)
-                schema_piece.update(hint_piece)
 
-        # Ensure arrays always have "items"
-        if schema_piece.get("type") == "array" and "items" not in schema_piece:
-            schema_piece["items"] = {"type": "string"}
+        # Annotation contract wins when recognized.
+        schema_piece = _schema_from_annotation(hints.get(name, p.annotation))
+        if schema_piece is None:
+            # Fall back: type from default, refined by the docstring token.
+            schema_piece = _schema_type_from_default(p.default)
+            if meta:
+                doc_type = meta.get("type")
+                if (p.default is inspect._empty or p.default is None) and doc_type:
+                    hint_piece = _schema_type_from_doc_hint(doc_type)
+                    schema_piece.update(hint_piece)
 
-        # Apply generic name-based heuristics (no per-tool logic)
-        schema_piece = _apply_name_heuristics(name, schema_piece)
+            # Ensure arrays always have "items"
+            if schema_piece.get("type") == "array" and "items" not in schema_piece:
+                schema_piece["items"] = {"type": "string"}
+
+            # Apply generic name-based heuristics (no per-tool logic)
+            schema_piece = _apply_name_heuristics(name, schema_piece)
 
         # Param-level description: prefer docstring text if available.
         # Extract any trailing "(format: <name>)" marker into a schema `format`.
@@ -505,6 +620,22 @@ def infer_tags(module: str, method: str, mutates: bool) -> list:
 # ---------------------------------------------------------------------------
 
 SCHEMA_RULES: Dict[str, Dict[str, Any]] = {
+    # Folders → constrain `structure`. The SDK types it as a bare str, so
+    # nothing stopped a caller inventing a value; the two accepted values are
+    # what make this one tool cover both the flat list and the full tree
+    # (which is why the get_all_folders / get_folder_ancestors aliases are
+    # not advertised). Worth asking upstream for Literal["flat", "tree"].
+    "folder.get_folders": {
+        "patch": {
+            "parameters.properties.structure.enum": ["flat", "tree"],
+            "parameters.properties.structure.default": "flat",
+            "parameters.properties.structure.description": (
+                "'flat' for a flat folder list, 'tree' for the full folder "
+                "hierarchy. Use 'tree' for any question about folder "
+                "structure, nesting, or parent/child relationships."
+            ),
+        }
+    },
     # Create DataModel → constrain datamodel_type
     "datamodel.create_datamodel": {
         "patch": {
@@ -726,13 +857,11 @@ def _mixin_to_sub_module(module_key: str, mixin_class: type) -> str:
 # Registry builder
 # ---------------------------------------------------------------------------
 
-# Tool IDs excluded from the registry entirely.
-# Add here when a method's output is incompatible with the app's rendering pipeline.
-_EXCLUDED_TOOL_IDS: frozenset = frozenset(
-    {
-        "wellcheck.run_full_wellcheck",  # nested multi-section output; use individual checks instead
-    }
-)
+# Tool IDs excluded from the registry entirely. (run_full_wellcheck was
+# excluded here for a rendering constraint inherited from another consumer;
+# MCP clients handle nested JSON fine, so it now lands in the registry and
+# the allowlist decides exposure like any other tool.)
+_EXCLUDED_TOOL_IDS: frozenset = frozenset()
 
 
 def build_registry() -> list:
@@ -748,15 +877,23 @@ def build_registry() -> list:
         for name, func in inspect.getmembers(klass, predicate=inspect.isfunction):
             if name.startswith("_"):
                 continue
+            if _is_deprecated_alias(func):
+                print(f"  skipping deprecated alias {module_name}.{name}: "
+                      f"{getattr(func, '__deprecated__', '')}")
+                continue
 
             doc = (inspect.getdoc(func) or "").strip()
             one_liner = (doc.splitlines()[0] if doc else "No description.").strip()
             sig = inspect.signature(func)
+            try:
+                hints = typing.get_type_hints(func)
+            except Exception:
+                hints = {}
 
             tool_id = f"{module_name}.{name}"
             if tool_id in _EXCLUDED_TOOL_IDS:
                 continue
-            schema = json_schema_from_signature(sig, doc)
+            schema = json_schema_from_signature(sig, doc, hints)
             mutates = is_mutating(name, doc)
             tags = infer_tags(module_name, name, mutates)
             defining_mixin = _get_defining_mixin(klass, name)

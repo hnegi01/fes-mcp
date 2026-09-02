@@ -52,7 +52,9 @@ def sample_tools():
             "mutates": False,
             "parameters": {
                 "type": "object",
-                "properties": {"dashboard_id": {"type": "string"}},
+                # payload is free-form (no declared type) — the shape MCP
+                # clients tend to stringify.
+                "properties": {"dashboard_id": {"type": "string"}, "payload": {}},
                 "required": ["dashboard_id"],
             },
         },
@@ -75,6 +77,8 @@ def sample_tools():
 class FakeDashboard:
     """Stands in for pysisense.Dashboard."""
 
+    resolver_calls: list = []
+
     def __init__(self, api_client):
         self.api_client = api_client
         self.calls = []
@@ -86,7 +90,18 @@ class FakeDashboard:
         self.calls.append(("get_dashboard_by_id", dashboard_id, payload))
         if dashboard_id == "missing":
             return {"error": "Dashboard not found"}
+        if dashboard_id == "str-error":
+            return "Error: boom"
         return {"oid": dashboard_id, "title": "Sales", "payload": payload}
+
+    def resolve_dashboard_reference(self, dashboard_ref):
+        FakeDashboard.resolver_calls.append(dashboard_ref)
+        if dashboard_ref == "Nonexistent":
+            return {"success": False, "status_code": 404, "dashboard_id": None,
+                    "dashboard_title": None, "error": "not found"}
+        resolved = {"Sales Overview": "a" * 24}.get(dashboard_ref, dashboard_ref)
+        return {"success": True, "status_code": 200, "dashboard_id": resolved,
+                "dashboard_title": dashboard_ref, "error": None}
 
     def delete_dashboard(self, dashboard_id):
         return "deleted"
@@ -97,6 +112,7 @@ def fake_sdk(monkeypatch):
     """Patch pysisense so no real client or network is involved."""
     import pysisense
 
+    FakeDashboard.resolver_calls = []
     monkeypatch.setattr(
         pysisense.SisenseClient,
         "from_connection",

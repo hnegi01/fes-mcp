@@ -93,7 +93,7 @@
         "notes": "This query retrieves the top 5 products by revenue for the first quarter of 2023 from the 'ProductAnalytics' datasource."
       },
       {
-        "user_query": "Retrieve monthly website traffic for the last 12 months.",
+        "user_query": "From the 'WebTrafficElasticube' elasticube, get the sum of Visits by Month for the last 12 months.",
         "arguments": {
           "datasource_name": "WebTrafficElasticube",
           "jaql_payload": {
@@ -148,7 +148,7 @@
     "mutates": true,
     "examples": [
       {
-        "user_query": "Export sales data for Q3 2023 as a CSV file.",
+        "user_query": "Export from 'sales_elasticube' the sum of sales.amount by sales.date for 2023-Q3 as a CSV file.",
         "arguments": {
           "datasource_name": "sales_elasticube",
           "jaql_payload": {

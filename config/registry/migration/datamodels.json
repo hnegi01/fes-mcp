@@ -57,20 +57,17 @@
           "shares": false,
           "batch_size": 10,
           "sleep_time": 5,
-          "action": "overwrite",
-          "emit": null
+          "action": "overwrite"
         },
         "notes": "This call migrates all data models in batches of 10, including data security and formulas, and overwrites existing models in the target environment if they are found."
       },
       {
         "user_query": "I want to migrate all data models, including shares, and duplicate any existing models in the target environment. How can I do this?",
         "arguments": {
-          "dependencies": null,
           "shares": true,
           "batch_size": 20,
           "sleep_time": 10,
-          "action": "duplicate",
-          "emit": null
+          "action": "duplicate"
         },
         "notes": "This call migrates all data models in batches of 20, includes shares, and duplicates any existing models in the target environment by appending \" (Duplicate)\" to their names."
       },
@@ -130,7 +127,7 @@
               "perspectives"
             ]
           },
-          "description": "A list of dependencies to include in the migration. If not provided or if \"all\" is passed, all dependencies are selected by default. Possible values: - \"dataSecurity\" (includes both Data Security and Scope Configuration) - \"formulas\" (for Formulas) - \"hierarchies\" (for Drill Hierarchies) - \"perspectives\" (for Perspectives) If left blank or set to \"all\", all dependencies are included by default."
+          "description": "A list of dependencies to include in the migration. If not provided or if \"all\" is passed, all dependencies are selected by default. Possible values: - \"dataSecurity\" (includes both Data Security and Scope Configuration) - \"formulas\" (for Formulas) - \"hierarchies\" (for Drill Hierarchies) - \"perspectives\" (for Perspectives) If left blank or set to \"all\", all dependencies are included by default. Windows: the export endpoint used on Windows sources has no dependencies parameter, so this argument has no effect there."
         },
         "shares": {
           "type": "boolean",

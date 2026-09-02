@@ -1,0 +1,164 @@
+[
+  {
+    "tool_id": "report_manager.create_report",
+    "description": "Create a new Report Manager report.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "report": {
+          "type": "object",
+          "description": "The report definition to create."
+        }
+      },
+      "required": [
+        "report"
+      ]
+    },
+    "mutates": true
+  },
+  {
+    "tool_id": "report_manager.delete_report",
+    "description": "Delete a Report Manager report by id.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "report_id": {
+          "type": "string",
+          "description": "The report id to delete."
+        }
+      },
+      "required": [
+        "report_id"
+      ]
+    },
+    "mutates": true
+  },
+  {
+    "tool_id": "report_manager.get_report",
+    "description": "Retrieve a single Report Manager report by id.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "report_id": {
+          "type": "string",
+          "description": "The report id."
+        },
+        "owner_info": {
+          "type": "boolean",
+          "description": "When ``True``, include the report owner's information. Default is ``False``."
+        },
+        "recipients_info": {
+          "type": "boolean",
+          "description": "When ``True``, include recipient data. Default is ``False``."
+        },
+        "dashboards_info": {
+          "type": "boolean",
+          "description": "When ``True``, include dashboard names. Default is ``False``."
+        },
+        "fields": {
+          "type": "string",
+          "description": "Whitelist of fields to return. Fields can also be excluded by prefixing their name with ``-``."
+        }
+      },
+      "required": [
+        "report_id"
+      ]
+    },
+    "mutates": false
+  },
+  {
+    "tool_id": "report_manager.get_reports",
+    "description": "Retrieve all reports configured in Report Manager.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Search reports by name."
+        },
+        "ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "One or more report ids to filter by. A bare string is treated as a single id."
+        },
+        "enabled": {
+          "type": "boolean",
+          "description": "When provided, filter to only enabled (``True``) or disabled (``False``) reports."
+        },
+        "statuses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "One or more running statuses to filter by. A bare string is treated as a single status."
+        },
+        "priority": {
+          "type": "string",
+          "description": "Filter reports by priority. One of ``\"high\"``, ``\"normal\"``."
+        },
+        "owner_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "One or more owner user ids to filter by. A bare string is treated as a single id."
+        },
+        "fields": {
+          "type": "string",
+          "description": "Whitelist of fields to return for each report. Fields can also be excluded by prefixing their name with ``-``."
+        },
+        "sort": {
+          "type": "string",
+          "description": "Field to sort results by. Ascending by default, descending if prefixed with ``-``."
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Page size used for the underlying paginated requests. Default is ``100``."
+        }
+      },
+      "required": []
+    },
+    "mutates": false
+  },
+  {
+    "tool_id": "report_manager.run_report",
+    "description": "Trigger an immediate run of a Report Manager report.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "report_id": {
+          "type": "string",
+          "description": "The report id to run."
+        }
+      },
+      "required": [
+        "report_id"
+      ]
+    },
+    "mutates": true
+  },
+  {
+    "tool_id": "report_manager.update_report",
+    "description": "Update an existing Report Manager report.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "report_id": {
+          "type": "string",
+          "description": "The report id to update."
+        },
+        "report": {
+          "type": "object",
+          "description": "The fields to update."
+        }
+      },
+      "required": [
+        "report_id",
+        "report"
+      ]
+    },
+    "mutates": true
+  }
+]

@@ -1,0 +1,115 @@
+{
+  "_comment": "Tool-selection battery: real prompts + acceptable tool_ids. Run scripts/04_tool_selection_eval.py before and after any description/allowlist change. When a prompt misbehaves in the wild, add it here as a case — never fix it with a one-off prompt patch. Cases deliberately cover: list-vs-fetch-one, near-synonym tools, cross-package ownership (the wellcheck-style confusion), and free-form payload tools.",
+  "cases": [
+    {
+      "prompt": "Which columns are unused in the Sales datamodel?",
+      "expect": [
+        "access_management.get_unused_columns_bulk"
+      ]
+    },
+    {
+      "prompt": "List all dashboards I have access to.",
+      "expect": [
+        "dashboard.get_dashboards"
+      ]
+    },
+    {
+      "prompt": "Who is the dashboard 'Q3 Revenue' shared with?",
+      "expect": [
+        "dashboard.get_dashboard_share"
+      ]
+    },
+    {
+      "prompt": "Show every dashboard share across the whole instance, for all dashboards.",
+      "expect": [
+        "access_management.get_all_dashboard_shares"
+      ]
+    },
+    {
+      "prompt": "What tables and columns are in the 'Finance' datamodel?",
+      "expect": [
+        "datamodel.get_model_schema",
+        "datamodel.describe_datamodel"
+      ]
+    },
+    {
+      "prompt": "List all datamodels with their size and status.",
+      "expect": [
+        "datamodel.get_all_datamodel"
+      ]
+    },
+    {
+      "prompt": "Give me the first 100 rows of the Customers table in the 'Sales' datamodel.",
+      "expect": [
+        "datamodel.get_data"
+      ]
+    },
+    {
+      "prompt": "Which groups is jane@acme.com a member of?",
+      "expect": [
+        "access_management.get_user"
+      ]
+    },
+    {
+      "prompt": "List all users along with their role names.",
+      "expect": [
+        "access_management.get_users_all"
+      ]
+    },
+    {
+      "prompt": "Who belongs to the 'Finance' group?",
+      "expect": [
+        "access_management.users_per_group"
+      ]
+    },
+    {
+      "prompt": "Which user account am I signed in as right now?",
+      "expect": [
+        "access_management.get_my_user"
+      ]
+    },
+    {
+      "prompt": "Check the 'Sales' datamodel for island tables.",
+      "expect": [
+        "wellcheck.run_full_wellcheck"
+      ]
+    },
+    {
+      "prompt": "Move the dashboard 'Q3 Revenue' into the 'Finance' folder.",
+      "expect": [
+        "dashboard.move_dashboard_to_folder"
+      ]
+    },
+    {
+      "prompt": "Create the user joe@acme.com with the viewer role in the Sales group.",
+      "expect": [
+        "access_management.create_user"
+      ]
+    },
+    {
+      "prompt": "On the LIVE model 'Finance_Live', add a data security rule limiting the Department column to Accounting.",
+      "expect": [
+        "datamodel.set_live_datasecurity_add_many"
+      ]
+    },
+    {
+      "prompt": "List every dashboard on the instance, including ones I don't own.",
+      "expect": [
+        "dashboard.get_all_dashboards"
+      ]
+    },
+    {
+      "prompt": "Which datasources can I run a JAQL query against?",
+      "expect": [
+        "metadata.get_datasources",
+        "datamodel.get_all_datamodel"
+      ]
+    },
+    {
+      "prompt": "This is a Windows-based Sisense — list the ElastiCubes.",
+      "expect": [
+        "datamodel.get_elasticubes"
+      ]
+    }
+  ]
+}
