@@ -2,7 +2,7 @@
 
 > ⚠️ **Experimental Project Notice**
 >
-> **Community-Contributed Tool from Sisense Field Engineering**
+> **Community-Contributed Tool from Sisense Field Engineering (FES)**
 >
 > This project is an experimental tool developed by Sisense Field Engineering
 > to facilitate customer learning and exploration of Sisense capabilities.
@@ -143,6 +143,10 @@ sequenceDiagram
   invisible: it holds no state.
 
 ## Deployment (docker compose)
+
+Tagged releases publish ready-to-run images to GitHub Container Registry:
+`ghcr.io/hnegi01/sisense-fes-auth` and `ghcr.io/hnegi01/sisense-fes-mcp`
+(no registry login needed). Or build from source:
 
 ```bash
 docker compose up --build
