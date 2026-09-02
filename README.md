@@ -23,14 +23,16 @@ that user can see and do in Sisense itself, enforced natively by Sisense's
 APIs.
 
 **Tools only, no agent.** Claude Desktop, Claude Code, claude.ai, Cursor — any
-MCP client brings its own agent; this project advertises and executes ~100
-curated tools (dashboards, data models, users/groups, folders, plugins,
-health checks, …).
+MCP client brings its own agent; this project advertises and executes a
+**curated subset of the ~170 SDK methods in the registry** (dashboards, data
+models, users/groups, folders, plugins, queries, …) — one tool per
+capability, with near-duplicates excluded so an agent never has to
+choose between near-identical methods.
 
 ## Architecture
 
 The MCP spec's modern shape, as two cooperating services shipped as two
-Docker images (`fes-auth`, `fes-mcp` — built from one multi-stage Dockerfile
+Docker images (`sisense-fes-auth`, `sisense-fes-mcp` — built from one multi-stage Dockerfile
 with shared layers):
 
 - **fes-auth** — the *authorization server* (AS). Owns everything about *who
@@ -58,7 +60,7 @@ flowchart LR
             P[/mcp proxy\ninjects credential headers/]
         end
         subgraph RS [fes-mcp : resource server]
-            T[Tool layer\nregistry-driven, ~100 tools]
+            T[Tool layer\nregistry-driven, curated]
             D[Dispatcher\nper-credential PySisense client]
         end
     end
@@ -74,8 +76,8 @@ flowchart LR
 
 The seam between the two services is just those two headers plus the 401
 contract, so each half can evolve — or be replaced — without the other
-noticing. There is deliberately **no shared secret** between the two — trust
-is the internal network (the RS's port is never published).
+noticing. There is **no shared secret** between the two; trust is the
+internal network (the RS's port is never published).
 
 ### Sign-in flow (what a user experiences)
 
@@ -135,7 +137,7 @@ sequenceDiagram
 - fes-auth treats an RS 401 as *credential dead*: it deletes the vault entry
   and re-challenges the MCP client, whose next move is to re-run the sign-in
   flow. Server-side revocation therefore propagates with no manual steps.
-- **Sessions are in-memory by design** (no database): restarting fes-auth
+- **Sessions are in-memory** (no database): restarting fes-auth
   signs everyone out — each user's next call pops the browser login again
   (with `?target=` set, that's just username/password). Restarting fes-mcp is
   invisible: it holds no state.
@@ -164,6 +166,11 @@ Endpoints on fes-auth: `/mcp` (proxied MCP), `/login`, `/.well-known/*` +
 Hardening included: per-IP login rate limiting, CSRF-protected login form,
 access logs with request ids.
 
+OAuth discovery requires the server's paths at the **origin root**, so give
+it its own hostname — or, on a shared hostname, route exactly these paths to
+fes-auth at the proxy. A path prefix (`https://host/some-prefix/mcp`) will
+not work.
+
 ## Quick start (local dev)
 
 Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/). Local dev skips
@@ -181,7 +188,7 @@ MCP client config (e.g. `claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
-    "sisense": {
+    "sisense-fes": {
       "command": "uv",
       "args": ["run", "--directory", "/absolute/path/to/fes_mcp", "fes-mcp"]
     }
@@ -200,21 +207,27 @@ FES_MCP_PORT=8300 FES_MCP_RS_URL=http://127.0.0.1:8200 uv run fes-auth
 ## Layout
 
 - `src/fes_mcp/` — `settings` (env config) · `registry` (load/filter) ·
-  `dispatcher` (per-credential SDK dispatch) · `upstream` (RS credential
-  verification) · `auth` (OAuth provider + login page) · `authserver`
-  (fes-auth service + proxy) · `middleware` (access logs) · `server`
-  (FastMCP assembly)
+  `schema_patches` (field-description overlay) · `dispatcher`
+  (per-credential SDK dispatch) · `upstream` (RS credential verification) ·
+  `auth` (OAuth provider + login page) · `authserver` (fes-auth service +
+  proxy) · `middleware` (access logs) · `server` (FastMCP assembly)
 - `config/tools.registry.with_examples.json` — auto-generated tool registry.
   **Never handwritten**; regenerate with `./refresh_registry.sh` when
   PySisense updates.
 - `config/allowlist.txt` — the curated tool surface, one tool per line.
   Delete/comment a line to remove a tool. Tools not listed are never exposed,
   so registry refreshes can't silently widen the surface. (Migration tools
-  are deliberately not listed — they need a dual-instance connection this
+  are not listed — they need a dual-instance connection this
   server doesn't model.)
 - Mutating tools are gated behind `FES_MCP_ALLOW_MUTATIONS=true` — see
   [Security](#technical-and-security-considerations) for the full mutation
   safeguards.
+- Payload parameters carry full nested schemas straight from the SDK's
+  TypedDict contracts (pysisense ≥ 1.1.0) — e.g. `create_user`'s `user_data`
+  declares `email` and `role` as required, so an agent gathers them *before*
+  calling instead of failing inside the SDK. `schema_patches.py` overlays
+  only human-written per-field descriptions (the contracts carry structure,
+  not prose); free-form payloads like JAQL stay unconstrained.
 
 ## Technical and security considerations
 
@@ -225,9 +238,9 @@ passwords — a password is used once against Sisense's login API to mint the
 user's own token, then discarded. Sisense tokens live in fes-auth's in-memory
 vault, keyed to the MCP access token, and survive refresh rotation. In dev
 mode the single env credential (`SISENSE_DOMAIN`/`SISENSE_TOKEN`) stays on
-your machine. Nothing is persisted to disk: a fes-auth restart wipes the
-vault (everyone re-signs-in) — the deliberate trade for having no database
-and no encryption-at-rest surface.
+your machine. Nothing is persisted to disk — there is no database and no
+encryption-at-rest surface; a fes-auth restart clears the vault and users
+sign in again.
 
 Hardening on the hosted surface: per-IP login rate limiting, CSRF-protected
 login form, access logs with request ids, and per-call tool logs
@@ -254,24 +267,22 @@ Mutating tools are exposed only when `FES_MCP_ALLOW_MUTATIONS=true`, always
 carry `destructiveHint`, are blocked server-side as a second layer when
 disabled, and are written to a mutation audit log.
 
-On top of that, mutating tools ask the human for approval before executing —
-via MCP elicitation, on clients that declare the capability (Claude Code,
-Cursor, VS Code). A proceed/abort dialog opens mid-call disclosing the exact
-arguments; abort or decline changes nothing. On clients without elicitation
-(Claude Desktop, claude.ai) the call proceeds normally and the client's own
-tool-approval flow plus the `destructiveHint` annotation are the safeguard,
-as for any MCP server.
+On top of that, mutating tools ask the human for approval before executing.
+The confirmation shows the exact arguments about to run (secrets masked), the
+approval is bound to those arguments, and abort or decline changes nothing.
+It works on both protocol generations: current (stateless) connections use an
+MCP `input_required` round trip, older connections use MCP elicitation.
 
-Proceeding without the dialog is a deliberate decision (fail-open), not an
-oversight: elicitation is an optional client capability and can be
-auto-answered by a misbehaving client, so it is treated strictly as UX — the
-authorization boundary is always the user's own Sisense permissions.
+A client that cannot render the confirmation proceeds under its own
+tool-approval flow plus the `destructiveHint` annotation, like any standard
+MCP server — the authorization boundary is always the user's own Sisense
+permissions.
 
 ### Data flow to the LLM provider
 
 This server has no summarization or data-redaction layer: every tool result —
 full rows, not `{ok, count}` metadata — is returned to the MCP client and
-lands in the model's context. That is by design and is what makes multi-step
+lands in the model's context. This is what makes multi-step
 tool chaining work: the model can only reason over, filter, and feed one
 tool's output into the next call if it actually sees the data.
 
@@ -289,8 +300,8 @@ per-deployment acceptance to make consciously.
   needs — fewer tools means less data exposure and a clearer approval story.
 - Prefer non-production Sisense instances while exploring; the tools are
   only as safe as the signed-in user's permissions.
-- Test destructive operations with an MCP client that supports elicitation
-  (Claude Code, Cursor) so you see the confirmation dialogs.
+- Test destructive operations in a non-production environment first; the
+  server asks for confirmation with the exact arguments before any write.
 
 ## Configuration
 
@@ -304,29 +315,25 @@ per-deployment acceptance to make consciously.
 | `FES_MCP_PUBLIC_URL` | — | fes-auth | public base URL (OAuth discovery/redirects) |
 | `FES_MCP_RS_URL` | — | fes-auth | the resource server to proxy tool calls to |
 | `FES_MCP_VERIFY_TTL` | `300` | fes-mcp | seconds a verified (instance, token) pair is trusted |
-| `FES_MCP_ALLOWED_SISENSE_ORIGINS` | — (accept any) | fes-mcp | exact-match allowlist for `X-Sisense-Url` |
+| `FES_MCP_ALLOWED_SISENSE_ORIGINS` | — (accept any) | both | allowed Sisense instances: login page and `X-Sisense-Url` checks |
 | `FES_MCP_TOOLS` | `config/allowlist.txt` | fes-mcp | comma-separated tool_ids / modules override |
 | `FES_MCP_ALLOW_MUTATIONS` | `false` | fes-mcp | expose mutating tools |
 | `FES_MCP_REGISTRY_PATH` | bundled registry | fes-mcp | alternate registry JSON |
-| `FES_MCP_LOG_LEVEL` | `INFO` | both | log verbosity (stderr only) |
+| `FES_MCP_LOG_LEVEL` | `INFO` | both | log verbosity |
+| `FES_MCP_LOG_DIR` | `logs/` | both | directory for `fes-mcp.log` / `fes-auth.log` (also logged to stderr) |
 
 ## Tests
 
 ```bash
-uv run python -m pytest
+uv run python -m pytest              # unit tests: mocked, no credentials
 ```
 
-(`python -m` matters: it puts the repo root on `sys.path`, which the test
-modules' `from tests.conftest import …` imports rely on.)
+Integration tests run against a real Sisense instance and are read-only; see
+[tests/integration/README.md](tests/integration/README.md) for setup:
 
-49 tests, no network and no credentials needed (Sisense and the SDK are
-mocked): registry selection, dispatcher validation/errors, MCP round-trips,
-mutation confirmation (approve/abort/decline/no-capability), upstream
-credential verification (injected headers, 401 contract, origin allowlist,
-TTL revocation), and the complete AS+RS split — OAuth dance with and without
-`?target=`, discovery metadata, proxied tool calls, refresh rotation,
-self-healing on Sisense-side revocation, plus the abuse paths (forged CSRF,
-brute-force rate limit, expired sessions).
+```bash
+uv run python -m pytest tests/integration -m integration
+```
 
 ## Registry regeneration
 

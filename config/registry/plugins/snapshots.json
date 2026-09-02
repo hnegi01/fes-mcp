@@ -7,6 +7,21 @@
       "properties": {
         "snapshot": {
           "type": "object",
+          "properties": {
+            "plugins": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "created": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "plugins"
+          ],
+          "additionalProperties": true,
           "description": "A snapshot dict as returned by :meth:`save_snapshot`, containing at minimum a ``\"plugins\"`` key with a list of ``folderName`` values for the plugins that should be enabled. All other plugins will be disabled."
         },
         "bulk": {

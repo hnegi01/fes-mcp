@@ -1,0 +1,72 @@
+[
+  {
+    "tool_id": "mergetool.migrate_all_dashboards",
+    "description": "Migrate all dashboards from source to target.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "enum": [
+            "skip",
+            "overwrite",
+            "duplicate"
+          ],
+          "description": "Conflict strategy applied to every dashboard."
+        },
+        "concurrency": {
+          "type": "integer",
+          "description": "Same as in ``migrate_dashboards``."
+        },
+        "emit": {
+          "type": "object",
+          "description": "Optional progress callback."
+        }
+      },
+      "required": []
+    },
+    "mutates": true
+  },
+  {
+    "tool_id": "mergetool.migrate_dashboards",
+    "description": "Migrate specific dashboards from source to target.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "dashboard_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Dashboard OIDs to migrate. Provide either this or ``dashboard_names``."
+        },
+        "dashboard_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Dashboard titles to migrate. Provide either this or ``dashboard_ids``."
+        },
+        "action": {
+          "type": "string",
+          "enum": [
+            "skip",
+            "overwrite",
+            "duplicate"
+          ],
+          "description": "Conflict strategy when a dashboard with the same ``oid`` already exists on the target. - ``\"skip\"`` — leave the existing dashboard unchanged. - ``\"overwrite\"`` — replace the existing dashboard with the source version. - ``\"duplicate\"`` — always create, regardless of conflicts."
+        },
+        "concurrency": {
+          "type": "integer",
+          "description": "Maximum number of dashboards to migrate concurrently, run via a background thread pool (``asyncio.to_thread``) since the underlying HTTP client is synchronous. Dashboards are independent of each other, so any value is safe. Values <= 1 (the default) process dashboards one at a time."
+        },
+        "emit": {
+          "type": "object",
+          "description": "Optional progress callback. Each invocation receives a dict with at least ``type``, ``step``, and ``message`` keys. When ``concurrency`` is greater than 1, this callback may be invoked from multiple worker threads concurrently."
+        }
+      },
+      "required": []
+    },
+    "mutates": true
+  }
+]

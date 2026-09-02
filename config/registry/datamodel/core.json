@@ -128,6 +128,30 @@
     ]
   },
   {
+    "tool_id": "datamodel.export_datamodel_schema",
+    "description": "Export a data model's full schema definition for re-import elsewhere.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "datamodel_id": {
+          "type": "string",
+          "description": "OID of the data model to export."
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "API dependency identifiers to include in the export (for example ``\"dataContext\"``, ``\"scopeConfiguration\"``, ``\"formulaManagement\"``, ``\"drillHierarchies\"``, ``\"perspectives\"``). Windows: has no effect — the export endpoint used there accepts no dependencies parameter."
+        }
+      },
+      "required": [
+        "datamodel_id"
+      ]
+    },
+    "mutates": false
+  },
+  {
     "tool_id": "datamodel.get_all_datamodel",
     "description": "Retrieve metadata for all data models using an internal API.",
     "parameters": {
@@ -260,6 +284,35 @@
         "notes": "This retrieves the schema of the 'Marketing Performance' data model, helping to identify the available tables and columns for analysis."
       }
     ]
+  },
+  {
+    "tool_id": "datamodel.import_datamodel_schema",
+    "description": "Import a data model schema (as produced by ``export_datamodel_schema``).",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "schema": {
+          "type": "object",
+          "description": "Schema object to import, typically produced by ``export_datamodel_schema``."
+        },
+        "action": {
+          "type": "string",
+          "description": "One of ``\"overwrite\"`` or ``\"duplicate\"``. Any other value (including ``None``) performs a plain create."
+        },
+        "target_datamodel_id": {
+          "type": "string",
+          "description": "OID of the existing data model to overwrite. Required for ``action=\"overwrite\"`` to take effect."
+        },
+        "new_title": {
+          "type": "string",
+          "description": "Title for the duplicated data model. Used only when ``action=\"duplicate\"``."
+        }
+      },
+      "required": [
+        "schema"
+      ]
+    },
+    "mutates": true
   },
   {
     "tool_id": "datamodel.load_datamodel",

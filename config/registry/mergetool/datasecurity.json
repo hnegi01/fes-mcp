@@ -1,0 +1,46 @@
+[
+  {
+    "tool_id": "mergetool.migrate_all_datasecurity",
+    "description": "Migrate datasecurity rules for all data models from source to target.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "emit": {
+          "type": "object",
+          "description": "Optional progress callback."
+        }
+      },
+      "required": []
+    },
+    "mutates": true
+  },
+  {
+    "tool_id": "mergetool.migrate_datasecurity",
+    "description": "Migrate row-level datasecurity rules for specific data models from source to target.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "datamodel_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Data model OIDs to migrate. Provide either this or ``datamodel_names``."
+        },
+        "datamodel_names": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Data model titles to migrate. Provide either this or ``datamodel_ids``."
+        },
+        "emit": {
+          "type": "object",
+          "description": "Optional progress callback. Each invocation receives a dict with at least ``type``, ``step``, and ``message`` keys."
+        }
+      },
+      "required": []
+    },
+    "mutates": true
+  }
+]

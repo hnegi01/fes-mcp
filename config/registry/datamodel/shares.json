@@ -12,7 +12,7 @@
         "shares": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object"
           },
           "description": "List of share definitions to add. Each dictionary should include: ``name`` (user email or group name), ``type`` (``\"user\"`` or ``\"group\"``), and ``permission`` (one of ``\"EDIT\"``, ``\"READ\"``, ``\"USE\"``)."
         }
@@ -79,6 +79,40 @@
     ]
   },
   {
+    "tool_id": "datamodel.get_datamodel_permissions_extract",
+    "description": "Retrieve raw share entries for an EXTRACT (Elasticube) data model.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "datamodel_title": {
+          "type": "string",
+          "description": "Title of the EXTRACT data model."
+        }
+      },
+      "required": [
+        "datamodel_title"
+      ]
+    },
+    "mutates": false
+  },
+  {
+    "tool_id": "datamodel.get_datamodel_permissions_live",
+    "description": "Retrieve raw share entries for a LIVE data model.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "datamodel_id": {
+          "type": "string",
+          "description": "OID of the LIVE data model."
+        }
+      },
+      "required": [
+        "datamodel_id"
+      ]
+    },
+    "mutates": false
+  },
+  {
     "tool_id": "datamodel.get_datamodel_shares",
     "description": "Retrieve all share entries (users and groups) for a given data model.",
     "parameters": {
@@ -117,5 +151,55 @@
         "notes": "Provides a breakdown of all share entries for the 'Customer_Segmentation' data model, including resolved user/group names and permission levels."
       }
     ]
+  },
+  {
+    "tool_id": "datamodel.update_datamodel_permissions_extract",
+    "description": "Replace share entries for an EXTRACT (Elasticube) data model.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "datamodel_title": {
+          "type": "string",
+          "description": "Title of the EXTRACT data model."
+        },
+        "shares": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "Raw share objects, each with ``partyId``, ``type`` (``\"user\"`` or ``\"group\"``), and ``permission``."
+        }
+      },
+      "required": [
+        "datamodel_title",
+        "shares"
+      ]
+    },
+    "mutates": true
+  },
+  {
+    "tool_id": "datamodel.update_datamodel_permissions_live",
+    "description": "Replace share entries for a LIVE data model.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "datamodel_id": {
+          "type": "string",
+          "description": "OID of the LIVE data model."
+        },
+        "shares": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "Raw share objects, each with ``partyId``, ``type`` (``\"user\"`` or ``\"group\"``), and ``permission``."
+        }
+      },
+      "required": [
+        "datamodel_id",
+        "shares"
+      ]
+    },
+    "mutates": true
   }
 ]

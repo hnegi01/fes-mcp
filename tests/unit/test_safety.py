@@ -4,7 +4,7 @@ import pytest
 from fastmcp import Client, FastMCP
 from fastmcp.client.elicitation import ElicitResult
 
-from conftest import make_settings
+from tests.conftest import make_settings
 from fes_mcp.dispatcher import SisenseDispatcher
 from fes_mcp.server import build_tool
 
@@ -171,3 +171,138 @@ async def test_read_tool_never_asks(settings, sample_tools, fake_sdk):
     async with Client(server, elicitation_handler=deny_everything) as client:
         res = await client.call_tool("dashboard_get_all_dashboards", {})
     assert res.structured_content == {"result": [{"oid": "d1", "title": "Sales"}]}
+
+
+class _StubCtx:
+    """Bare context stub: era probe is a METHOD, exactly like the real
+    fastmcp Context — a bound method is truthy, so truth-testing instead of
+    calling it would send the MRTR ask to legacy clients too."""
+
+    def __init__(self, modern: bool):
+        self._modern = modern
+
+    def _is_modern_protocol(self) -> bool:
+        return self._modern
+
+
+def test_is_modern_calls_the_probe_instead_of_truth_testing_it():
+    from fes_mcp.server import _is_modern
+
+    assert _is_modern(_StubCtx(modern=True)) is True
+    assert _is_modern(_StubCtx(modern=False)) is False  # bound method ≠ True
+    assert _is_modern(object()) is False  # no probe at all → legacy path
+
+
+def test_fastmcp_still_has_the_private_era_probe():
+    # _is_modern reads fastmcp's private Context._is_modern_protocol (no
+    # public equivalent). If an upgrade removes or reshapes it, fail here
+    # instead of silently routing every client onto the legacy wire path.
+    from fastmcp.server.context import Context
+
+    probe = getattr(Context, "_is_modern_protocol", None)
+    assert callable(probe) and not isinstance(probe, property)
+
+
+# ---- the modern (MRTR / 2026-07-28) confirmation path -----------------------
+
+
+class _ModernCtx:
+    """Context stub for a 2026-07-28 connection with form elicitation."""
+
+    def __init__(self, responses=None, state=None):
+        self.input_responses = responses or {}
+        self.request_state = state
+        self.session = type(
+            "S", (), {"check_client_capability": lambda self, cap: True}
+        )()
+
+    def _is_modern_protocol(self):
+        return True
+
+
+class _Answer:
+    def __init__(self, action, content):
+        self.action = action
+        self.content = content
+
+
+def _mutating_tool(sample_tools):
+    dispatcher = SisenseDispatcher(make_settings(allow_mutations=True), sample_tools)
+    return build_tool(sample_tools["dashboard.delete_dashboard"], dispatcher)
+
+
+def _install_ctx(monkeypatch, ctx):
+    from fes_mcp import server as server_mod
+
+    monkeypatch.setattr(server_mod, "_current_context", lambda: ctx)
+
+
+async def test_mrtr_round1_sends_the_ask(sample_tools, fake_sdk, monkeypatch):
+    from fastmcp.tools import InputRequiredToolResult
+
+    tool = _mutating_tool(sample_tools)
+    _install_ctx(monkeypatch, _ModernCtx())
+    res = await tool.run({"dashboard_id": "d1"})
+    assert isinstance(res, InputRequiredToolResult)
+
+
+async def test_mrtr_round2_accept_runs(sample_tools, fake_sdk, monkeypatch):
+    from fes_mcp.server import _CONFIRM_KEY, _args_fingerprint
+
+    args = {"dashboard_id": "d1"}
+    ctx = _ModernCtx(
+        responses={_CONFIRM_KEY: _Answer("accept", {"value": "proceed"})},
+        state=_args_fingerprint(args),
+    )
+    tool = _mutating_tool(sample_tools)
+    _install_ctx(monkeypatch, ctx)
+    res = await tool.run(args)
+    assert res.structured_content == {"result": "deleted"}
+
+
+async def test_mrtr_round2_accept_with_model_shaped_content(
+    sample_tools, fake_sdk, monkeypatch
+):
+    # Some clients/SDK paths deliver content as a model object, not a dict.
+    from fes_mcp.server import _CONFIRM_KEY, _args_fingerprint
+
+    content = type("C", (), {"value": "proceed"})()
+    args = {"dashboard_id": "d1"}
+    ctx = _ModernCtx(
+        responses={_CONFIRM_KEY: _Answer("accept", content)},
+        state=_args_fingerprint(args),
+    )
+    tool = _mutating_tool(sample_tools)
+    _install_ctx(monkeypatch, ctx)
+    res = await tool.run(args)
+    assert res.structured_content == {"result": "deleted"}
+
+
+async def test_mrtr_round2_decline_aborts(sample_tools, fake_sdk, monkeypatch):
+    from fes_mcp.server import _CONFIRM_KEY, _args_fingerprint
+
+    args = {"dashboard_id": "d1"}
+    ctx = _ModernCtx(
+        responses={_CONFIRM_KEY: _Answer("decline", None)},
+        state=_args_fingerprint(args),
+    )
+    tool = _mutating_tool(sample_tools)
+    _install_ctx(monkeypatch, ctx)
+    res = await tool.run(args)
+    assert res.structured_content["aborted"] is True
+
+
+async def test_mrtr_fingerprint_mismatch_reasks(sample_tools, fake_sdk, monkeypatch):
+    # An approval must never be replayed onto different arguments.
+    from fastmcp.tools import InputRequiredToolResult
+
+    from fes_mcp.server import _CONFIRM_KEY, _args_fingerprint
+
+    ctx = _ModernCtx(
+        responses={_CONFIRM_KEY: _Answer("accept", {"value": "proceed"})},
+        state=_args_fingerprint({"dashboard_id": "SOMETHING-ELSE"}),
+    )
+    tool = _mutating_tool(sample_tools)
+    _install_ctx(monkeypatch, ctx)
+    res = await tool.run({"dashboard_id": "d1"})
+    assert isinstance(res, InputRequiredToolResult)

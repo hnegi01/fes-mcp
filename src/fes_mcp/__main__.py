@@ -6,29 +6,18 @@ The authorization server has its own entry point: `fes-auth`
 
 from __future__ import annotations
 
-import logging
-import sys
-
 from dotenv import load_dotenv
 
+from .logsetup import setup_logging
 from .settings import REPO_ROOT, Settings
 from .server import build_server
-
-
-def _setup_logging(level: str) -> None:
-    # stderr only — stdout belongs to the stdio MCP transport.
-    logging.basicConfig(
-        level=getattr(logging, level, logging.INFO),
-        stream=sys.stderr,
-        format="%(asctime)s %(levelname)s %(name)s %(message)s",
-    )
 
 
 def main() -> None:
     # Real environment variables (e.g. from an MCP client's config) win over .env.
     load_dotenv(REPO_ROOT / ".env")
     settings = Settings.from_env()
-    _setup_logging(settings.log_level)
+    setup_logging(settings.log_level, "fes-mcp")
 
     if settings.auth_mode == "upstream":
         if settings.transport != "http":

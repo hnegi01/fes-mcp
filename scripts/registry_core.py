@@ -21,6 +21,11 @@ from typing import Any, Dict, List, Optional
 
 import pysisense
 
+try:
+    from typing_extensions import is_typeddict as _is_typeddict
+except ImportError:  # pragma: no cover
+    from typing import is_typeddict as _is_typeddict
+
 # ---------------------------------------------------------------------------
 # Facade class discovery
 # ---------------------------------------------------------------------------
@@ -28,29 +33,41 @@ import pysisense
 _SKIP_CLASSES = {"SisenseClient"}
 
 
-def _discover_facade_classes() -> Dict[str, Any]:
+def _discover_facade_classes(sdk: Any = pysisense) -> Dict[str, Any]:
     """
-    Auto-discover facade classes from pysisense.__all__.
+    Auto-discover facade classes, mapping subpackage name → facade class,
+    e.g. "access_management" → AccessManagement, "datamodel" → DataModel.
+    The subpackage name is derived from the class's __module__.
 
-    Maps subpackage name → facade class, e.g.:
-      "access_management" → AccessManagement
-      "datamodel"         → DataModel
-
-    The subpackage name is derived from the class's __module__:
-      "pysisense.access_management" → "access_management"
-
-    New packages added to pysisense.__all__ are picked up automatically.
+    pysisense >= 1.1.0 exports FACADES — an explicit tuple of the tool-bearing
+    facade classes — as the supported entry point for generators; iterate it
+    when present. The __all__ fallback (older SDKs) additionally skips
+    TypedDict payload classes: from 1.1.0 __all__ also carries the payload
+    contracts, which ARE classes and would otherwise be introspected as tool
+    modules.
     """
+    facades = getattr(sdk, "FACADES", None)
+    if facades:
+        candidates = list(facades)
+    else:
+        candidates = []
+        for name in getattr(sdk, "__all__", []):
+            obj = getattr(sdk, name, None)
+            if obj is None or not inspect.isclass(obj):
+                continue
+            if name in _SKIP_CLASSES or _is_typeddict(obj):
+                continue
+            candidates.append(obj)
+
     modules: Dict[str, Any] = {}
-    for name in pysisense.__all__:
-        obj = getattr(pysisense, name, None)
-        if obj is None or not inspect.isclass(obj):
-            continue
-        if name in _SKIP_CLASSES:
-            continue
+    for obj in candidates:
         mod_path = getattr(obj, "__module__", "") or ""
         parts = mod_path.split(".")
-        subpkg = parts[1] if len(parts) >= 2 and parts[0] == "pysisense" else name.lower()
+        subpkg = (
+            parts[1]
+            if len(parts) >= 2 and parts[0] == "pysisense"
+            else obj.__name__.lower()
+        )
         modules[subpkg] = obj
     return modules
 

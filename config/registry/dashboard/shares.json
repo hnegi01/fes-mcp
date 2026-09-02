@@ -12,7 +12,7 @@
         "shares": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "object"
           },
           "description": "A list of share entries. Each entry must contain: - ``name`` (str): The username (email) or group name. - ``type`` (str): Either ``\"user\"`` or ``\"group\"``. - ``rule`` (str): The access level (for example ``\"view\"`` or ``\"edit\"``). The ``name`` is resolved to ``shareId`` internally; entries that cannot be resolved are skipped."
         }
@@ -84,6 +84,36 @@
     ]
   },
   {
+    "tool_id": "dashboard.change_dashboard_owner",
+    "description": "Transfer ownership of a dashboard to a different user.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "dashboard_id": {
+          "type": "string",
+          "description": "The ``oid`` of the dashboard whose owner will be changed."
+        },
+        "new_owner_id": {
+          "type": "string",
+          "description": "The Sisense user ID (``_id``) of the user who will become the new owner."
+        },
+        "admin_access": {
+          "type": "boolean",
+          "description": "When ``True`` (default), appends ``?adminAccess=true`` to the request. Required when the API token user is not the current dashboard owner. Pass ``False`` when restoring ownership back to the original owner (the caller is already the temporary owner at that point)."
+        },
+        "original_owner_rule": {
+          "type": "string",
+          "description": "The share rule assigned to the outgoing owner after the transfer. Defaults to ``\"edit\"``."
+        }
+      },
+      "required": [
+        "dashboard_id",
+        "new_owner_id"
+      ]
+    },
+    "mutates": true
+  },
+  {
     "tool_id": "dashboard.get_dashboard_share",
     "description": "Retrieve share details (users and groups) for a dashboard by title.",
     "parameters": {
@@ -135,7 +165,7 @@
         },
         "admin_access": {
           "type": "boolean",
-          "description": "When ``True`` (default), request with ``adminAccess=true``."
+          "description": "When ``True`` (default), request with ``adminAccess=true``. Some Sisense versions reject the ``adminAccess`` query parameter with HTTP 422 (strict query-schema validation); the request is then retried automatically without it."
         }
       },
       "required": [
