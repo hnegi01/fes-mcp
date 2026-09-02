@@ -69,6 +69,21 @@ _ELICIT_ARGS_LIMIT = 800
 _CONFIRM_KEY = "confirm_mutation"
 
 
+def _is_modern(ctx: Any) -> bool:
+    """Whether this connection negotiated the stateless (2026-07-28) era.
+
+    fastmcp exposes this only as the private method Context._is_modern_protocol
+    (no public equivalent yet — re-check on every fastmcp upgrade; a drift
+    guard in tests/unit/test_safety.py fails if it disappears). It is a
+    method, not a property: it must be called, never truth-tested.
+    """
+    probe = getattr(ctx, "_is_modern_protocol", None)
+    try:
+        return probe() if callable(probe) else bool(probe)
+    except Exception:  # noqa: BLE001 — unknown era: use the legacy wire path
+        return False
+
+
 def _supports_form_elicitation(ctx: Any) -> bool:
     try:
         return bool(
@@ -175,7 +190,7 @@ class SisenseTool(Tool):
         if not _supports_form_elicitation(ctx):
             return True  # fail-open: the client's own approval UI is the safeguard
 
-        if getattr(ctx, "_is_modern_protocol", False):
+        if _is_modern(ctx):
             return self._mrtr_ask(arguments)  # MRTR round 1: send the ask
 
         # Legacy connection: imperative elicitation.

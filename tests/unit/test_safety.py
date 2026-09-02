@@ -171,3 +171,33 @@ async def test_read_tool_never_asks(settings, sample_tools, fake_sdk):
     async with Client(server, elicitation_handler=deny_everything) as client:
         res = await client.call_tool("dashboard_get_all_dashboards", {})
     assert res.structured_content == {"result": [{"oid": "d1", "title": "Sales"}]}
+
+
+class _StubCtx:
+    """Bare context stub: era probe is a METHOD, exactly like the real
+    fastmcp Context — a bound method is truthy, so truth-testing instead of
+    calling it would send the MRTR ask to legacy clients too."""
+
+    def __init__(self, modern: bool):
+        self._modern = modern
+
+    def _is_modern_protocol(self) -> bool:
+        return self._modern
+
+
+def test_is_modern_calls_the_probe_instead_of_truth_testing_it():
+    from fes_mcp.server import _is_modern
+
+    assert _is_modern(_StubCtx(modern=True)) is True
+    assert _is_modern(_StubCtx(modern=False)) is False  # bound method ≠ True
+    assert _is_modern(object()) is False  # no probe at all → legacy path
+
+
+def test_fastmcp_still_has_the_private_era_probe():
+    # _is_modern reads fastmcp's private Context._is_modern_protocol (no
+    # public equivalent). If an upgrade removes or reshapes it, fail here
+    # instead of silently routing every client onto the legacy wire path.
+    from fastmcp.server.context import Context
+
+    probe = getattr(Context, "_is_modern_protocol", None)
+    assert callable(probe) and not isinstance(probe, property)
