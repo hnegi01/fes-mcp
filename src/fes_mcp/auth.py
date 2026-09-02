@@ -136,6 +136,34 @@ def normalize_domain(raw: str) -> str:
     return domain
 
 
+def origin_allowed(domain: str, allowed: tuple[str, ...] | None) -> bool:
+    """Whether a normalized Sisense URL is permitted by the origin allowlist.
+
+    Entries are either exact origins (``https://acme.sisense.com``,
+    ``http://10.1.2.3`` — scheme optional, https assumed) or wildcard
+    patterns of the form ``*.suffix``, which match any **HTTPS** host ending
+    in ``.suffix`` (a wildcard never sanctions plaintext HTTP or a bare
+    apex domain). ``None`` (unset) accepts any origin.
+    """
+    if allowed is None:
+        return True
+    target = domain.strip().lower()
+    host = urlparse(target).hostname or ""
+    for entry in allowed:
+        pattern = entry.strip().lower()
+        if not pattern:
+            continue
+        if pattern.startswith("*."):
+            if target.startswith("https://") and host.endswith(pattern[1:]):
+                return True
+        else:
+            if not re.match(r"^https?://", pattern):
+                pattern = f"https://{pattern}"
+            if target == pattern.rstrip("/"):
+                return True
+    return False
+
+
 def domain_uses_ssl(domain: str) -> bool:
     """Whether a normalized Sisense URL is HTTPS — this, not the certificate
     checkbox, is what PySisense's is_ssl means (it also selects port 30845
@@ -278,14 +306,11 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
         self._login_limiter = _RateLimiter(
             LOGIN_RATE_LIMIT_ATTEMPTS, LOGIN_RATE_LIMIT_WINDOW_SECONDS
         )
-        # When set, the login page only connects to these Sisense origins —
-        # without it, anyone reaching the page can use this server to probe
-        # arbitrary hosts (the connect attempt itself is the oracle).
-        self._allowed_origins = (
-            tuple(normalize_domain(o).lower() for o in allowed_origins)
-            if allowed_origins is not None
-            else None
-        )
+        # When set, the login page only connects to these Sisense origins
+        # (exact entries and/or *.suffix wildcards — see origin_allowed).
+        # Without it, anyone reaching the page can use this server to probe
+        # arbitrary hosts, or point a victim's login at their own server.
+        self._allowed_origins = allowed_origins
         # CIMD (Client ID Metadata Documents): clients identified by an HTTPS
         # URL hosting their metadata, instead of registering via DCR. The
         # manager fetches documents SSRF-safely and caches them. fastmcp marks
@@ -507,7 +532,7 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
     ) -> SisenseCredential:
         """Blocking: validate the submitted form against Sisense."""
         domain = normalize_domain(domain)
-        if self._allowed_origins is not None and domain.lower() not in self._allowed_origins:
+        if not origin_allowed(domain, self._allowed_origins):
             logger.warning("Login refused: %s is not an allowed Sisense origin", domain)
             raise SisenseLoginError(
                 "This server is not configured to connect to that Sisense instance."

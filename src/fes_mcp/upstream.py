@@ -27,7 +27,7 @@ from collections import OrderedDict
 
 from fastmcp.server.auth.auth import AccessToken, TokenVerifier
 
-from .auth import SisenseLoginError, normalize_domain, verify_api_token
+from .auth import SisenseLoginError, normalize_domain, origin_allowed, verify_api_token
 from .credentials import SisenseCredential
 from .settings import Settings
 
@@ -55,11 +55,8 @@ class UpstreamTokenVerifier(TokenVerifier):
         super().__init__()
         self._ssl_verify = settings.sisense_ssl_verify
         self._ttl = settings.verify_ttl
-        self._allowed: tuple[str, ...] | None = (
-            tuple(normalize_domain(o) for o in settings.allowed_sisense_origins)
-            if settings.allowed_sisense_origins is not None
-            else None
-        )
+        # Exact origins and/or *.suffix wildcards — see auth.origin_allowed.
+        self._allowed: tuple[str, ...] | None = settings.allowed_sisense_origins
         self._verified: OrderedDict[tuple[str, str], float] = OrderedDict()
 
     async def verify_token(self, token: str) -> AccessToken | None:
@@ -79,7 +76,7 @@ class UpstreamTokenVerifier(TokenVerifier):
             logger.warning("upstream auth rejected: malformed %s", SISENSE_URL_HEADER)
             return None
 
-        if self._allowed is not None and domain not in self._allowed:
+        if not origin_allowed(domain, self._allowed):
             logger.warning("upstream auth rejected: origin not allowlisted domain=%s", domain)
             return None
 

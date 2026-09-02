@@ -740,3 +740,24 @@ def test_cimd_beta_api_drift_guard():
     assert callable(getattr(CIMDFetcher, "fetch"))
     doc = CIMDDocument(client_id="https://x.example/doc.json", redirect_uris=["https://x.example/cb"])
     assert doc.token_endpoint_auth_method == "none"  # public client default
+
+
+def test_origin_allowed_patterns():
+    from fes_mcp.auth import origin_allowed
+
+    allowed = ("*.sisense.com", "http://10.185.1.92", "https://onprem.example")
+    # wildcard: any HTTPS subdomain of sisense.com
+    assert origin_allowed("https://acme.sisense.com", allowed)
+    assert origin_allowed("https://deep.sub.sisense.com", allowed)
+    # wildcard never sanctions plaintext, lookalikes, or the bare apex
+    assert not origin_allowed("http://acme.sisense.com", allowed)
+    assert not origin_allowed("https://evilsisense.com", allowed)
+    assert not origin_allowed("https://sisense.com", allowed)
+    # exact entries: scheme-faithful
+    assert origin_allowed("http://10.185.1.92", allowed)
+    assert not origin_allowed("https://10.185.1.92", allowed)
+    assert origin_allowed("https://onprem.example", allowed)
+    assert not origin_allowed("https://attacker.example", allowed)
+    # unset = accept any; empty tuple = refuse all
+    assert origin_allowed("https://anything.example", None)
+    assert not origin_allowed("https://anything.example", ())

@@ -322,7 +322,7 @@ per-deployment acceptance to make consciously.
 | `FES_MCP_PUBLIC_URL` | — | fes-auth | public base URL (OAuth discovery/redirects) |
 | `FES_MCP_RS_URL` | — | fes-auth | the resource server to proxy tool calls to |
 | `FES_MCP_VERIFY_TTL` | `300` | fes-mcp | seconds a verified (instance, token) pair is trusted |
-| `FES_MCP_ALLOWED_SISENSE_ORIGINS` | — (accept any) | both | allowed Sisense instances: login page and `X-Sisense-Url` checks |
+| `FES_MCP_ALLOWED_SISENSE_ORIGINS` | — (accept any) | both | allowed Sisense instances (exact origins and `*.suffix` wildcards): login page and `X-Sisense-Url` checks |
 | `FES_MCP_TOOLS` | `config/allowlist.txt` | fes-mcp | comma-separated tool_ids / modules override |
 | `FES_MCP_ALLOW_MUTATIONS` | `false` | fes-mcp | expose mutating tools |
 | `FES_MCP_REGISTRY_PATH` | bundled registry | fes-mcp | alternate registry JSON |
