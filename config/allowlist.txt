@@ -34,7 +34,7 @@
 #  READ TOOLS — advertising 52 of 75  (no tool here can change anything)
 #==============================================================================
 
-# ----- access_management (9/10) -----
+# ----- access_management (18/19) -----
 access_management.get_all_dashboard_shares  # Retrieve all dashboard shares, including user and group…
 access_management.get_datamodel_columns     # Retrieve columns from a DataModel by collecting them from…
 access_management.get_groups                # Retrieve groups — one named group, or all of them.
@@ -46,18 +46,18 @@ access_management.get_users_all             # Retrieve every user, one canonical
 access_management.users_per_group           # Retrieve group memberships — one group's members, or…
 # access_management.get_tenants             # Retrieve all tenants.  — multi-tenant instances only; no demand yet
 
-# ----- blox (0/2) -----
+# ----- blox (0/5) -----
 # blox.get_blox_actions       # Retrieve all custom Blox actions from the Sisense…
 # blox.get_blox_widget_style  # Retrieve the style objects of a BloX widget.  — narrow BloX styling niche
 
-# ----- custom_code (3/3) -----
-# custom_code.export_notebook                # Export a notebook definition.  [fes:off]
-# custom_code.get_notebooks                  # Retrieve notebooks from Sisense.  [fes:off]
-# custom_code.list_notebook_folder_contents  # List contents of a custom-code notebook folder.  [fes:off]
+# ----- custom_code (0/8) -----
+# custom_code.export_notebook                # Export a notebook definition.
+# custom_code.get_notebooks                  # Retrieve notebooks from Sisense.
+# custom_code.list_notebook_folder_contents  # List contents of a custom-code notebook folder.
 
-# ----- dashboard (11/15) -----
+# ----- dashboard (18/24) -----
 dashboard.can_be_owned                   # Check whether a dashboard can be owned by the current…
-# dashboard.export_dashboard               # Export a dashboard definition using the Sisense admin…  [fes:off]
+# dashboard.export_dashboard               # Export a dashboard definition using the Sisense admin…
 dashboard.find_widgets_by_type           # Find all widgets matching a given type across one or more…
 dashboard.get_all_dashboards             # Retrieve all dashboards from the Sisense server.
 dashboard.get_dashboard_by_id            # Retrieve a specific dashboard by its ID.
@@ -72,7 +72,7 @@ dashboard.get_widget_script              # Build a formatted widget script helpe
 # dashboard.get_dashboard_widgets        # Retrieve widget definitions from an admin export of the…  — dup group 2 — calls export_dashboard and returns its widgets key  [fes:on]
 # dashboard.resolve_dashboard_reference  # Resolve a dashboard reference (ID or name) to a concrete…  — dup group 1 — plumbing; belongs in the dispatcher, not the tool list
 
-# ----- datamodel (11/21) -----
+# ----- datamodel (23/36) -----
 datamodel.describe_datamodel                   # Retrieve data model structure in a flat, row-based format.
 datamodel.generate_connections_payload         # Generate a connection payload for a given data source…
 datamodel.get_all_datamodel                    # Retrieve metadata for all data models using an internal…
@@ -91,51 +91,51 @@ datamodel.get_table_schema                     # Retrieve the schema of a table 
 # datamodel.get_datamodel_permissions_live     # Retrieve raw share entries for a LIVE data model.  — raw partyId shares; get_datamodel_shares resolves names
 # datamodel.get_datasecurity                   # Retrieve datasecurity table and column entries for a…  — dup group 9 — get_datasecurity_detail is a strict superset
 # datamodel.get_datasecurity_raw               # Retrieve the raw, unprocessed datasecurity rules for a…  — raw twin of get_datasecurity_detail
-datamodel.get_row_count                      # Retrieve the row count for each table in a specific data…  — dup group 14 — get_data can express SELECT COUNT(*) itself  [fes:on]
+datamodel.get_row_count                      # Retrieve the row count for each table in a specific data…  — dup group 14 — get_data can express SELECT COUNT(*) itself
 # datamodel.load_datamodel                     # Look up a data model's OID by title using the GraphQL ECM…  — OID-by-title lookup — the dispatcher already resolves references before dispatch (fes-assistant delisted it too)
 # datamodel.resolve_datamodel_reference        # Resolve a data model reference (ID or title) to a…
 
-# ----- folder (2/5) -----
+# ----- folder (5/8) -----
 folder.get_folder_id           # Retrieve a single folder by OID.
-folder.get_folders             # Retrieve folders using a configurable ``structure`` query…
-# folder.get_all_folders       # Retrieve the full folder tree.  — dup group 12 — literally get_folders('tree')  [fes:on]
+# folder.get_folders             # Retrieve folders using a configurable ``structure`` query…  [fes:on]
+folder.get_all_folders       # Retrieve the full folder tree.  — dup group 12 — literally get_folders('tree')
 # folder.get_folder_ancestors  # Retrieve folders by a caller-supplied structure value.  — dup group 12 — pure alias of get_folders  [fes:on]
 # folder.get_navver            # Retrieve the Sisense navigation tree (navver payload).  — separate /navver UI payload; get_folders(structure='tree') answers hierarchy questions  [fes:on]
 
-# ----- metadata (3/3) -----
-metadata.get_datasource_dimensions  # Retrieve saved filter dimensions for a datasource.  [fes:off]
-metadata.get_datasource_measures    # Retrieve saved formula measures for a datasource.  [fes:off]
-metadata.get_datasources            # Retrieve all datasources visible to the authenticated…  [fes:off]
+# ----- metadata (0/5) -----
+# metadata.get_datasource_dimensions  # Retrieve saved filter dimensions for a datasource.
+# metadata.get_datasource_measures    # Retrieve saved formula measures for a datasource.
+# metadata.get_datasources            # Retrieve all datasources visible to the authenticated…
 
-# ----- plugins (2/3) -----
+# ----- plugins (1/8) -----
 plugins.get_all_plugins  # Retrieve all plugins installed on the Sisense instance.
-plugins.save_snapshot    # Capture the current plugin enable/disable state as a…
+# plugins.save_snapshot    # Capture the current plugin enable/disable state as a…  [fes:on]
 # plugins.get_plugin     # Get a single plugin by its name or folder name.  — dup group 15 — fetches the full list anyway and filters client-side  [fes:on]
 
-# ----- queries (1/2) -----
-queries.elasticube_run_jaql_query   # Run a JAQL query against a datasource (elasticube).
+# ----- queries (0/2) -----
+# queries.elasticube_run_jaql_query   # Run a JAQL query against a datasource (elasticube).  [fes:on]
 # queries.elasticubes_run_jaql_csv  # Run a JAQL query and return CSV output.  — same query as elasticube_run_jaql_query via /jaql/csv; structured JSON is what an agent can reason over  [fes:on]
 
-# ----- report_manager (2/2) -----
-report_manager.get_report   # Retrieve a single Report Manager report by id.
+# ----- report_manager (5/6) -----
+# report_manager.get_report   # Retrieve a single Report Manager report by id.  [fes:on]
 report_manager.get_reports  # Retrieve all reports configured in Report Manager.
 
-# ----- wellcheck (8/9) -----
-wellcheck.check_dashboard_structure          # Analyze the structure of one or more dashboards.
-wellcheck.check_dashboard_widget_counts      # Compute widget counts for one or more dashboards.
-wellcheck.check_datamodel_custom_tables      # Inspect custom tables in one or more data models and flag…
-wellcheck.check_datamodel_import_queries     # Inspect tables in one or more data models for import…
-wellcheck.check_datamodel_island_tables      # Identify island tables (tables with no relationships) in…
-wellcheck.check_datamodel_m2m_relationships  # Check for potential many-to-many (M2M) relationships…
-wellcheck.check_datamodel_rls_datatypes      # Inspect row-level security (RLS) rules for one or more…
-wellcheck.check_pivot_widget_fields          # Analyze pivot widgets on one or more dashboards and…
-# wellcheck.run_full_wellcheck               # Run a composite "full" wellcheck across dashboards and…  — composite of the eight checks; slow (m2m runs aggregate SQL) — enable to trade nine tools for one
+# ----- wellcheck (1/9) -----
+# wellcheck.check_dashboard_structure    # Analyze the structure of one or more dashboards.  — run_full_wellcheck covers all eight (surface-size decision; scope with its dashboards/datamodels params)  [fes:on]
+# wellcheck.check_dashboard_widget_counts    # Compute widget counts for one or more dashboards.  — run_full_wellcheck covers all eight (surface-size decision; scope with its dashboards/datamodels params)  [fes:on]
+# wellcheck.check_datamodel_custom_tables    # Inspect custom tables in one or more data models and flag…  — run_full_wellcheck covers all eight (surface-size decision; scope with its dashboards/datamodels params)  [fes:on]
+# wellcheck.check_datamodel_import_queries    # Inspect tables in one or more data models for import…  — run_full_wellcheck covers all eight (surface-size decision; scope with its dashboards/datamodels params)  [fes:on]
+# wellcheck.check_datamodel_island_tables    # Identify island tables (tables with no relationships) in…  — run_full_wellcheck covers all eight (surface-size decision; scope with its dashboards/datamodels params)  [fes:on]
+# wellcheck.check_datamodel_m2m_relationships    # Check for potential many-to-many (M2M) relationships…  — run_full_wellcheck covers all eight (surface-size decision; scope with its dashboards/datamodels params)  [fes:on]
+# wellcheck.check_datamodel_rls_datatypes    # Inspect row-level security (RLS) rules for one or more…  — run_full_wellcheck covers all eight (surface-size decision; scope with its dashboards/datamodels params)  [fes:on]
+# wellcheck.check_pivot_widget_fields    # Analyze pivot widgets on one or more dashboards and…  — run_full_wellcheck covers all eight (surface-size decision; scope with its dashboards/datamodels params)  [fes:on]
+wellcheck.run_full_wellcheck    # Run a composite "full" wellcheck across dashboards and…  [fes:off]
 
 #==============================================================================
 #  WRITE TOOLS — advertising 47 of 57
 #==============================================================================
 
-# ----- access_management (9/9) -----
+# ----- access_management (18/19) -----
 access_management.change_folder_and_dashboard_ownership  # Change the ownership of folders and optionally dashboards.
 access_management.change_user_password                   # Change a user's password.
 access_management.create_groups_bulk                     # Create multiple groups in a single bulk request.
@@ -146,19 +146,19 @@ access_management.delete_group                           # Delete a group by ID.
 access_management.delete_user                            # Delete a user by their email (username).
 access_management.update_user                            # Update an existing Sisense user identified by their email…
 
-# ----- blox (0/3) -----
+# ----- blox (0/5) -----
 # blox.delete_blox_action        # Delete a custom Blox action from the Sisense instance.
 # blox.save_blox_action          # Save a custom Blox action on the Sisense instance.
 # blox.update_blox_widget_style  # Update the style objects of a BloX widget.  — narrow BloX styling niche
 
-# ----- custom_code (5/5) -----
-custom_code.create_notebook         # Create a new notebook.  [fes:off]
-custom_code.delete_notebook         # Delete a notebook by ID.  [fes:off]
-custom_code.rename_notebook_file    # Rename or update a notebook resource file.  [fes:off]
-custom_code.rename_notebook_folder  # Rename a custom-code notebook folder.  [fes:off]
-custom_code.update_notebook         # Update an existing notebook.  [fes:off]
+# ----- custom_code (0/8) -----
+# custom_code.create_notebook         # Create a new notebook.
+# custom_code.delete_notebook         # Delete a notebook by ID.
+# custom_code.rename_notebook_file    # Rename or update a notebook resource file.
+# custom_code.rename_notebook_folder  # Rename a custom-code notebook folder.
+# custom_code.update_notebook         # Update an existing notebook.
 
-# ----- dashboard (8/9) -----
+# ----- dashboard (18/24) -----
 dashboard.add_dashboard_script      # Add or overwrite a script on a dashboard.
 dashboard.add_dashboard_shares      # Add or update shares for a dashboard for the given users…
 dashboard.add_widget_script         # Add or overwrite a script for a specific widget within a…
@@ -169,7 +169,7 @@ dashboard.rename_dashboard          # Rename a dashboard.
 dashboard.update_widget             # Write updated widget data back to Sisense.
 # dashboard.import_dashboards_bulk  # Import one or more dashboards via the bulk import…  — cross-environment primitive: pairs with export_dashboard into a DIY migration path
 
-# ----- datamodel (11/15) -----
+# ----- datamodel (23/36) -----
 datamodel.add_datamodel_shares                    # Add share entries (users and groups) to a data model.
 datamodel.create_connections                      # Create a new connection using the provided payload.
 datamodel.create_dataset                          # Create a new dataset in the specified data model.
@@ -186,27 +186,27 @@ datamodel.update_datasecurity                     # Add datasecurity rules to an
 # datamodel.update_datamodel_permissions_extract  # Replace share entries for an EXTRACT (Elasticube) data…  — wholesale replace; add_datamodel_shares is additive
 # datamodel.update_datamodel_permissions_live     # Replace share entries for a LIVE data model.  — wholesale replace; add_datamodel_shares is additive
 
-# ----- encryption (2/2) -----
-encryption.decrypt  # Decrypt a value using the Sisense encryption service.  [fes:off]
-encryption.encrypt  # Encrypt a value using the Sisense encryption service.  [fes:off]
+# ----- encryption (0/2) -----
+# encryption.decrypt  # Decrypt a value using the Sisense encryption service.
+# encryption.encrypt  # Encrypt a value using the Sisense encryption service.
 
-# ----- folder (3/3) -----
+# ----- folder (5/8) -----
 folder.create_folder  # Create a new Sisense folder.
 folder.delete_folder  # Delete a folder by OID.
 folder.update_folder  # Update an existing folder.
 
-# ----- metadata (2/2) -----
-metadata.add_datasource_measure  # Create a saved formula measure in Sisense metadata.  [fes:off]
-metadata.post_metadata_query     # Execute a metadata query against Sisense.  [fes:off]
+# ----- metadata (0/5) -----
+# metadata.add_datasource_measure  # Create a saved formula measure in Sisense metadata.
+# metadata.post_metadata_query     # Execute a metadata query against Sisense.
 
-# ----- plugins (3/5) -----
-plugins.disable_plugins   # Disable one or more plugins by name or folder name.
-plugins.enable_plugins    # Enable one or more plugins by name or folder name.
-plugins.restore_snapshot  # Restore plugin states to exactly match a previously saved…
+# ----- plugins (1/8) -----
+# plugins.disable_plugins   # Disable one or more plugins by name or folder name.  [fes:on]
+# plugins.enable_plugins    # Enable one or more plugins by name or folder name.  [fes:on]
+# plugins.restore_snapshot  # Restore plugin states to exactly match a previously saved…  [fes:on]
 # plugins.disable_plugin  # Disable a single plugin by name or folder name.  — dup group 15 — disable_plugins is a strict input superset  [fes:on]
 # plugins.enable_plugin   # Enable a single plugin by name or folder name.  — dup group 15 — enable_plugins accepts a bare string and returns richer results  [fes:on]
 
-# ----- report_manager (4/4) -----
+# ----- report_manager (5/6) -----
 report_manager.create_report  # Create a new Report Manager report.
 report_manager.delete_report  # Delete a Report Manager report by id.
 report_manager.run_report     # Trigger an immediate run of a Report Manager report.

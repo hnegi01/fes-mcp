@@ -72,8 +72,15 @@ def test_unknown_model_fails_cleanly(live_dispatcher):
         )
 
 
-def test_folder_tree_via_structure_param(live_dispatcher):
-    """get_folders(structure='tree') — the capability that justified cutting
-    the get_all_folders alias — must work live."""
+def test_folder_tree_via_structure_param(live_dispatcher, read_surface):
+    """get_folders(structure='tree') live-verified shape: 'tree' returns the
+    ROOT FOLDER NODE (a dict with nested children), 'flat' a list of rows.
+    Skips when the tool is curated out of the surface."""
+    if "folder.get_folders" not in read_surface:
+        pytest.skip("folder.get_folders is not in the curated surface")
     tree = live_dispatcher.invoke("folder.get_folders", {"structure": "tree"})
-    assert isinstance(tree, list)
+    root = tree[0] if isinstance(tree, list) else tree
+    assert isinstance(root, dict) and root.get("type") == "folder"
+
+    flat = live_dispatcher.invoke("folder.get_folders", {"structure": "flat"})
+    assert isinstance(flat, list)
