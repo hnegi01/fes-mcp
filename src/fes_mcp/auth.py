@@ -336,9 +336,19 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
             scopes=params.scopes or [],
             expires_at=time.time() + DEFAULT_AUTH_CODE_EXPIRY_SECONDS,
             code_challenge=params.code_challenge,
+            # RFC 8707: bind the code (and the tokens minted from it) to the
+            # resource the client asked for; the proxy enforces the audience.
+            resource=params.resource,
         )
         self._credentials[code_value] = credential
-        return construct_redirect_uri(str(params.redirect_uri), code=code_value, state=params.state)
+        # RFC 9207: identify the issuer in the authorization response so
+        # clients can detect authorization-server mix-up attacks.
+        return construct_redirect_uri(
+            str(params.redirect_uri),
+            code=code_value,
+            state=params.state,
+            iss=str(self.base_url),
+        )
 
     # -- step 3: keep the token→credential map across issuance/rotation ------
 
@@ -347,7 +357,7 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
     ) -> OAuthToken:
         credential = self._credentials.pop(authorization_code.code, None)
         token = await super().exchange_authorization_code(client, authorization_code)
-        self._map_tokens(token, credential)
+        self._map_tokens(token, credential, resource=authorization_code.resource)
         return token
 
     async def exchange_refresh_token(
@@ -358,10 +368,14 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
     ) -> OAuthToken:
         credential = self._credentials.pop(refresh_token.token, None)
         old_access = self._refresh_to_access_map.get(refresh_token.token)
+        # RefreshToken carries no resource; the audience binding survives
+        # rotation by copying it from the access token being replaced.
+        prior = self.access_tokens.get(old_access) if old_access else None
+        prior_resource = getattr(prior, "resource", None)
         token = await super().exchange_refresh_token(client, refresh_token, scopes)
         if old_access:
             self._credentials.pop(old_access, None)
-        self._map_tokens(token, credential)
+        self._map_tokens(token, credential, resource=prior_resource)
         return token
 
     async def revoke_token(self, token) -> None:
@@ -373,14 +387,21 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
             self._credentials.pop(linked, None)
         await super().revoke_token(token)
 
-    def _map_tokens(self, token: OAuthToken, credential: SisenseCredential | None) -> None:
+    def _map_tokens(
+        self,
+        token: OAuthToken,
+        credential: SisenseCredential | None,
+        resource: str | None = None,
+    ) -> None:
         # get_access_token() in the tool layer requires FastMCP's AccessToken
         # subclass; the in-memory base class stores the low-level SDK type.
+        # The rebuild also stamps the RFC 8707 audience onto the stored token.
         stored = self.access_tokens.get(token.access_token)
-        if stored is not None and not isinstance(stored, FastMCPAccessToken):
-            self.access_tokens[token.access_token] = FastMCPAccessToken(
-                **stored.model_dump(exclude_none=True)
-            )
+        if stored is not None:
+            fields = stored.model_dump(exclude_none=True)
+            if resource is not None:
+                fields["resource"] = resource
+            self.access_tokens[token.access_token] = FastMCPAccessToken(**fields)
 
         if credential is None:
             logger.warning("No Sisense credential associated with issued token")

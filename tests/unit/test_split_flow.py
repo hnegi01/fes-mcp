@@ -411,3 +411,74 @@ async def test_login_rate_limited(split):
         )
     assert last.status_code == 429
     assert "Too many login attempts" in last.text
+
+
+async def test_iss_in_authorization_response(split):
+    # RFC 9207: the redirect back to the client names the issuer, and it must
+    # equal the issuer advertised in the AS metadata.
+    base, _, _ = split
+    issuer = httpx.get(f"{base}/.well-known/oauth-authorization-server").json()["issuer"]
+    submit, _ = _run_oauth_dance(
+        base, {"domain": "acme.sisense.com", "username": "alice@acme.com", "password": "hunter2"}
+    )
+    qs = parse_qs(urlparse(submit.headers["location"]).query)
+    assert qs["iss"] == [issuer]
+
+
+async def test_token_bound_to_foreign_resource_rejected(split):
+    # RFC 8707 audience enforcement: a token minted for another resource must
+    # not work at this server's /mcp, even though it is otherwise valid.
+    base, _, _ = split
+    submit, ctx = _run_oauth_dance(
+        base,
+        {"domain": "acme.sisense.com", "username": "mallory@acme.com", "password": "hunter2"},
+        resource="https://attacker.example/mcp",
+    )
+    tokens = _exchange_code(submit, ctx)
+    resp = httpx.post(
+        f"{base}/mcp",
+        json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+        headers={
+            "Accept": "application/json, text/event-stream",
+            "Authorization": f"Bearer {tokens['access_token']}",
+        },
+    )
+    assert resp.status_code == 401
+
+
+async def test_audience_binding_survives_refresh(split):
+    base, _, provider = split
+    submit, ctx = _run_oauth_dance(
+        base,
+        {"username": "dave@acme.com", "password": "hunter2"},
+        resource=f"{base}/mcp?target={quote(TARGET, safe='')}",
+    )
+    tokens = _exchange_code(submit, ctx)
+    refreshed = ctx["http"].post(
+        "/token",
+        data={
+            "grant_type": "refresh_token",
+            "refresh_token": tokens["refresh_token"],
+            "client_id": ctx["client_info"]["client_id"],
+            "client_secret": ctx["client_info"]["client_secret"],
+        },
+    ).json()
+    stored = provider.access_tokens[refreshed["access_token"]]
+    assert str(stored.resource).startswith(f"{base}/mcp")
+    async with Client(f"{base}/mcp", auth=refreshed["access_token"]) as client:
+        res = await client.call_tool("dashboard_get_all_dashboards", {})
+        assert res.is_error is False
+
+
+async def test_register_rate_limited(split):
+    base, _, _ = split
+    reg_body = {
+        "client_name": "spam",
+        "redirect_uris": [REDIRECT_URI],
+        "grant_types": ["authorization_code", "refresh_token"],
+        "response_types": ["code"],
+        "token_endpoint_auth_method": "client_secret_post",
+    }
+    statuses = [httpx.post(f"{base}/register", json=reg_body).status_code for _ in range(11)]
+    assert statuses[:10] == [201] * 10
+    assert statuses[10] == 429

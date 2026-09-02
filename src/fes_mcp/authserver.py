@@ -37,7 +37,9 @@ from starlette.requests import Request
 from starlette.responses import JSONResponse, PlainTextResponse, Response, StreamingResponse
 from starlette.routing import Route
 
-from .auth import SisenseAuthProvider
+from urllib.parse import urlparse
+
+from .auth import SisenseAuthProvider, _client_ip, _RateLimiter
 from .middleware import AccessLogMiddleware
 from .settings import REPO_ROOT, Settings
 
@@ -57,6 +59,48 @@ _SKIP_REQUEST_HEADERS = {
     "authorization",  # replaced with the injected Sisense credential
 }
 _SKIP_RESPONSE_HEADERS = {"content-length", "transfer-encoding", "connection", "keep-alive"}
+
+
+class _RegisterThrottleMiddleware:
+    """Rate-limit dynamic client registration. /register is unauthenticated
+    and every registration grows in-memory state, so without a limiter it is
+    a memory-exhaustion vector. Legitimate clients register once per connect;
+    10 per IP per hour is generous."""
+
+    def __init__(self, app):
+        self.app = app
+        self._limiter = _RateLimiter(10, 3600)
+
+    async def __call__(self, scope, receive, send):
+        if (
+            scope["type"] == "http"
+            and scope["method"] == "POST"
+            and scope["path"].rstrip("/") == "/register"
+        ):
+            ip = _client_ip(Request(scope))
+            if not self._limiter.allow(ip):
+                response = JSONResponse(
+                    {
+                        "error": "too_many_requests",
+                        "error_description": "client registration rate limit exceeded",
+                    },
+                    status_code=429,
+                )
+                await response(scope, receive, send)
+                return
+        await self.app(scope, receive, send)
+
+
+def _audience_matches(bound_resource: str, public_url: str) -> bool:
+    """RFC 8707 audience check: the token must have been requested for THIS
+    server's /mcp resource — same origin (case-insensitive scheme/host) and
+    path, query ignored (that is where ?target= rides)."""
+    bound, own = urlparse(bound_resource), urlparse(f"{public_url}/mcp")
+    return (
+        bound.scheme.lower() == own.scheme.lower()
+        and bound.netloc.lower() == own.netloc.lower()
+        and bound.path.rstrip("/") == own.path.rstrip("/")
+    )
 
 
 def build_auth_app(settings: Settings, provider: SisenseAuthProvider) -> Starlette:
@@ -84,6 +128,13 @@ def build_auth_app(settings: Settings, provider: SisenseAuthProvider) -> Starlet
 
         access = provider.access_tokens.get(token_str)
         if access is None or (access.expires_at and access.expires_at < time.time()):
+            return _challenge(request, presented=True)
+        # RFC 8707 audience enforcement: a token requested for some other
+        # resource must not work here. Tokens issued to clients that sent no
+        # resource indicator carry none and skip the check.
+        bound = getattr(access, "resource", None)
+        if bound and not _audience_matches(str(bound), public_url):
+            logger.warning("token audience mismatch: bound to %s", bound)
             return _challenge(request, presented=True)
         credential = provider.credential_for(token_str)
         if credential is None:
@@ -161,7 +212,10 @@ def build_auth_app(settings: Settings, provider: SisenseAuthProvider) -> Starlet
     return Starlette(
         routes=routes,
         lifespan=lifespan,
-        middleware=[Middleware(AccessLogMiddleware)],
+        middleware=[
+            Middleware(AccessLogMiddleware),
+            Middleware(_RegisterThrottleMiddleware),
+        ],
     )
 
 
