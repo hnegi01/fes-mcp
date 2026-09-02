@@ -52,7 +52,9 @@ def sample_tools():
             "mutates": False,
             "parameters": {
                 "type": "object",
-                "properties": {"dashboard_id": {"type": "string"}},
+                # payload is free-form (no declared type) — the shape MCP
+                # clients tend to stringify.
+                "properties": {"dashboard_id": {"type": "string"}, "payload": {}},
                 "required": ["dashboard_id"],
             },
         },

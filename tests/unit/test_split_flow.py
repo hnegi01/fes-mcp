@@ -482,3 +482,105 @@ async def test_register_rate_limited(split):
     statuses = [httpx.post(f"{base}/register", json=reg_body).status_code for _ in range(11)]
     assert statuses[:10] == [201] * 10
     assert statuses[10] == 429
+
+
+async def test_login_page_names_client_and_redirect(split):
+    # Consent-phishing defense: the page must say which OAuth client asked
+    # and where the browser is sent afterwards.
+    base, _, _ = split
+    submit, ctx = _run_oauth_dance(
+        base, {"domain": TARGET, "username": "u@x.com", "password": "hunter2"}
+    )
+    assert "pytest-claude" in ctx["login_page"]
+    assert urlparse(REDIRECT_URI).netloc in ctx["login_page"]
+    assert submit.status_code == 302
+
+
+async def test_refresh_token_gets_absolute_expiry(split):
+    base, _, provider = split
+    submit, ctx = _run_oauth_dance(
+        base, {"domain": TARGET, "username": "u@x.com", "password": "hunter2"}
+    )
+    token = _exchange_code(submit, ctx)
+    refresh = provider.refresh_tokens[token["refresh_token"]]
+    assert refresh.expires_at is not None
+    assert refresh.expires_at <= time.time() + auth_mod.REFRESH_TOKEN_TTL_SECONDS + 5
+
+
+async def test_login_refuses_disallowed_origin():
+    provider = SisenseAuthProvider(
+        "http://127.0.0.1:1", allowed_origins=("https://ok.sisense.com",)
+    )
+    with pytest.raises(auth_mod.SisenseLoginError, match="not configured"):
+        provider._authenticate_form(
+            "https://evil.example", "u@x.com", "pw", "", False
+        )
+
+
+def test_client_ip_uses_rightmost_forwarded_entry():
+    # The leftmost X-Forwarded-For entries are client-supplied (spoofable);
+    # the rightmost is appended by our own proxy.
+    from starlette.requests import Request
+
+    scope = {
+        "type": "http",
+        "method": "GET",
+        "path": "/",
+        "query_string": b"",
+        "headers": [(b"x-forwarded-for", b"6.6.6.6, 9.9.9.9")],
+        "client": ("10.0.0.1", 1234),
+    }
+    assert auth_mod._client_ip(Request(scope)) == "9.9.9.9"
+
+
+def test_sweep_evicts_dead_state_but_keeps_refreshable_sessions():
+    from mcp.server.auth.provider import AuthorizationCode as Code
+    from mcp.server.auth.provider import RefreshToken as Refresh
+    from fastmcp.server.auth.auth import AccessToken as Access
+
+    from fes_mcp.credentials import SisenseCredential
+
+    provider = SisenseAuthProvider("http://127.0.0.1:1")
+    cred = SisenseCredential(domain=TARGET, token="t")
+    past, future = time.time() - 10, time.time() + 3600
+
+    provider.auth_codes["dead-code"] = Code(
+        code="dead-code", client_id="c", redirect_uri=REDIRECT_URI,
+        redirect_uri_provided_explicitly=True, scopes=[], expires_at=past,
+        code_challenge="x",
+    )
+    provider._credentials["dead-code"] = cred
+
+    provider.access_tokens["dead-access"] = Access(
+        token="dead-access", client_id="c", scopes=[], expires_at=int(past)
+    )
+    provider._credentials["dead-access"] = cred
+
+    provider.access_tokens["live-session"] = Access(
+        token="live-session", client_id="c", scopes=[], expires_at=int(past)
+    )
+    provider._credentials["live-session"] = cred
+    provider.refresh_tokens["live-refresh"] = Refresh(
+        token="live-refresh", client_id="c", scopes=[], expires_at=int(future)
+    )
+    provider._access_to_refresh_map["live-session"] = "live-refresh"
+    provider._refresh_to_access_map["live-refresh"] = "live-session"
+    provider._credentials["live-refresh"] = cred
+
+    provider._sweep_expired_tokens()
+
+    assert "dead-code" not in provider.auth_codes
+    assert "dead-code" not in provider._credentials
+    assert "dead-access" not in provider.access_tokens
+    assert "dead-access" not in provider._credentials
+    # Expired access token with a live refresh token survives: it carries the
+    # RFC 8707 resource binding that rotation copies forward.
+    assert "live-session" in provider.access_tokens
+    assert "live-refresh" in provider.refresh_tokens
+
+
+def test_client_supplied_sisense_url_never_forwarded():
+    from fes_mcp.authserver import _SKIP_REQUEST_HEADERS
+
+    assert "x-sisense-url" in _SKIP_REQUEST_HEADERS
+    assert "x-forwarded-for" in _SKIP_REQUEST_HEADERS

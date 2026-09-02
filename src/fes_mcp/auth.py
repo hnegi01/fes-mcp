@@ -49,6 +49,11 @@ LOGIN_SESSION_TTL_SECONDS = 600
 LOGIN_RATE_LIMIT_ATTEMPTS = 5
 LOGIN_RATE_LIMIT_WINDOW_SECONDS = 60
 
+# Absolute refresh-token lifetime. The SDK default is "never expires", which
+# would keep a Sisense credential alive in the vault indefinitely for an
+# abandoned or stolen refresh token; rotation renews the window.
+REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 3600
+
 
 class SisenseLoginError(Exception):
     """User-facing login failure (bad credentials, unreachable domain, ...)."""
@@ -90,11 +95,13 @@ class _RateLimiter:
 
 
 def _client_ip(request: Request) -> str:
-    # Behind the EC2 reverse proxy the peer address is the proxy; the proxy
-    # appends the real client to X-Forwarded-For.
+    # Behind the reverse proxy the peer address is the proxy; the proxy
+    # APPENDS the connecting address to X-Forwarded-For, so the rightmost
+    # entry is the one our own proxy wrote. The leftmost entries are
+    # client-supplied and trivially spoofable — never key rate limits on them.
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
-        return forwarded.split(",")[0].strip()
+        return forwarded.split(",")[-1].strip()
     return request.client.host if request.client else "unknown"
 
 
@@ -121,6 +128,13 @@ def normalize_domain(raw: str) -> str:
     return domain
 
 
+def domain_uses_ssl(domain: str) -> bool:
+    """Whether a normalized Sisense URL is HTTPS — this, not the certificate
+    checkbox, is what PySisense's is_ssl means (it also selects port 30845
+    for HTTP instances)."""
+    return not domain.lower().startswith("http://")
+
+
 def login_with_password(domain: str, username: str, password: str, ssl_verify: bool) -> str:
     """Call Sisense's login API and return the user's bearer token."""
     try:
@@ -131,7 +145,10 @@ def login_with_password(domain: str, username: str, password: str, ssl_verify: b
             timeout=20,
         )
     except _requests.RequestException as exc:
-        raise SisenseLoginError(f"Could not reach {domain}: {exc}") from exc
+        # Log the detail, show a generic message: connection errors echoed to
+        # the browser would let any visitor probe the internal network.
+        logger.warning("Sisense login unreachable domain=%s: %s", domain, exc)
+        raise SisenseLoginError(f"Could not reach {domain}.") from exc
 
     if resp.status_code in (401, 403):
         raise SisenseLoginError(
@@ -141,7 +158,11 @@ def login_with_password(domain: str, username: str, password: str, ssl_verify: b
     if resp.status_code != 200:
         raise SisenseLoginError(f"Sisense login failed (HTTP {resp.status_code}).")
 
-    token = (resp.json() or {}).get("access_token")
+    try:
+        payload = resp.json() or {}
+    except ValueError as exc:
+        raise SisenseLoginError("Sisense returned an unexpected response.") from exc
+    token = payload.get("access_token")
     if not token:
         raise SisenseLoginError("Sisense login succeeded but returned no access token.")
     return token
@@ -159,14 +180,22 @@ def verify_api_token(domain: str, token: str, ssl_verify: bool) -> None:
 
     try:
         client = SisenseClient.from_connection(
-            domain=domain, token=token, is_ssl=ssl_verify
+            domain=domain,
+            token=token,
+            # The SDK strips the scheme from `domain` and rebuilds the URL from
+            # is_ssl (https:443 vs http:30845) — so is_ssl must mirror the URL
+            # scheme, and the self-signed-certificate checkbox maps to
+            # verify_ssl (certificate verification), never to is_ssl.
+            is_ssl=domain_uses_ssl(domain),
+            verify_ssl=ssl_verify,
         )
         # The un-versioned route, as the SDK's own get_my_user uses: on some
         # Sisense versions /api/v1/users/loggedin is parsed as /users/{id}
         # and 422s ("loggedin" is not a 24-hex id).
         resp = client.get("/api/users/loggedin")
     except Exception as exc:  # noqa: BLE001 — network/SDK errors → login error
-        raise SisenseLoginError(f"Could not reach {domain}: {exc}") from exc
+        logger.warning("Sisense token check unreachable domain=%s: %s", domain, exc)
+        raise SisenseLoginError(f"Could not reach {domain}.") from exc
     if resp is None or resp.status_code != 200:
         status = getattr(resp, "status_code", "no response")
         raise SisenseLoginError(f"Sisense did not accept the API token (HTTP {status}).")
@@ -175,7 +204,7 @@ def verify_api_token(domain: str, token: str, ssl_verify: bool) -> None:
 class SisenseAuthProvider(InMemoryOAuthProvider):
     """OAuth provider whose authorization step is a Sisense login."""
 
-    def __init__(self, public_url: str):
+    def __init__(self, public_url: str, allowed_origins: tuple[str, ...] | None = None):
         super().__init__(
             base_url=public_url,
             client_registration_options=ClientRegistrationOptions(enabled=True),
@@ -186,6 +215,14 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
         self._credentials: dict[str, SisenseCredential] = {}
         self._login_limiter = _RateLimiter(
             LOGIN_RATE_LIMIT_ATTEMPTS, LOGIN_RATE_LIMIT_WINDOW_SECONDS
+        )
+        # When set, the login page only connects to these Sisense origins —
+        # without it, anyone reaching the page can use this server to probe
+        # arbitrary hosts (the connect attempt itself is the oracle).
+        self._allowed_origins = (
+            tuple(normalize_domain(o).lower() for o in allowed_origins)
+            if allowed_origins is not None
+            else None
         )
 
     # -- step 1: Claude hits /authorize → send the user to our login page ----
@@ -202,12 +239,48 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
             target=_target_from_resource(params.resource),
         )
         self._sweep_pending()
+        self._sweep_expired_tokens()
         return f"{str(self.base_url).rstrip('/')}/login?session={login_id}"
 
     def _sweep_pending(self) -> None:
         now = time.time()
         for key in [k for k, v in self._pending_logins.items() if v.expires_at < now]:
             del self._pending_logins[key]
+        # /authorize has no rate limit; bound memory under a flood by evicting
+        # the soonest-to-expire sessions (a real user re-authorizes anyway).
+        while len(self._pending_logins) > 10_000:
+            oldest = min(
+                self._pending_logins, key=lambda k: self._pending_logins[k].expires_at
+            )
+            del self._pending_logins[oldest]
+
+    def _sweep_expired_tokens(self) -> None:
+        """Evict expired state the base class only cleans lazily, so abandoned
+        flows can't accumulate Sisense credentials in memory: never-exchanged
+        auth codes, and fully dead sessions (expired access token whose refresh
+        token is also gone or expired). An expired access token with a live
+        refresh token is kept — it carries the RFC 8707 resource binding that
+        rotation copies forward."""
+        now = time.time()
+        for code in [c for c, v in self.auth_codes.items() if v.expires_at < now]:
+            del self.auth_codes[code]
+            self._credentials.pop(code, None)
+        for access_str, access in list(self.access_tokens.items()):
+            if not (access.expires_at and access.expires_at < now):
+                continue
+            refresh_str = self._access_to_refresh_map.get(access_str)
+            refresh = self.refresh_tokens.get(refresh_str) if refresh_str else None
+            if refresh is not None and (
+                refresh.expires_at is None or refresh.expires_at >= now
+            ):
+                continue  # session still refreshable
+            del self.access_tokens[access_str]
+            self._credentials.pop(access_str, None)
+            if refresh_str:
+                self._access_to_refresh_map.pop(access_str, None)
+                self._refresh_to_access_map.pop(refresh_str, None)
+                self.refresh_tokens.pop(refresh_str, None)
+                self._credentials.pop(refresh_str, None)
 
     # -- step 2: the login page ----------------------------------------------
 
@@ -257,9 +330,7 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
                                           "Close this window and reconnect from your MCP client."),
                                     status_code=400)
             pending_get = self._pending_logins[login_id]
-            return HTMLResponse(
-                _page(_form(login_id, pending_get.csrf, target=pending_get.target))
-            )
+            return HTMLResponse(_page(self._render_form(login_id, pending_get)))
 
         form = await request.form()
         login_id = str(form.get("session", ""))
@@ -279,9 +350,9 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
         if not self._login_limiter.allow(ip):
             logger.warning("Login rate limit exceeded for ip=%s", ip)
             return HTMLResponse(
-                _page(_form(login_id, pending_check.csrf,
-                            error="Too many login attempts. Wait a minute and try again.",
-                            target=pending_check.target)),
+                _page(self._render_form(
+                    login_id, pending_check,
+                    error="Too many login attempts. Wait a minute and try again.")),
                 status_code=429,
             )
 
@@ -297,25 +368,51 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
             )
         except SisenseLoginError as exc:
             return HTMLResponse(
-                _page(_form(login_id, pending_check.csrf, error=str(exc),
-                            target=pending_check.target)),
+                _page(self._render_form(login_id, pending_check, error=str(exc))),
                 status_code=200,
             )
 
-        pending = self._pending_logins.pop(login_id)
+        # pop with a default: a concurrent double-submit must get the
+        # invalid-link page, not an unhandled KeyError.
+        pending = self._pending_logins.pop(login_id, None)
+        if pending is None:
+            return HTMLResponse(_page("This login link is invalid or has expired. "
+                                      "Close this window and reconnect from your MCP client."),
+                                status_code=400)
         redirect_url = self._issue_code(pending, credential)
         return RedirectResponse(redirect_url, status_code=302)
+
+    def _render_form(
+        self, login_id: str, pending: _PendingLogin, error: str | None = None
+    ) -> str:
+        # Identify the requesting OAuth client and where the browser goes
+        # afterwards, so a genuine login link sent by someone else reads as
+        # what it is (consent-phishing defense; see _form).
+        client_label = pending.client.client_name or pending.client.client_id
+        redirect_host = urlparse(str(pending.params.redirect_uri)).netloc
+        return _form(
+            login_id,
+            pending.csrf,
+            error=error,
+            target=pending.target,
+            client_label=str(client_label or "An MCP client"),
+            redirect_host=redirect_host,
+        )
 
     def _valid_login_id(self, login_id: str) -> bool:
         self._sweep_pending()
         return bool(login_id) and login_id in self._pending_logins
 
-    @staticmethod
     def _authenticate_form(
-        domain: str, username: str, password: str, api_token: str, skip_tls: bool
+        self, domain: str, username: str, password: str, api_token: str, skip_tls: bool
     ) -> SisenseCredential:
         """Blocking: validate the submitted form against Sisense."""
         domain = normalize_domain(domain)
+        if self._allowed_origins is not None and domain.lower() not in self._allowed_origins:
+            logger.warning("Login refused: %s is not an allowed Sisense origin", domain)
+            raise SisenseLoginError(
+                "This server is not configured to connect to that Sisense instance."
+            )
         ssl_verify = not skip_tls
 
         if api_token.strip():
@@ -374,13 +471,17 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
         refresh_token: RefreshToken,
         scopes: list[str],
     ) -> OAuthToken:
-        credential = self._credentials.pop(refresh_token.token, None)
+        # Read (don't pop) before super(): if the SDK rejects the exchange
+        # (e.g. invalid_scope) the refresh token survives, so its credential
+        # must too — popping first would strand a credential-less session.
+        credential = self._credentials.get(refresh_token.token)
         old_access = self._refresh_to_access_map.get(refresh_token.token)
         # RefreshToken carries no resource; the audience binding survives
         # rotation by copying it from the access token being replaced.
         prior = self.access_tokens.get(old_access) if old_access else None
         prior_resource = getattr(prior, "resource", None)
         token = await super().exchange_refresh_token(client, refresh_token, scopes)
+        self._credentials.pop(refresh_token.token, None)
         if old_access:
             self._credentials.pop(old_access, None)
         self._map_tokens(token, credential, resource=prior_resource)
@@ -410,6 +511,15 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
             if resource is not None:
                 fields["resource"] = resource
             self.access_tokens[token.access_token] = FastMCPAccessToken(**fields)
+
+        if token.refresh_token:
+            # The base class issues refresh tokens with no expiry; stamp the
+            # absolute lifetime (load_refresh_token enforces expires_at).
+            refresh = self.refresh_tokens.get(token.refresh_token)
+            if refresh is not None and refresh.expires_at is None:
+                self.refresh_tokens[token.refresh_token] = refresh.model_copy(
+                    update={"expires_at": int(time.time() + REFRESH_TOKEN_TTL_SECONDS)}
+                )
 
         if credential is None:
             logger.warning("No Sisense credential associated with issued token")
@@ -467,14 +577,36 @@ def _page(body: str) -> str:
   .hint {{ color:#888; font-size:.72rem; margin-top:2px; }}
   .fixed {{ background:#f5f6f8; border:1px solid #e2e4e8; border-radius:6px;
            padding:9px 10px; font-size:.9rem; color:#444; word-break:break-all; }}
+  .consent {{ background:#f0f4fb; border:1px solid #d5e0f0; border-radius:6px;
+           padding:10px 12px; font-size:.82rem; color:#334; margin-bottom:16px; }}
 </style></head>
 <body><div class="card">{body}</div></body></html>"""
 
 
 def _form(
-    login_id: str, csrf: str, error: str | None = None, target: str | None = None
+    login_id: str,
+    csrf: str,
+    error: str | None = None,
+    target: str | None = None,
+    client_label: str = "An MCP client",
+    redirect_host: str = "",
 ) -> str:
     error_html = f'<div class="error">{html.escape(error)}</div>' if error else ""
+    # Consent-phishing defense: anyone can register an OAuth client and send a
+    # victim a genuine link to this page, so the page must say who asked and
+    # where the browser goes next — a victim expecting Claude who reads
+    # "sent back to attacker.example" has a reason to stop.
+    returned_to = (
+        f" After signing in, your browser will be sent back to "
+        f"<strong>{html.escape(redirect_host)}</strong>."
+        if redirect_host
+        else ""
+    )
+    consent_html = (
+        f'<div class="consent"><strong>{html.escape(client_label)}</strong> is '
+        f"requesting access to run Sisense tools as you.{returned_to} "
+        "If you did not start this connection from that app, close this window.</div>"
+    )
     if target:
         # Instance fixed by the connector URL's ?target= — show, don't ask.
         domain_html = f"""  <label>Sisense instance</label>
@@ -486,9 +618,9 @@ def _form(
         username_extra = ""
     return f"""
 <h1>Connect to Sisense</h1>
-<p class="sub">Sign in to let your MCP client run Sisense tools as you.
-Your credentials go only to your Sisense instance — the client never sees them.</p>
-{error_html}
+<p class="sub">Your credentials go only to your Sisense instance — the client
+never sees them.</p>
+{consent_html}{error_html}
 <form method="post" action="login">
   <input type="hidden" name="session" value="{html.escape(login_id)}">
   <input type="hidden" name="csrf" value="{html.escape(csrf)}">
