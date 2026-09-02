@@ -95,6 +95,15 @@ def _supports_form_elicitation(ctx: Any) -> bool:
         return False
 
 
+def _answer_value(answer: Any) -> Any:
+    """The "value" field of an elicitation answer's content, which may arrive
+    as a plain dict or as a model object depending on the client/SDK."""
+    content = getattr(answer, "content", None)
+    if isinstance(content, dict):
+        return content.get("value")
+    return getattr(content, "value", None)
+
+
 def _args_fingerprint(arguments: dict[str, Any]) -> str:
     """Binds a confirmation to the exact arguments the human saw: carried in
     request_state across the MRTR round trip and re-checked on the retry, so
@@ -181,11 +190,10 @@ class SisenseTool(Tool):
             if getattr(ctx, "request_state", None) != _args_fingerprint(arguments):
                 return self._mrtr_ask(arguments)  # args changed since the ask
             answer = responses[_CONFIRM_KEY]
-            accepted = (
+            return (
                 getattr(answer, "action", None) == "accept"
-                and (getattr(answer, "content", None) or {}).get("value") == "proceed"
+                and _answer_value(answer) == "proceed"
             )
-            return bool(accepted)
 
         if not _supports_form_elicitation(ctx):
             return True  # fail-open: the client's own approval UI is the safeguard

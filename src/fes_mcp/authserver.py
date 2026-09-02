@@ -56,6 +56,11 @@ _SKIP_REQUEST_HEADERS = {
     "trailers",
     "proxy-authorization",
     "authorization",  # replaced with the injected Sisense credential
+    "x-sisense-url",  # ours to set — a client-supplied value must never reach the RS
+    "x-forwarded-for",
+    "x-forwarded-proto",
+    "x-forwarded-host",
+    "x-real-ip",
 }
 _SKIP_RESPONSE_HEADERS = {"content-length", "transfer-encoding", "connection", "keep-alive"}
 
@@ -194,9 +199,12 @@ def build_auth_app(settings: Settings, provider: SisenseAuthProvider) -> Starlet
 
     @asynccontextmanager
     async def lifespan(app: Starlette):
-        # No read timeout: MCP responses stream (SSE) and can idle for long.
+        # No read timeout (MCP responses stream over SSE and can idle for
+        # long), but bounded connect/write/pool so hung upstream requests
+        # can't exhaust the connection pool.
         app.state.rs_client = httpx.AsyncClient(
-            timeout=httpx.Timeout(None, connect=10)
+            timeout=httpx.Timeout(connect=10, read=None, write=30, pool=10),
+            limits=httpx.Limits(max_connections=100, max_keepalive_connections=20),
         )
         try:
             yield
@@ -227,7 +235,9 @@ def main() -> None:
 
     setup_logging(settings.log_level, "fes-auth")
     public_url = settings.public_url or f"http://{settings.host}:{settings.port}"
-    provider = SisenseAuthProvider(public_url)
+    provider = SisenseAuthProvider(
+        public_url, allowed_origins=settings.allowed_sisense_origins
+    )
     app = build_auth_app(settings, provider)
     uvicorn.run(app, host=settings.host, port=settings.port, log_level="warning")
 

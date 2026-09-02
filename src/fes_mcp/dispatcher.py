@@ -47,10 +47,17 @@ class _ClientBundle:
             urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
         from pysisense import SisenseClient
 
+        from .auth import domain_uses_ssl
+
         self.client = SisenseClient.from_connection(
             domain=credential.domain,
             token=credential.token,
-            is_ssl=credential.ssl_verify,
+            # is_ssl is the URL scheme (it also selects http:30845 for non-SSL
+            # instances); the credential's ssl_verify is certificate
+            # verification. Confusing the two sends HTTPS traffic to
+            # http://host:30845 — token in cleartext.
+            is_ssl=domain_uses_ssl(credential.domain),
+            verify_ssl=credential.ssl_verify,
         )
         self.modules: dict[str, Any] = {}
 
@@ -128,7 +135,7 @@ class SisenseDispatcher:
                 "or set SISENSE_DOMAIN and SISENSE_TOKEN in the server environment for dev mode."
             )
 
-        args = _coerce_json_strings(arguments or {})
+        args = _coerce_json_strings(arguments or {}, meta["parameters"])
         _validate_arguments(tool_id, args, meta["parameters"])
 
         bundle = self._get_bundle(cred)
@@ -235,12 +242,31 @@ def _validate_arguments(tool_id: str, args: dict[str, Any], schema: dict[str, An
         logger.warning("Registry schema for %s is invalid; skipping validation", tool_id)
 
 
-def _coerce_json_strings(arguments: dict[str, Any]) -> dict[str, Any]:
+def _wants_structure(prop_schema: Any) -> bool:
+    """Whether a parameter's declared schema expects an object/array (or is
+    free-form), i.e. a stringified JSON value should be parsed for it."""
+    if not isinstance(prop_schema, dict):
+        return False
+    declared = prop_schema.get("type")
+    if declared is None:
+        # Free-form param (bare {} or anyOf without a top-level type): keep
+        # coercing — these are exactly the payloads clients stringify.
+        return True
+    types = declared if isinstance(declared, list) else [declared]
+    return "object" in types or "array" in types
+
+
+def _coerce_json_strings(
+    arguments: dict[str, Any], schema: dict[str, Any]
+) -> dict[str, Any]:
     """Parse JSON-looking string values ('{...}' / '[...]') into objects —
-    MCP clients sometimes stringify nested arguments."""
+    MCP clients sometimes stringify nested arguments. Only parameters whose
+    schema expects structure are coerced: a genuine string value that happens
+    to look like JSON (a title such as "[1,2]") must pass through untouched."""
+    properties = schema.get("properties") or {}
     coerced: dict[str, Any] = {}
     for key, value in arguments.items():
-        if isinstance(value, str):
+        if isinstance(value, str) and _wants_structure(properties.get(key)):
             stripped = value.strip()
             if (stripped.startswith("{") and stripped.endswith("}")) or (
                 stripped.startswith("[") and stripped.endswith("]")

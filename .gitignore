@@ -35,3 +35,4 @@ docker-compose.prod.yml
 deploy/
 config/tools.registry.json
 tests/integration/integration_config.yaml
+.claude/settings.local.json

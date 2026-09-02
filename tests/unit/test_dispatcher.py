@@ -87,12 +87,20 @@ def test_sdk_error_payload_becomes_error(dispatcher):
         dispatcher.invoke("dashboard.get_dashboard_by_id", {"dashboard_id": "missing"})
 
 
-def test_json_string_coercion(dispatcher):
+def test_json_string_coercion_is_schema_aware(dispatcher):
+    # A free-form param gets stringified JSON parsed back into structure...
     result = dispatcher.invoke(
         "dashboard.get_dashboard_by_id",
         {"dashboard_id": "d1", "payload": '{"a": 1}'},
     )
     assert result["payload"] == {"a": 1}
+    # ...but a declared string param passes through even when it looks like
+    # JSON — a genuine title such as "[1,2]" must never be mangled.
+    from fes_mcp.dispatcher import _coerce_json_strings
+
+    schema = {"properties": {"title": {"type": "string"}, "data": {"type": "object"}}}
+    out = _coerce_json_strings({"title": "[1,2]", "data": '{"x": 1}'}, schema)
+    assert out == {"title": "[1,2]", "data": {"x": 1}}
 
 
 def test_error_string_result_becomes_error(dispatcher):
@@ -164,3 +172,25 @@ def test_datamodel_id_resolves_to_title(settings, fake_sdk, monkeypatch):
     assert d.invoke("datamodel.describe_datamodel", {"datamodel_name": "My Cube"}) == {
         "title": "My Cube"
     }
+
+
+def test_client_wiring_scheme_drives_is_ssl_checkbox_drives_verify(fake_sdk):
+    # PySisense's is_ssl is scheme/port selection (https:443 vs http:30845);
+    # verify_ssl is certificate verification. The credential's ssl_verify flag
+    # (the "self-signed certificate" checkbox) must land on verify_ssl only.
+    from fes_mcp.credentials import SisenseCredential
+    from fes_mcp.dispatcher import _ClientBundle
+
+    self_signed = _ClientBundle(
+        SisenseCredential(domain="https://acme.sisense.com", token="t", ssl_verify=False)
+    )
+    conn = self_signed.client["connection"]
+    assert conn["is_ssl"] is True
+    assert conn["verify_ssl"] is False
+
+    http_box = _ClientBundle(
+        SisenseCredential(domain="http://10.0.0.5", token="t", ssl_verify=True)
+    )
+    conn = http_box.client["connection"]
+    assert conn["is_ssl"] is False
+    assert conn["verify_ssl"] is True

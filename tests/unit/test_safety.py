@@ -201,3 +201,108 @@ def test_fastmcp_still_has_the_private_era_probe():
 
     probe = getattr(Context, "_is_modern_protocol", None)
     assert callable(probe) and not isinstance(probe, property)
+
+
+# ---- the modern (MRTR / 2026-07-28) confirmation path -----------------------
+
+
+class _ModernCtx:
+    """Context stub for a 2026-07-28 connection with form elicitation."""
+
+    def __init__(self, responses=None, state=None):
+        self.input_responses = responses or {}
+        self.request_state = state
+        self.session = type(
+            "S", (), {"check_client_capability": lambda self, cap: True}
+        )()
+
+    def _is_modern_protocol(self):
+        return True
+
+
+class _Answer:
+    def __init__(self, action, content):
+        self.action = action
+        self.content = content
+
+
+def _mutating_tool(sample_tools):
+    dispatcher = SisenseDispatcher(make_settings(allow_mutations=True), sample_tools)
+    return build_tool(sample_tools["dashboard.delete_dashboard"], dispatcher)
+
+
+def _install_ctx(monkeypatch, ctx):
+    from fes_mcp import server as server_mod
+
+    monkeypatch.setattr(server_mod, "_current_context", lambda: ctx)
+
+
+async def test_mrtr_round1_sends_the_ask(sample_tools, fake_sdk, monkeypatch):
+    from fastmcp.tools import InputRequiredToolResult
+
+    tool = _mutating_tool(sample_tools)
+    _install_ctx(monkeypatch, _ModernCtx())
+    res = await tool.run({"dashboard_id": "d1"})
+    assert isinstance(res, InputRequiredToolResult)
+
+
+async def test_mrtr_round2_accept_runs(sample_tools, fake_sdk, monkeypatch):
+    from fes_mcp.server import _CONFIRM_KEY, _args_fingerprint
+
+    args = {"dashboard_id": "d1"}
+    ctx = _ModernCtx(
+        responses={_CONFIRM_KEY: _Answer("accept", {"value": "proceed"})},
+        state=_args_fingerprint(args),
+    )
+    tool = _mutating_tool(sample_tools)
+    _install_ctx(monkeypatch, ctx)
+    res = await tool.run(args)
+    assert res.structured_content == {"result": "deleted"}
+
+
+async def test_mrtr_round2_accept_with_model_shaped_content(
+    sample_tools, fake_sdk, monkeypatch
+):
+    # Some clients/SDK paths deliver content as a model object, not a dict.
+    from fes_mcp.server import _CONFIRM_KEY, _args_fingerprint
+
+    content = type("C", (), {"value": "proceed"})()
+    args = {"dashboard_id": "d1"}
+    ctx = _ModernCtx(
+        responses={_CONFIRM_KEY: _Answer("accept", content)},
+        state=_args_fingerprint(args),
+    )
+    tool = _mutating_tool(sample_tools)
+    _install_ctx(monkeypatch, ctx)
+    res = await tool.run(args)
+    assert res.structured_content == {"result": "deleted"}
+
+
+async def test_mrtr_round2_decline_aborts(sample_tools, fake_sdk, monkeypatch):
+    from fes_mcp.server import _CONFIRM_KEY, _args_fingerprint
+
+    args = {"dashboard_id": "d1"}
+    ctx = _ModernCtx(
+        responses={_CONFIRM_KEY: _Answer("decline", None)},
+        state=_args_fingerprint(args),
+    )
+    tool = _mutating_tool(sample_tools)
+    _install_ctx(monkeypatch, ctx)
+    res = await tool.run(args)
+    assert res.structured_content["aborted"] is True
+
+
+async def test_mrtr_fingerprint_mismatch_reasks(sample_tools, fake_sdk, monkeypatch):
+    # An approval must never be replayed onto different arguments.
+    from fastmcp.tools import InputRequiredToolResult
+
+    from fes_mcp.server import _CONFIRM_KEY, _args_fingerprint
+
+    ctx = _ModernCtx(
+        responses={_CONFIRM_KEY: _Answer("accept", {"value": "proceed"})},
+        state=_args_fingerprint({"dashboard_id": "SOMETHING-ELSE"}),
+    )
+    tool = _mutating_tool(sample_tools)
+    _install_ctx(monkeypatch, ctx)
+    res = await tool.run({"dashboard_id": "d1"})
+    assert isinstance(res, InputRequiredToolResult)
