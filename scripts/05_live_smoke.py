@@ -31,7 +31,7 @@ from fes_mcp.settings import REPO_ROOT, Settings
 DERIVE = {
     "dashboard.get_dashboard_by_id": ("dashboard_id", "dashboard.get_dashboards", ("oid", "_id")),
     "dashboard.export_dashboard": ("dashboard_id", "dashboard.get_dashboards", ("oid", "_id")),
-    "dashboard.get_dashboard_columns": ("dashboard_id", "dashboard.get_dashboards", ("oid",)),
+    "dashboard.get_dashboard_columns": ("dashboard_name", "dashboard.get_dashboards", ("title",)),
     "dashboard.get_dashboard_share": ("dashboard_name", "dashboard.get_dashboards", ("title",)),
     "dashboard.get_dashboard_script": ("dashboard_id", "dashboard.get_dashboards", ("oid",)),
     "datamodel.describe_datamodel": ("datamodel_name", "datamodel.get_all_datamodel", ("title",)),
@@ -61,14 +61,27 @@ SKIP = {
 }
 
 
-def _first_value(result: Any, keys: tuple[str, ...]) -> Any:
+def _candidate_values(result: Any, keys: tuple[str, ...], limit: int = 5) -> list[Any]:
+    """Up to `limit` distinct derivable values, in row order — a shared box can
+    hold rows (another tenant's model, a script-less dashboard) that list but
+    don't resolve, so callers may need to try more than the first."""
     rows = result if isinstance(result, list) else [result]
+    values: list[Any] = []
     for row in rows:
-        if isinstance(row, dict):
-            for k in keys:
-                if row.get(k):
-                    return row[k]
-    return None
+        if not isinstance(row, dict):
+            continue
+        for k in keys:
+            if row.get(k) and row[k] not in values:
+                values.append(row[k])
+                break
+        if len(values) >= limit:
+            break
+    return values
+
+
+def _first_value(result: Any, keys: tuple[str, ...]) -> Any:
+    values = _candidate_values(result, keys, limit=1)
+    return values[0] if values else None
 
 
 def _summarize(result: Any) -> str:
