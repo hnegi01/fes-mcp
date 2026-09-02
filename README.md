@@ -26,7 +26,7 @@ APIs.
 MCP client brings its own agent; this project advertises and executes a
 **curated subset of the ~170 SDK methods in the registry** (dashboards, data
 models, users/groups, folders, plugins, queries, …) — one tool per
-capability, near-duplicates deliberately excluded so an agent never has to
+capability, with near-duplicates excluded so an agent never has to
 choose between near-identical methods.
 
 ## Architecture
@@ -76,8 +76,8 @@ flowchart LR
 
 The seam between the two services is just those two headers plus the 401
 contract, so each half can evolve — or be replaced — without the other
-noticing. There is deliberately **no shared secret** between the two — trust
-is the internal network (the RS's port is never published).
+noticing. There is **no shared secret** between the two; trust is the
+internal network (the RS's port is never published).
 
 ### Sign-in flow (what a user experiences)
 
@@ -137,7 +137,7 @@ sequenceDiagram
 - fes-auth treats an RS 401 as *credential dead*: it deletes the vault entry
   and re-challenges the MCP client, whose next move is to re-run the sign-in
   flow. Server-side revocation therefore propagates with no manual steps.
-- **Sessions are in-memory by design** (no database): restarting fes-auth
+- **Sessions are in-memory** (no database): restarting fes-auth
   signs everyone out — each user's next call pops the browser login again
   (with `?target=` set, that's just username/password). Restarting fes-mcp is
   invisible: it holds no state.
@@ -217,7 +217,7 @@ FES_MCP_PORT=8300 FES_MCP_RS_URL=http://127.0.0.1:8200 uv run fes-auth
 - `config/allowlist.txt` — the curated tool surface, one tool per line.
   Delete/comment a line to remove a tool. Tools not listed are never exposed,
   so registry refreshes can't silently widen the surface. (Migration tools
-  are deliberately not listed — they need a dual-instance connection this
+  are not listed — they need a dual-instance connection this
   server doesn't model.)
 - Mutating tools are gated behind `FES_MCP_ALLOW_MUTATIONS=true` — see
   [Security](#technical-and-security-considerations) for the full mutation
@@ -227,8 +227,7 @@ FES_MCP_PORT=8300 FES_MCP_RS_URL=http://127.0.0.1:8200 uv run fes-auth
   declares `email` and `role` as required, so an agent gathers them *before*
   calling instead of failing inside the SDK. `schema_patches.py` overlays
   only human-written per-field descriptions (the contracts carry structure,
-  not prose), drift-guarded by tests; free-form payloads like JAQL stay
-  unconstrained by design.
+  not prose); free-form payloads like JAQL stay unconstrained.
 
 ## Technical and security considerations
 
@@ -239,9 +238,9 @@ passwords — a password is used once against Sisense's login API to mint the
 user's own token, then discarded. Sisense tokens live in fes-auth's in-memory
 vault, keyed to the MCP access token, and survive refresh rotation. In dev
 mode the single env credential (`SISENSE_DOMAIN`/`SISENSE_TOKEN`) stays on
-your machine. Nothing is persisted to disk: a fes-auth restart wipes the
-vault (everyone re-signs-in) — the deliberate trade for having no database
-and no encryption-at-rest surface.
+your machine. Nothing is persisted to disk — there is no database and no
+encryption-at-rest surface; a fes-auth restart clears the vault and users
+sign in again.
 
 Hardening on the hosted surface: per-IP login rate limiting, CSRF-protected
 login form, access logs with request ids, and per-call tool logs
@@ -268,26 +267,22 @@ Mutating tools are exposed only when `FES_MCP_ALLOW_MUTATIONS=true`, always
 carry `destructiveHint`, are blocked server-side as a second layer when
 disabled, and are written to a mutation audit log.
 
-On top of that, mutating tools ask the human for approval before executing,
-disclosing the exact arguments (secrets masked) so they confirm an operation,
-not a tool name. Two wire mechanisms, one behavior: on 2026-07-28 (stateless)
-connections the ask travels as an MRTR `input_required` result — the client
-answers and retries, with the approval fingerprint-bound to the exact
-arguments so it can never be replayed onto different ones; on older
-connections it uses classic MCP elicitation. Abort or decline changes
-nothing.
+On top of that, mutating tools ask the human for approval before executing.
+The confirmation shows the exact arguments about to run (secrets masked), the
+approval is bound to those arguments, and abort or decline changes nothing.
+It works on both protocol generations: current (stateless) connections use an
+MCP `input_required` round trip, older connections use MCP elicitation.
 
 A client that cannot render the confirmation proceeds under its own
 tool-approval flow plus the `destructiveHint` annotation, like any standard
-MCP server. That fail-open is a deliberate decision, not an oversight: the
-confirmation is UX, and the authorization boundary is always the user's own
-Sisense permissions.
+MCP server — the authorization boundary is always the user's own Sisense
+permissions.
 
 ### Data flow to the LLM provider
 
 This server has no summarization or data-redaction layer: every tool result —
 full rows, not `{ok, count}` metadata — is returned to the MCP client and
-lands in the model's context. That is by design and is what makes multi-step
+lands in the model's context. This is what makes multi-step
 tool chaining work: the model can only reason over, filter, and feed one
 tool's output into the next call if it actually sees the data.
 
@@ -305,8 +300,8 @@ per-deployment acceptance to make consciously.
   needs — fewer tools means less data exposure and a clearer approval story.
 - Prefer non-production Sisense instances while exploring; the tools are
   only as safe as the signed-in user's permissions.
-- Test destructive operations with an MCP client that supports elicitation
-  (Claude Code, Cursor) so you see the confirmation dialogs.
+- Test destructive operations in a non-production environment first; the
+  server asks for confirmation with the exact arguments before any write.
 
 ## Configuration
 
@@ -329,20 +324,15 @@ per-deployment acceptance to make consciously.
 ## Tests
 
 ```bash
-uv run python -m pytest
+uv run python -m pytest              # unit tests: mocked, no credentials
 ```
 
-(`python -m` matters: it puts the repo root on `sys.path`, which the test
-modules' `from tests.conftest import …` imports rely on.)
+Integration tests run against a real Sisense instance and are read-only; see
+[tests/integration/README.md](tests/integration/README.md) for setup:
 
-101 unit tests, no network and no credentials needed (Sisense and the SDK are
-mocked): registry selection, dispatcher validation/errors, MCP round-trips,
-mutation confirmation (approve/abort/decline/no-capability), upstream
-credential verification (injected headers, 401 contract, origin allowlist,
-TTL revocation), and the complete AS+RS split — OAuth dance with and without
-`?target=`, discovery metadata, proxied tool calls, refresh rotation,
-self-healing on Sisense-side revocation, plus the abuse paths (forged CSRF,
-brute-force rate limit, expired sessions).
+```bash
+uv run python -m pytest tests/integration -m integration
+```
 
 ## Registry regeneration
 
