@@ -148,20 +148,28 @@ def login_with_password(domain: str, username: str, password: str, ssl_verify: b
 
 
 def verify_api_token(domain: str, token: str, ssl_verify: bool) -> None:
-    """Confirm a pasted API token works against the instance."""
+    """Confirm an API token works against the instance.
+
+    Goes through the PySisense client — the exact connection path every tool
+    call takes — rather than a raw HTTP GET, so quirks the SDK handles (e.g.
+    non-SSL instances serve the API on :30845, not :80) can't make
+    verification and dispatch disagree about the same credential.
+    """
+    from pysisense import SisenseClient
+
     try:
-        resp = _requests.get(
-            f"{domain}/api/v1/users/loggedin",
-            headers={"Authorization": f"Bearer {token}"},
-            verify=ssl_verify,
-            timeout=20,
+        client = SisenseClient.from_connection(
+            domain=domain, token=token, is_ssl=ssl_verify
         )
-    except _requests.RequestException as exc:
+        # The un-versioned route, as the SDK's own get_my_user uses: on some
+        # Sisense versions /api/v1/users/loggedin is parsed as /users/{id}
+        # and 422s ("loggedin" is not a 24-hex id).
+        resp = client.get("/api/users/loggedin")
+    except Exception as exc:  # noqa: BLE001 — network/SDK errors → login error
         raise SisenseLoginError(f"Could not reach {domain}: {exc}") from exc
-    if resp.status_code != 200:
-        raise SisenseLoginError(
-            f"Sisense did not accept the API token (HTTP {resp.status_code})."
-        )
+    if resp is None or resp.status_code != 200:
+        status = getattr(resp, "status_code", "no response")
+        raise SisenseLoginError(f"Sisense did not accept the API token (HTTP {status}).")
 
 
 class SisenseAuthProvider(InMemoryOAuthProvider):

@@ -24,17 +24,17 @@ async def test_list_tools_names_and_annotations(mcp):
     }
     read = tools["dashboard_get_all_dashboards"]
     write = tools["dashboard_delete_dashboard"]
-    assert read.annotations.readOnlyHint is True
-    assert read.annotations.destructiveHint is False
-    assert write.annotations.readOnlyHint is False
-    assert write.annotations.destructiveHint is True
+    assert read.annotations.read_only_hint is True
+    assert read.annotations.destructive_hint is False
+    assert write.annotations.read_only_hint is False
+    assert write.annotations.destructive_hint is True
     assert read.meta["tool_id"] == "dashboard.get_all_dashboards"
 
 
 async def test_schema_passthrough(mcp):
     async with Client(mcp) as client:
         tools = {t.name: t for t in await client.list_tools()}
-    schema = tools["dashboard_get_dashboard_by_id"].inputSchema
+    schema = tools["dashboard_get_dashboard_by_id"].input_schema
     assert schema["properties"]["dashboard_id"]["type"] == "string"
     assert schema["required"] == ["dashboard_id"]
 

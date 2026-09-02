@@ -268,18 +268,20 @@ Mutating tools are exposed only when `FES_MCP_ALLOW_MUTATIONS=true`, always
 carry `destructiveHint`, are blocked server-side as a second layer when
 disabled, and are written to a mutation audit log.
 
-On top of that, mutating tools ask the human for approval before executing —
-via MCP elicitation, on clients that declare the capability (Claude Code,
-Cursor, VS Code). A proceed/abort dialog opens mid-call disclosing the exact
-arguments; abort or decline changes nothing. On clients without elicitation
-(Claude Desktop, claude.ai) the call proceeds normally and the client's own
-tool-approval flow plus the `destructiveHint` annotation are the safeguard,
-as for any MCP server.
+On top of that, mutating tools ask the human for approval before executing,
+disclosing the exact arguments (secrets masked) so they confirm an operation,
+not a tool name. Two wire mechanisms, one behavior: on 2026-07-28 (stateless)
+connections the ask travels as an MRTR `input_required` result — the client
+answers and retries, with the approval fingerprint-bound to the exact
+arguments so it can never be replayed onto different ones; on older
+connections it uses classic MCP elicitation. Abort or decline changes
+nothing.
 
-Proceeding without the dialog is a deliberate decision (fail-open), not an
-oversight: elicitation is an optional client capability and can be
-auto-answered by a misbehaving client, so it is treated strictly as UX — the
-authorization boundary is always the user's own Sisense permissions.
+A client that cannot render the confirmation proceeds under its own
+tool-approval flow plus the `destructiveHint` annotation, like any standard
+MCP server. That fail-open is a deliberate decision, not an oversight: the
+confirmation is UX, and the authorization boundary is always the user's own
+Sisense permissions.
 
 ### Data flow to the LLM provider
 
@@ -333,7 +335,7 @@ uv run python -m pytest
 (`python -m` matters: it puts the repo root on `sys.path`, which the test
 modules' `from tests.conftest import …` imports rely on.)
 
-77 tests, no network and no credentials needed (Sisense and the SDK are
+101 unit tests, no network and no credentials needed (Sisense and the SDK are
 mocked): registry selection, dispatcher validation/errors, MCP round-trips,
 mutation confirmation (approve/abort/decline/no-capability), upstream
 credential verification (injected headers, 401 contract, origin allowlist,
