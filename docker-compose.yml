@@ -8,29 +8,40 @@
 # only on the internal compose network, which is the trust boundary between
 # the two services (no shared secret, by design).
 
+# Bounded container logs: Docker's json-file driver is unlimited by default,
+# and one chatty or crash-looping container can fill the host disk.
+x-logging: &bounded-logs
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
 services:
-  fes-auth:
+  sisense-fes-auth:
     build:
       context: .
       target: fes-auth
-    image: fes-auth
+    image: sisense-fes-auth
+    <<: *bounded-logs
     ports:
       - "8200:8200"
     environment:
       FES_MCP_PUBLIC_URL: ${FES_MCP_PUBLIC_URL:-http://localhost:8200}
-      FES_MCP_RS_URL: http://fes-mcp:8200
+      FES_MCP_RS_URL: http://sisense-fes-mcp:8200
     volumes:
       - ./logs:/app/logs
     depends_on:
-      fes-mcp:
+      sisense-fes-mcp:
         condition: service_healthy
     restart: unless-stopped
 
-  fes-mcp:
+  sisense-fes-mcp:
     build:
       context: .
       target: fes-mcp
-    image: fes-mcp
+    image: sisense-fes-mcp
+    <<: *bounded-logs
     # No published ports: upstream mode trusts injected credentials and must
     # never be reachable from outside the compose network.
     environment:

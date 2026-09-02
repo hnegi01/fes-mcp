@@ -1,8 +1,8 @@
 # fes_mcp — Sisense MCP server. Multi-stage build producing the project's
 # two service images:
 #
-#   docker build --target fes-auth -t fes-auth .   # authorization server (login UI + proxy)
-#   docker build --target fes-mcp  -t fes-mcp .    # resource server (tools)
+#   docker build --target fes-auth -t sisense-fes-auth .   # authorization server (login UI + proxy)
+#   docker build --target fes-mcp  -t sisense-fes-mcp  .   # resource server (tools)
 #
 # `docker compose up --build` builds and runs both — see docker-compose.yml.
 
