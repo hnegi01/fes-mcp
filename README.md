@@ -188,7 +188,7 @@ MCP client config (e.g. `claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
-    "sisense": {
+    "sisense-fes": {
       "command": "uv",
       "args": ["run", "--directory", "/absolute/path/to/fes_mcp", "fes-mcp"]
     }

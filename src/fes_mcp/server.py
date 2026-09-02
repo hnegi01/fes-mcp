@@ -295,7 +295,9 @@ def build_server(
             "SISENSE_DOMAIN/SISENSE_TOKEN not set — tools will list but every call will fail."
         )
 
-    mcp: FastMCP = FastMCP(name="sisense", instructions=SERVER_INSTRUCTIONS, auth=auth)
+    # "sisense-fes", not "sisense": users may also have Sisense's product MCP
+    # connected, and the two must be tellable apart in the client.
+    mcp: FastMCP = FastMCP(name="sisense-fes", instructions=SERVER_INSTRUCTIONS, auth=auth)
     for entry in selected.values():
         mcp.add_tool(build_tool(entry, dispatcher, credential_resolver))
 
