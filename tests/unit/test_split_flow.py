@@ -479,9 +479,15 @@ async def test_register_rate_limited(split):
         "response_types": ["code"],
         "token_endpoint_auth_method": "client_secret_post",
     }
-    statuses = [httpx.post(f"{base}/register", json=reg_body).status_code for _ in range(11)]
-    assert statuses[:10] == [201] * 10
-    assert statuses[10] == 429
+    from fes_mcp.authserver import _RegisterThrottleMiddleware
+
+    limit = _RegisterThrottleMiddleware.REGISTRATIONS_PER_IP_PER_HOUR
+    statuses = [
+        httpx.post(f"{base}/register", json=reg_body).status_code
+        for _ in range(limit + 1)
+    ]
+    assert statuses[:limit] == [201] * limit
+    assert statuses[limit] == 429
 
 
 async def test_login_page_names_client_and_redirect(split):
