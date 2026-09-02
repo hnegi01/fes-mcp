@@ -137,7 +137,7 @@ async def test_enriched_schema_reaches_mcp_clients(registry, fake_sdk, monkeypat
     server.add_tool(build_tool(entry, d))
     async with Client(server) as client:
         tools = await client.list_tools()
-    inner = tools[0].inputSchema["properties"]["user_data"]
+    inner = tools[0].input_schema["properties"]["user_data"]
     assert inner["required"] == ["email", "role"]
     assert inner["properties"]["role"]["description"]
 

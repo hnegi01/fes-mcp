@@ -94,14 +94,15 @@ async def test_upstream_mode_verifies_real_token(upstream_mode_server, tenant):
 
 
 async def test_upstream_mode_rejects_garbage_token(upstream_mode_server, tenant):
-    transport = StreamableHttpTransport(
+    # 401 is an HTTP-layer contract (fes-auth's self-healing keys off it),
+    # so assert it at the HTTP layer.
+    resp = httpx.post(
         f"{upstream_mode_server}/mcp",
+        json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
         headers={
+            "Accept": "application/json, text/event-stream",
             "Authorization": "Bearer not-a-real-sisense-token",
             "X-Sisense-Url": tenant["domain"],
         },
     )
-    with pytest.raises(httpx.HTTPStatusError) as exc:
-        async with Client(transport) as client:
-            await client.call_tool("dashboard_get_dashboards", {})
-    assert exc.value.response.status_code == 401
+    assert resp.status_code == 401

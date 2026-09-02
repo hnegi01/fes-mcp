@@ -115,6 +115,22 @@ def _mcp_client(base: str, token: str | None, target: str | None) -> Client:
     return Client(StreamableHttpTransport(f"{base}/mcp", headers=headers))
 
 
+def _raw_status(base: str, token: str | None, target: str | None) -> int:
+    """The 401 contract lives at the HTTP layer (fes-auth's self-healing
+    keys off it), so assert it there rather than through a client wrapper."""
+    headers = {"Accept": "application/json, text/event-stream"}
+    if token is not None:
+        headers["Authorization"] = f"Bearer {token}"
+    if target is not None:
+        headers["X-Sisense-Url"] = target
+    resp = httpx.post(
+        f"{base}/mcp",
+        json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+        headers=headers,
+    )
+    return resp.status_code
+
+
 async def test_injected_headers_run_tool_as_that_credential(upstream_server):
     base, _ = upstream_server
     async with _mcp_client(base, "tok-alice", TARGET_A) as client:
@@ -134,26 +150,17 @@ async def test_two_users_two_targets_same_server(upstream_server):
 
 async def test_missing_sisense_url_header_is_401(upstream_server):
     base, _ = upstream_server
-    with pytest.raises(httpx.HTTPStatusError) as exc:
-        async with _mcp_client(base, "tok-alice", None) as client:
-            await client.call_tool("dashboard_get_all_dashboards", {})
-    assert exc.value.response.status_code == 401
+    assert _raw_status(base, "tok-alice", None) == 401
 
 
 async def test_missing_bearer_is_401(upstream_server):
     base, _ = upstream_server
-    with pytest.raises(httpx.HTTPStatusError) as exc:
-        async with _mcp_client(base, None, TARGET_A) as client:
-            await client.call_tool("dashboard_get_all_dashboards", {})
-    assert exc.value.response.status_code == 401
+    assert _raw_status(base, None, TARGET_A) == 401
 
 
 async def test_sisense_rejected_token_is_401(upstream_server):
     base, _ = upstream_server
-    with pytest.raises(httpx.HTTPStatusError) as exc:
-        async with _mcp_client(base, "tok-revoked", TARGET_A) as client:
-            await client.call_tool("dashboard_get_all_dashboards", {})
-    assert exc.value.response.status_code == 401
+    assert _raw_status(base, "tok-revoked", TARGET_A) == 401
 
 
 async def test_origin_allowlist_enforced(upstream_env):
@@ -164,10 +171,7 @@ async def test_origin_allowlist_enforced(upstream_env):
         async with _mcp_client(base, "tok-alice", TARGET_A) as client:
             res = await client.call_tool("dashboard_get_all_dashboards", {})
         assert res.structured_content["domain"] == TARGET_A
-        with pytest.raises(httpx.HTTPStatusError) as exc:
-            async with _mcp_client(base, "tok-bob", TARGET_B) as client:
-                await client.call_tool("dashboard_get_all_dashboards", {})
-        assert exc.value.response.status_code == 401
+        assert _raw_status(base, "tok-bob", TARGET_B) == 401
     finally:
         server.should_exit = True
         thread.join(timeout=5)
@@ -181,10 +185,7 @@ async def test_ttl_revocation_turns_into_401(upstream_env):
         async with _mcp_client(base, "tok-alice", TARGET_A) as client:
             await client.call_tool("dashboard_get_all_dashboards", {})
         upstream_env["valid_tokens"].discard("tok-alice")  # revoked on Sisense side
-        with pytest.raises(httpx.HTTPStatusError) as exc:
-            async with _mcp_client(base, "tok-alice", TARGET_A) as client:
-                await client.call_tool("dashboard_get_all_dashboards", {})
-        assert exc.value.response.status_code == 401
+        assert _raw_status(base, "tok-alice", TARGET_A) == 401
     finally:
         server.should_exit = True
         thread.join(timeout=5)
