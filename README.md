@@ -139,8 +139,11 @@ sequenceDiagram
   flow. Server-side revocation therefore propagates with no manual steps.
 - **Sessions are in-memory** (no database): restarting fes-auth
   signs everyone out — each user's next call pops the browser login again
-  (with `?target=` set, that's just username/password). Restarting fes-mcp is
-  invisible: it holds no state.
+  (with `?target=` set, that's just username/password). Dynamically registered
+  OAuth clients are also in-memory, so a client that registered via DCR may
+  need to reconnect (or re-add the connector) after a restart; CIMD clients
+  are unaffected, since their client ID is a URL the server resolves fresh.
+  Restarting fes-mcp is invisible: it holds no state.
 
 ## Deployment (docker compose)
 

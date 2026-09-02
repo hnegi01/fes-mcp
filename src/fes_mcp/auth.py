@@ -95,10 +95,18 @@ class _RateLimiter:
 
 
 def _client_ip(request: Request) -> str:
-    # Behind the reverse proxy the peer address is the proxy; the proxy
-    # APPENDS the connecting address to X-Forwarded-For, so the rightmost
-    # entry is the one our own proxy wrote. The leftmost entries are
-    # client-supplied and trivially spoofable — never key rate limits on them.
+    # Behind Cloudflare, X-Forwarded-For's rightmost entry is a Cloudflare
+    # edge IP shared by unrelated users — pooling them into one rate-limit
+    # bucket. CF-Connecting-IP carries the real client, so prefer it; it is
+    # only spoofable by traffic that bypasses Cloudflare, which could equally
+    # spoof X-Forwarded-For.
+    cf_ip = request.headers.get("cf-connecting-ip")
+    if cf_ip:
+        return cf_ip.strip()
+    # Behind a plain reverse proxy the proxy APPENDS the connecting address
+    # to X-Forwarded-For, so the rightmost entry is the one our own proxy
+    # wrote. The leftmost entries are client-supplied and trivially
+    # spoofable — never key rate limits on them.
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
         return forwarded.split(",")[-1].strip()
@@ -201,11 +209,18 @@ def verify_api_token(domain: str, token: str, ssl_verify: bool) -> None:
         raise SisenseLoginError(f"Sisense did not accept the API token (HTTP {status}).")
 
 
-class _IssuerNormalizer:
-    """ASGI wrapper for the SDK's authorization-server-metadata endpoint:
-    rewrites the JSON body's `issuer` to drop the trailing slash pydantic's
-    URL type appends (RFC 8414 §3.3 requires a byte-match with the issuer
-    identifier the client derived the metadata URL from)."""
+class _ASMetadataTailor:
+    """ASGI wrapper for the SDK's authorization-server-metadata endpoint.
+
+    Two corrections to the generated document:
+    - `issuer`: drop the trailing slash pydantic's URL type appends (RFC 8414
+      §3.3 requires a byte-match with the issuer identifier the client
+      derived the metadata URL from).
+    - CIMD advertisement: `client_id_metadata_document_supported: true` plus
+      "none" in `token_endpoint_auth_methods_supported` — the exact pair a
+      CIMD-capable client (Claude) checks before using its hosted client
+      metadata URL as the client_id.
+    """
 
     def __init__(self, app):
         self.app = app
@@ -231,6 +246,11 @@ class _IssuerNormalizer:
         try:
             data = _json.loads(body)
             data["issuer"] = str(data["issuer"]).rstrip("/")
+            data["client_id_metadata_document_supported"] = True
+            methods = list(data.get("token_endpoint_auth_methods_supported") or [])
+            if "none" not in methods:
+                methods.append("none")
+            data["token_endpoint_auth_methods_supported"] = methods
             body = _json.dumps(data).encode()
         except Exception:  # noqa: BLE001 — non-JSON body: pass through as-is
             pass
@@ -266,6 +286,23 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
             if allowed_origins is not None
             else None
         )
+        # CIMD (Client ID Metadata Documents): clients identified by an HTTPS
+        # URL hosting their metadata, instead of registering via DCR. The
+        # manager fetches documents SSRF-safely and caches them. fastmcp marks
+        # this beta — a drift-guard test pins the surface we consume.
+        from fastmcp.server.auth.cimd import CIMDClientManager
+
+        self._cimd_manager = CIMDClientManager(enable_cimd=True)
+
+    async def get_client(self, client_id: str) -> OAuthClientInformationFull | None:
+        """DCR-registered clients first; otherwise a client_id that is an
+        HTTPS URL is resolved as a CIMD client (public client + PKCE)."""
+        client = await super().get_client(client_id)
+        if client is not None:
+            return client
+        if self._cimd_manager.is_cimd_client_id(client_id):
+            return await self._cimd_manager.get_client(client_id)
+        return None
 
     # -- step 1: Claude hits /authorize → send the user to our login page ----
 
@@ -366,9 +403,8 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
     @staticmethod
     def _patched_as_metadata(original):
         """Wrap the SDK's authorization-server-metadata endpoint (an ASGI app,
-        CORS-wrapped), stripping the trailing slash pydantic appends to the
-        issuer."""
-        return _IssuerNormalizer(original)
+        CORS-wrapped) — see _ASMetadataTailor."""
+        return _ASMetadataTailor(original)
 
     async def _protected_resource_metadata(self, request: Request):
         base = str(self.base_url).rstrip("/")
