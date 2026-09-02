@@ -14,7 +14,7 @@ what is actually advertised per tool:
   schema can teach those payloads — example-teaching exactly where
   schema-teaching can't reach.
 
-Token budget (measured 2026-08-29): ~9.5k tokens for the 47-tool read-only
+Token budget: ~9.5k tokens for the 47-tool read-only
 surface, ~20k with mutations enabled.
 """
 
@@ -64,8 +64,7 @@ USAGE_NOTES: dict[str, str] = {
         "Uses an internal Linux-only route; on Windows-based Sisense use "
         "get_elasticubes instead."
     ),
-    # Open SDK issue (reported 2026-09-01): partial success must not read as
-    # plain success.
+    # SDK gap: partial success must not read as plain success.
     "datamodel.add_datamodel_shares": (
         "IMPORTANT: check the `skipped` array in the result — those shares "
         "were requested but NOT applied (unknown or inactive user); report "

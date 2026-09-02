@@ -29,9 +29,9 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push images
-        # Published as sisense-fes-*: the same registry namespace also hosts
-        # the fes-assistant images (fes-mcp among them), and the two projects
-        # share a Docker host — names must not collide.
+        # Published as sisense-fes-*: distinctive names that cannot collide
+        # with other images in the owner's registry namespace or on a shared
+        # Docker host.
         run: |
           VERSION=${GITHUB_REF_NAME#v}
           for target in fes-auth fes-mcp; do

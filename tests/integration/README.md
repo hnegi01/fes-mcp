@@ -1,7 +1,5 @@
 # Integration Tests
 
-Pattern shared with the fes-assistant project.
-
 **Unit tests** (`tests/unit/`) run on every `pytest` invocation: fast, mocked,
 no credentials — the default `testpaths` only includes them.
 
