@@ -128,6 +128,20 @@ def build_auth_app(settings: Settings, provider: SisenseAuthProvider) -> Starlet
         auth_header = request.headers.get("authorization", "")
         token_str = auth_header[7:].strip() if auth_header.lower().startswith("bearer ") else ""
         if not token_str:
+            # A human browsing the endpoint (no token, wants HTML) gets an
+            # explanation instead of a bare 401 error page. MCP clients never
+            # send text/html — their GET is the SSE stream (text/event-stream)
+            # — so the protocol behavior is untouched.
+            if request.method == "GET" and "text/html" in request.headers.get("accept", ""):
+                return PlainTextResponse(
+                    "This is the Sisense Meta-Management MCP endpoint — it speaks "
+                    "the MCP protocol, not the browser's.\n\n"
+                    "To use it, add this URL as a connector in your MCP client "
+                    "(Claude Desktop, Claude Code, claude.ai, MCP Inspector):\n\n"
+                    f"    {public_url}/mcp?target=https://your-instance.sisense.com\n\n"
+                    "The client will open a sign-in page where you authenticate "
+                    "with your own Sisense credentials.\n"
+                )
             return _challenge(request, presented=False)
 
         access = provider.access_tokens.get(token_str)
