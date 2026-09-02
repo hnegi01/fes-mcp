@@ -32,7 +32,7 @@ choose between near-identical methods.
 ## Architecture
 
 The MCP spec's modern shape, as two cooperating services shipped as two
-Docker images (`fes-auth`, `fes-mcp` — built from one multi-stage Dockerfile
+Docker images (`sisense-fes-auth`, `sisense-fes-mcp` — built from one multi-stage Dockerfile
 with shared layers):
 
 - **fes-auth** — the *authorization server* (AS). Owns everything about *who
