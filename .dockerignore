@@ -12,6 +12,5 @@ __pycache__/
 sis_mcp.txt
 docker-compose.prod.yml
 deploy/
-KICKOFF_PROMPT.md
 Dockerfile
 .dockerignore

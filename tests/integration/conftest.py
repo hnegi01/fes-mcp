@@ -1,4 +1,4 @@
-"""Shared fixtures for integration tests (pattern shared with fes-assistant).
+"""Shared fixtures for integration tests.
 
 Credentials live in ONE place — tests/integration/integration_config.yaml
 (gitignored). Copy integration_config.example.yaml to that name and fill it
