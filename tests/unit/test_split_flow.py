@@ -584,3 +584,15 @@ def test_client_supplied_sisense_url_never_forwarded():
 
     assert "x-sisense-url" in _SKIP_REQUEST_HEADERS
     assert "x-forwarded-for" in _SKIP_REQUEST_HEADERS
+
+
+async def test_browser_get_mcp_gets_explanation_not_bare_401(split):
+    base, _, _ = split
+    async with httpx.AsyncClient() as http:
+        page = await http.get(f"{base}/mcp", headers={"accept": "text/html,*/*"})
+        assert page.status_code == 200
+        assert "MCP endpoint" in page.text
+        # MCP clients are unaffected: no text/html accept -> the challenge.
+        sse = await http.get(f"{base}/mcp", headers={"accept": "text/event-stream"})
+        assert sse.status_code == 401
+        assert "resource_metadata" in sse.headers["www-authenticate"]
