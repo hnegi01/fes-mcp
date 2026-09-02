@@ -68,12 +68,15 @@ _SKIP_RESPONSE_HEADERS = {"content-length", "transfer-encoding", "connection", "
 class _RegisterThrottleMiddleware:
     """Rate-limit dynamic client registration. /register is unauthenticated
     and every registration grows in-memory state, so without a limiter it is
-    a memory-exhaustion vector. Legitimate clients register once per connect;
-    10 per IP per hour is generous."""
+    a memory-exhaustion vector. The per-IP budget must stay generous: hosted
+    MCP clients (Claude connectors) register from their platform's shared
+    egress IPs, so one bucket can carry a whole organization's users."""
+
+    REGISTRATIONS_PER_IP_PER_HOUR = 60
 
     def __init__(self, app):
         self.app = app
-        self._limiter = _RateLimiter(10, 3600)
+        self._limiter = _RateLimiter(self.REGISTRATIONS_PER_IP_PER_HOUR, 3600)
 
     async def __call__(self, scope, receive, send):
         if (

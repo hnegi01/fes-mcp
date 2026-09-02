@@ -479,9 +479,15 @@ async def test_register_rate_limited(split):
         "response_types": ["code"],
         "token_endpoint_auth_method": "client_secret_post",
     }
-    statuses = [httpx.post(f"{base}/register", json=reg_body).status_code for _ in range(11)]
-    assert statuses[:10] == [201] * 10
-    assert statuses[10] == 429
+    from fes_mcp.authserver import _RegisterThrottleMiddleware
+
+    limit = _RegisterThrottleMiddleware.REGISTRATIONS_PER_IP_PER_HOUR
+    statuses = [
+        httpx.post(f"{base}/register", json=reg_body).status_code
+        for _ in range(limit + 1)
+    ]
+    assert statuses[:limit] == [201] * limit
+    assert statuses[limit] == 429
 
 
 async def test_login_page_names_client_and_redirect(split):
@@ -531,6 +537,14 @@ def test_client_ip_uses_rightmost_forwarded_entry():
         "client": ("10.0.0.1", 1234),
     }
     assert auth_mod._client_ip(Request(scope)) == "9.9.9.9"
+
+    # Behind Cloudflare the rightmost XFF entry is a shared edge IP;
+    # CF-Connecting-IP carries the real client and wins.
+    scope["headers"] = [
+        (b"x-forwarded-for", b"6.6.6.6, 172.68.0.1"),
+        (b"cf-connecting-ip", b"7.7.7.7"),
+    ]
+    assert auth_mod._client_ip(Request(scope)) == "7.7.7.7"
 
 
 def test_sweep_evicts_dead_state_but_keeps_refreshable_sessions():
@@ -612,3 +626,117 @@ async def test_as_metadata_issuer_has_no_trailing_slash(split):
     )
     iss = parse_qs(urlparse(submit.headers["location"]).query)["iss"][0]
     assert iss == meta["issuer"]
+
+
+# ---- CIMD (Client ID Metadata Documents) ------------------------------------
+
+CIMD_URL = "https://client.example/claude-cimd.json"
+
+
+def _fake_cimd_fetch(monkeypatch):
+    from fastmcp.server.auth.cimd import CIMDDocument, CIMDFetcher
+
+    doc = CIMDDocument(
+        client_id=CIMD_URL,
+        client_name="Claude (CIMD test)",
+        redirect_uris=[REDIRECT_URI],
+        token_endpoint_auth_method="none",
+        grant_types=["authorization_code", "refresh_token"],
+    )
+
+    async def fake_fetch(self, client_id_url):
+        assert client_id_url == CIMD_URL
+        return doc
+
+    monkeypatch.setattr(CIMDFetcher, "fetch", fake_fetch)
+
+
+async def test_metadata_advertises_cimd(split):
+    base, _, _ = split
+    async with httpx.AsyncClient() as http:
+        meta = (await http.get(f"{base}/.well-known/oauth-authorization-server")).json()
+    assert meta["client_id_metadata_document_supported"] is True
+    assert "none" in meta["token_endpoint_auth_methods_supported"]
+
+
+async def test_cimd_client_full_flow(split, monkeypatch):
+    # A CIMD client never registers: its client_id IS its metadata URL, and
+    # it authenticates at /token as a public client (PKCE only).
+    base, _, _ = split
+    _fake_cimd_fetch(monkeypatch)
+    http = httpx.Client(base_url=base, follow_redirects=False, timeout=10)
+
+    verifier = secrets.token_urlsafe(48)
+    challenge = (
+        base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest())
+        .rstrip(b"=")
+        .decode()
+    )
+    authz = http.get("/authorize", params={
+        "response_type": "code",
+        "client_id": CIMD_URL,
+        "redirect_uri": REDIRECT_URI,
+        "state": "st4te",
+        "code_challenge": challenge,
+        "code_challenge_method": "S256",
+    })
+    assert authz.status_code in (302, 307), authz.text
+    login_url = authz.headers["location"]
+    page = http.get(login_url)
+    assert "Claude (CIMD test)" in page.text  # consent banner names the client
+    csrf = re.search(r'name="csrf" value="([^"]+)"', page.text).group(1)
+    session_id = parse_qs(urlparse(login_url).query)["session"][0]
+
+    submit = http.post("/login", data={
+        "session": session_id, "csrf": csrf,
+        "domain": TARGET, "username": "u@x.com", "password": "hunter2",
+    })
+    assert submit.status_code == 302, submit.text
+    code = parse_qs(urlparse(submit.headers["location"]).query)["code"][0]
+
+    token_resp = http.post("/token", data={
+        "grant_type": "authorization_code",
+        "code": code,
+        "redirect_uri": REDIRECT_URI,
+        "client_id": CIMD_URL,  # no client_secret: public client
+        "code_verifier": verifier,
+    })
+    assert token_resp.status_code == 200, token_resp.text
+    token = token_resp.json()
+    assert token["access_token"]
+
+    # The token works end-to-end through the credential-injecting proxy.
+    init = http.post(
+        "/mcp",
+        headers={
+            "Authorization": f"Bearer {token['access_token']}",
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/event-stream",
+        },
+        json={
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "initialize",
+            "params": {
+                "protocolVersion": "2026-07-28",
+                "capabilities": {},
+                "clientInfo": {"name": "cimd-test", "version": "0"},
+            },
+        },
+    )
+    assert init.status_code == 200, init.text
+    assert "sisense-fes" in init.text  # serverInfo reached through the proxy
+
+
+def test_cimd_beta_api_drift_guard():
+    # Our provider consumes fastmcp's beta CIMD surface; fail loudly if an
+    # upgrade reshapes it (see SisenseAuthProvider.get_client).
+    from fastmcp.server.auth.cimd import CIMDClientManager, CIMDDocument, CIMDFetcher
+
+    manager = CIMDClientManager(enable_cimd=True)
+    assert manager.is_cimd_client_id("https://x.example/doc.json") is True
+    assert manager.is_cimd_client_id("plain-client-id") is False
+    assert callable(getattr(manager, "get_client"))
+    assert callable(getattr(CIMDFetcher, "fetch"))
+    doc = CIMDDocument(client_id="https://x.example/doc.json", redirect_uris=["https://x.example/cb"])
+    assert doc.token_endpoint_auth_method == "none"  # public client default
