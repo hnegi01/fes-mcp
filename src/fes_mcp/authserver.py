@@ -23,7 +23,6 @@ The resource server never learns about OAuth; this service never runs tools.
 from __future__ import annotations
 
 import logging
-import sys
 import time
 from contextlib import asynccontextmanager
 from urllib.parse import quote
@@ -224,11 +223,9 @@ def main() -> None:
 
     load_dotenv(REPO_ROOT / ".env")
     settings = Settings.from_env()
-    logging.basicConfig(
-        level=getattr(logging, settings.log_level, logging.INFO),
-        stream=sys.stderr,
-        format="%(asctime)s %(levelname)s %(name)s %(message)s",
-    )
+    from .logsetup import setup_logging
+
+    setup_logging(settings.log_level, "fes-auth")
     public_url = settings.public_url or f"http://{settings.host}:{settings.port}"
     provider = SisenseAuthProvider(public_url)
     app = build_auth_app(settings, provider)

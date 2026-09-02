@@ -19,6 +19,8 @@ services:
     environment:
       FES_MCP_PUBLIC_URL: ${FES_MCP_PUBLIC_URL:-http://localhost:8200}
       FES_MCP_RS_URL: http://fes-mcp:8200
+    volumes:
+      - ./logs:/app/logs
     depends_on:
       fes-mcp:
         condition: service_healthy
@@ -34,4 +36,6 @@ services:
     environment:
       FES_MCP_AUTH: upstream
       # FES_MCP_ALLOW_MUTATIONS: "true"   # expose mutating tools (default off)
+    volumes:
+      - ./logs:/app/logs
     restart: unless-stopped
