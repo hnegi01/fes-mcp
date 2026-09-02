@@ -234,6 +234,7 @@ def build_tool(
         name=_mcp_tool_name(entry["tool_id"]),
         description=compose_description(entry) or f"PySisense {entry['tool_id']}",
         parameters=entry["parameters"],
+        output_schema=entry.get("output_schema"),
         annotations=ToolAnnotations(
             title=entry["tool_id"],
             read_only_hint=not mutates,
