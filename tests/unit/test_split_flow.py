@@ -596,3 +596,19 @@ async def test_browser_get_mcp_gets_explanation_not_bare_401(split):
         sse = await http.get(f"{base}/mcp", headers={"accept": "text/event-stream"})
         assert sse.status_code == 401
         assert "resource_metadata" in sse.headers["www-authenticate"]
+
+
+async def test_as_metadata_issuer_has_no_trailing_slash(split):
+    # RFC 8414 §3.3: issuer must byte-match the URL the client derived the
+    # metadata from. Strict clients (MCP Inspector) refuse a trailing slash.
+    base, _, _ = split
+    async with httpx.AsyncClient() as http:
+        meta = (await http.get(f"{base}/.well-known/oauth-authorization-server")).json()
+    assert meta["issuer"] == base  # no trailing slash
+
+    # The RFC 9207 iss parameter must byte-match the metadata issuer.
+    submit, _ = _run_oauth_dance(
+        base, {"domain": TARGET, "username": "u@x.com", "password": "hunter2"}
+    )
+    iss = parse_qs(urlparse(submit.headers["location"]).query)["iss"][0]
+    assert iss == meta["issuer"]

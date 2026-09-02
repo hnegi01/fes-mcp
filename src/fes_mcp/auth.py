@@ -201,6 +201,48 @@ def verify_api_token(domain: str, token: str, ssl_verify: bool) -> None:
         raise SisenseLoginError(f"Sisense did not accept the API token (HTTP {status}).")
 
 
+class _IssuerNormalizer:
+    """ASGI wrapper for the SDK's authorization-server-metadata endpoint:
+    rewrites the JSON body's `issuer` to drop the trailing slash pydantic's
+    URL type appends (RFC 8414 §3.3 requires a byte-match with the issuer
+    identifier the client derived the metadata URL from)."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send) -> None:
+        import json as _json
+
+        messages: list[dict] = []
+
+        async def capture(message) -> None:
+            messages.append(message)
+
+        await self.app(scope, receive, capture)
+
+        start = next((m for m in messages if m["type"] == "http.response.start"), None)
+        if start is None:
+            for m in messages:
+                await send(m)
+            return
+        body = b"".join(
+            m.get("body", b"") for m in messages if m["type"] == "http.response.body"
+        )
+        try:
+            data = _json.loads(body)
+            data["issuer"] = str(data["issuer"]).rstrip("/")
+            body = _json.dumps(data).encode()
+        except Exception:  # noqa: BLE001 — non-JSON body: pass through as-is
+            pass
+        headers = [
+            (k, v) for k, v in start["headers"] if k.lower() != b"content-length"
+        ] + [(b"content-length", str(len(body)).encode())]
+        await send(
+            {"type": "http.response.start", "status": start["status"], "headers": headers}
+        )
+        await send({"type": "http.response.body", "body": body})
+
+
 class SisenseAuthProvider(InMemoryOAuthProvider):
     """OAuth provider whose authorization step is a Sisense login."""
 
@@ -286,6 +328,20 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
 
     def get_routes(self, mcp_path: str | None = None) -> list[Route]:
         routes = super().get_routes(mcp_path)
+        # RFC 8414 §3.3: the metadata's `issuer` must byte-match the issuer
+        # identifier the client derived it from — no trailing slash. The SDK
+        # serializes base_url as a pydantic URL, which appends one; strict
+        # clients (MCP Inspector) refuse the mismatch. Wrap the SDK's
+        # metadata route and normalize.
+        for i, route in enumerate(routes):
+            if str(getattr(route, "path", "")).startswith(
+                "/.well-known/oauth-authorization-server"
+            ):
+                routes[i] = Route(
+                    route.path,
+                    self._patched_as_metadata(route.endpoint),
+                    methods=["GET", "OPTIONS"],
+                )
         # Replace the SDK's static protected-resource-metadata route with a
         # dynamic one that echoes ?target= back in `resource`, so the target
         # survives the client's discovery hop (it sends the PRM `resource`
@@ -306,6 +362,13 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
         )
         routes.append(Route("/login", self._login_endpoint, methods=["GET", "POST"]))
         return routes
+
+    @staticmethod
+    def _patched_as_metadata(original):
+        """Wrap the SDK's authorization-server-metadata endpoint (an ASGI app,
+        CORS-wrapped), stripping the trailing slash pydantic appends to the
+        issuer."""
+        return _IssuerNormalizer(original)
 
     async def _protected_resource_metadata(self, request: Request):
         base = str(self.base_url).rstrip("/")
@@ -447,12 +510,13 @@ class SisenseAuthProvider(InMemoryOAuthProvider):
         )
         self._credentials[code_value] = credential
         # RFC 9207: identify the issuer in the authorization response so
-        # clients can detect authorization-server mix-up attacks.
+        # clients can detect authorization-server mix-up attacks. Must
+        # byte-match the metadata issuer (no trailing slash — RFC 8414 §3.3).
         return construct_redirect_uri(
             str(params.redirect_uri),
             code=code_value,
             state=params.state,
-            iss=str(self.base_url),
+            iss=str(self.base_url).rstrip("/"),
         )
 
     # -- step 3: keep the token→credential map across issuance/rotation ------
