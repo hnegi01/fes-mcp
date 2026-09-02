@@ -57,8 +57,8 @@ EXAMPLE_TOOLS = frozenset(
 # docstring — an entry here is the stopgap.
 USAGE_NOTES: dict[str, str] = {
     "wellcheck.run_full_wellcheck": (
-        "Can be slow: the m2m check runs real aggregate SQL. Prefer a single "
-        "targeted check when the user asked about one dashboard or model."
+        "Can be slow: the m2m check runs real aggregate SQL. Scope it with the "
+        "dashboards/datamodels parameters whenever the user named specific assets."
     ),
     "datamodel.get_all_datamodel": (
         "Uses an internal Linux-only route; on Windows-based Sisense use "

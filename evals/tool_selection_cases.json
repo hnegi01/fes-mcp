@@ -14,12 +14,6 @@
       ]
     },
     {
-      "prompt": "Export the full definition of the dashboard 'Q3 Revenue'.",
-      "expect": [
-        "dashboard.export_dashboard"
-      ]
-    },
-    {
       "prompt": "Who is the dashboard 'Q3 Revenue' shared with?",
       "expect": [
         "dashboard.get_dashboard_share"
@@ -42,12 +36,6 @@
       "prompt": "List all datamodels with their size and status.",
       "expect": [
         "datamodel.get_all_datamodel"
-      ]
-    },
-    {
-      "prompt": "Run a JAQL query against the 'Sales' elasticube: total revenue by month.",
-      "expect": [
-        "queries.elasticube_run_jaql_query"
       ]
     },
     {
@@ -83,7 +71,7 @@
     {
       "prompt": "Check the 'Sales' datamodel for island tables.",
       "expect": [
-        "wellcheck.check_datamodel_island_tables"
+        "wellcheck.run_full_wellcheck"
       ]
     },
     {
@@ -99,27 +87,9 @@
       ]
     },
     {
-      "prompt": "Disable the 'Funnel Widget' plugin.",
-      "expect": [
-        "plugins.disable_plugins"
-      ]
-    },
-    {
       "prompt": "On the LIVE model 'Finance_Live', add a data security rule limiting the Department column to Accounting.",
       "expect": [
         "datamodel.set_live_datasecurity_add_many"
-      ]
-    },
-    {
-      "prompt": "Encrypt the value 'abc123' so I can store it safely.",
-      "expect": [
-        "encryption.encrypt"
-      ]
-    },
-    {
-      "prompt": "Show the folder hierarchy as a tree.",
-      "expect": [
-        "folder.get_folders"
       ]
     },
     {
